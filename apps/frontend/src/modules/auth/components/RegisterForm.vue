@@ -16,6 +16,16 @@ const password = ref('')
 const confirmPassword = ref('')
 const localError = ref<string | null>(null)
 
+const validatePasswordMatch = (_rule: any, value: string) => {
+  if (!value) {
+    return Promise.reject('Please confirm your password')
+  }
+  if (value !== password.value) {
+    return Promise.reject('Passwords do not match')
+  }
+  return Promise.resolve()
+}
+
 const handleSubmit = async () => {
   localError.value = null
   
@@ -49,74 +59,64 @@ const handleSubmit = async () => {
 </script>
 
 <template>
-  <form @submit.prevent="handleSubmit" class="space-y-4">
-    <div v-if="localError || authStore.error" class="bg-red-50 border border-red-200 text-red-800 px-4 py-3 rounded">
-      {{ localError || authStore.error }}
-    </div>
+  <a-form @submit.prevent="handleSubmit" layout="vertical">
+    <a-alert
+      v-if="localError || authStore.error"
+      :message="localError || authStore.error"
+      type="error"
+      show-icon
+      closable
+      class="mb-4"
+    />
 
-    <div>
-      <label for="name" class="block text-sm font-medium text-gray-700 mb-1">
-        Name
-      </label>
-      <input
-        id="name"
-        v-model="name"
+    <a-form-item label="Name" name="name" :rules="[{ required: true, message: 'Please enter your name' }]">
+      <a-input
+        v-model:value="name"
         type="text"
-        required
-        class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
         placeholder="Enter your name"
+        size="large"
       />
-    </div>
+    </a-form-item>
 
-    <div>
-      <label for="email" class="block text-sm font-medium text-gray-700 mb-1">
-        Email
-      </label>
-      <input
-        id="email"
-        v-model="email"
+    <a-form-item label="Email" name="email" :rules="[{ required: true, type: 'email', message: 'Please enter a valid email' }]">
+      <a-input
+        v-model:value="email"
         type="email"
-        required
-        class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
         placeholder="Enter your email"
+        size="large"
       />
-    </div>
+    </a-form-item>
 
-    <div>
-      <label for="password" class="block text-sm font-medium text-gray-700 mb-1">
-        Password
-      </label>
-      <input
-        id="password"
-        v-model="password"
-        type="password"
-        required
-        class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+    <a-form-item label="Password" name="password" :rules="[{ required: true, min: 6, message: 'Password must be at least 6 characters' }]">
+      <a-input-password
+        v-model:value="password"
         placeholder="Enter your password"
+        size="large"
       />
-    </div>
+    </a-form-item>
 
-    <div>
-      <label for="confirmPassword" class="block text-sm font-medium text-gray-700 mb-1">
-        Confirm Password
-      </label>
-      <input
-        id="confirmPassword"
-        v-model="confirmPassword"
-        type="password"
-        required
-        class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+    <a-form-item label="Confirm Password" name="confirmPassword" :rules="[
+      { required: true, message: 'Please confirm your password' },
+      { validator: validatePasswordMatch }
+    ]">
+      <a-input-password
+        v-model:value="confirmPassword"
         placeholder="Confirm your password"
+        size="large"
       />
-    </div>
+    </a-form-item>
 
-    <button
-      type="submit"
-      :disabled="authStore.loading"
-      class="w-full bg-blue-500 text-white py-2 px-4 rounded-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
-    >
-      {{ authStore.loading ? 'Registering...' : 'Register' }}
-    </button>
-  </form>
+    <a-form-item>
+      <a-button
+        type="primary"
+        html-type="submit"
+        :loading="authStore.loading"
+        block
+        size="large"
+      >
+        Register
+      </a-button>
+    </a-form-item>
+  </a-form>
 </template>
 

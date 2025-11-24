@@ -17,6 +17,10 @@ export default defineConfig({
       '@': fileURLToPath(new URL('./src', import.meta.url))
     },
   },
+  optimizeDeps: {
+    include: ['ant-design-vue', 'vue', 'vue-router', 'pinia'],
+    force: false, // Set to true to force re-optimization
+  },
   server: {
     proxy: {
       '/api': {

@@ -7,16 +7,16 @@ import { TransformInterceptor } from './common/interceptors/transform.intercepto
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
   const reflector = app.get(Reflector);
-  
+
   // Set global prefix with versioning
   app.setGlobalPrefix('api/v1');
-  
+
   // Global interceptors for consistent response format
   app.useGlobalInterceptors(
     new TransformInterceptor(),
     new ClassSerializerInterceptor(reflector),
   );
-  
+
   // Enable validation pipes
   app.useGlobalPipes(
     new ValidationPipe({
@@ -28,7 +28,7 @@ async function bootstrap() {
       },
     }),
   );
-  
+
   // Swagger/OpenAPI documentation
   const config = new DocumentBuilder()
     .setTitle('Strategy API')
@@ -48,13 +48,13 @@ async function bootstrap() {
     .build();
   const document = SwaggerModule.createDocument(app, config);
   SwaggerModule.setup('api/docs', app, document);
-  
+
   // Enable CORS for frontend connection
   app.enableCors({
     origin: 'http://localhost:5173', // Vite default port
     credentials: true,
   });
-  
+
   await app.listen(3000);
   console.log('🚀 Backend server running on http://localhost:3000');
   console.log('📡 API available at http://localhost:3000/api/v1');

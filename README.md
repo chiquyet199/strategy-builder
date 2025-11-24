@@ -29,29 +29,67 @@ Before you begin, ensure you have the following installed:
 
 - **Node.js** (v20.19.0 or >=22.12.0)
 - **npm** (>=9.0.0)
+- **PostgreSQL** (v14 or higher) - or use Docker
 - **Docker** (optional, for containerized development)
 - **Docker Compose** (optional, for local Docker setup)
 
 ## Quick Start
 
-### Option 1: Using npm workspaces (Recommended)
+### Option 1: Using npm workspaces (Recommended for Development)
+
+**1. Start PostgreSQL Database (Docker):**
+
+```bash
+# Start only PostgreSQL in Docker
+npm run db:up
+
+# Check if it's running
+docker ps | grep postgres
+
+# View database logs
+npm run db:logs
+```
+
+**2. Configure Environment Variables:**
+
+Create `apps/backend/.env` file:
+```env
+DB_HOST=localhost
+DB_PORT=5432
+DB_USERNAME=postgres
+DB_PASSWORD=postgres
+DB_NAME=strategy
+JWT_SECRET=your-secret-key-change-in-production
+NODE_ENV=development
+```
+
+**3. Install and Start:**
 
 ```bash
 # Install all dependencies (root, backend, and frontend)
 npm install
 
-# Start both backend and frontend servers simultaneously
+# Start both backend and frontend servers simultaneously (with hot reload)
 npm run dev
 ```
 
 This will start:
-- **Backend** on http://localhost:3000
-- **Frontend** on http://localhost:5173
+- **PostgreSQL** on localhost:5432 (Docker)
+- **Backend** on http://localhost:3000 (with hot reload)
+- **Frontend** on http://localhost:5173 (with hot reload)
 
-### Option 2: Using Docker
+**Database Management:**
+```bash
+npm run db:up      # Start PostgreSQL
+npm run db:down    # Stop PostgreSQL
+npm run db:logs    # View PostgreSQL logs
+npm run db:reset   # Reset database (removes all data)
+```
+
+### Option 2: Using Docker (Includes PostgreSQL)
 
 ```bash
-# Build and start all services with Docker
+# Build and start all services with Docker (includes PostgreSQL)
 npm run docker:up
 
 # View logs
@@ -59,7 +97,15 @@ npm run docker:logs
 
 # Stop all services
 npm run docker:down
+
+# Remove volumes (clears database data)
+docker-compose down -v
 ```
+
+This will start:
+- **PostgreSQL** on localhost:5432
+- **Backend** on http://localhost:3000
+- **Frontend** on http://localhost:5173
 
 ### Option 3: Using setup script
 
@@ -82,9 +128,15 @@ From the root directory, you can run:
 
 ```bash
 # Development
-npm run dev              # Start both backend and frontend servers
-npm run dev:backend      # Start only backend server
-npm run dev:frontend     # Start only frontend server
+npm run dev              # Start both backend and frontend servers (with hot reload)
+npm run dev:backend      # Start only backend server (with hot reload)
+npm run dev:frontend     # Start only frontend server (with hot reload)
+
+# Database (PostgreSQL in Docker)
+npm run db:up            # Start PostgreSQL database
+npm run db:down          # Stop PostgreSQL database
+npm run db:logs          # View PostgreSQL logs
+npm run db:reset         # Reset database (removes all data)
 
 # Building
 npm run build            # Build all applications
@@ -155,6 +207,10 @@ The frontend is configured to proxy all `/api/*` requests to the backend server 
 - **NestJS** - Progressive Node.js framework
 - **TypeScript** - Type-safe JavaScript
 - **Express** - Web framework (via NestJS)
+- **PostgreSQL** - Relational database
+- **TypeORM** - Object-Relational Mapping
+- **JWT** - JSON Web Tokens for authentication
+- **bcrypt** - Password hashing
 
 ### Frontend
 - **Vue 3** - Progressive JavaScript framework
@@ -163,6 +219,7 @@ The frontend is configured to proxy all `/api/*` requests to the backend server 
 - **Vue Router** - Official router for Vue.js
 - **Pinia** - State management for Vue
 - **Tailwind CSS** - Utility-first CSS framework
+- **Ant Design Vue** - UI component library
 - **Vitest** - Unit testing framework
 
 ### Infrastructure
@@ -183,12 +240,33 @@ The frontend Vite server is configured to proxy all `/api/*` requests to `http:/
 
 ### Environment Variables
 
-Create `.env` files in the respective directories if you need environment-specific configuration:
+**Backend Environment Variables** (`apps/backend/.env`):
 
-- `apps/backend/.env` - Backend environment variables
-- `apps/frontend/.env` - Frontend environment variables
+```env
+# Database Configuration
+DB_HOST=localhost
+DB_PORT=5432
+DB_USERNAME=postgres
+DB_PASSWORD=postgres
+DB_NAME=strategy
 
-**Note**: `.env` files are already included in `.gitignore` and should not be committed to version control.
+# JWT Configuration
+JWT_SECRET=your-secret-key-change-in-production
+
+# Environment
+NODE_ENV=development
+```
+
+**Frontend Environment Variables** (`apps/frontend/.env`):
+
+```env
+VITE_API_URL=http://localhost:3000
+```
+
+**Note**: 
+- `.env` files are already included in `.gitignore` and should not be committed to version control
+- Copy `apps/backend/.env.example` to `apps/backend/.env` and update values
+- In production, use secure secrets management (AWS Secrets Manager, HashiCorp Vault, etc.)
 
 ## Deployment
 

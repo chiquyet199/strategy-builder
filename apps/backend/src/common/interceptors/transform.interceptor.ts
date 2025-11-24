@@ -27,14 +27,14 @@ export class TransformInterceptor<T>
         if (data && typeof data === 'object' && 'data' in data) {
           return data;
         }
-        
+
         // Wrap response in standard format
         return {
           data,
-          message: context.switchToHttp().getResponse().statusMessage || 'Success',
+          message:
+            context.switchToHttp().getResponse().statusMessage || 'Success',
         };
       }),
     );
   }
 }
-

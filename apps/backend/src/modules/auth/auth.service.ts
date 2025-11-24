@@ -1,71 +1,77 @@
-import { Injectable, UnauthorizedException, ConflictException } from '@nestjs/common'
-import { JwtService } from '@nestjs/jwt'
-import * as bcrypt from 'bcrypt'
-import { LoginDto } from './dto/login.dto'
-import { RegisterDto } from './dto/register.dto'
-
-// In-memory user store (replace with database in production)
-interface User {
-  id: string
-  email: string
-  name: string
-  password: string
-  createdAt: Date
-  updatedAt: Date
-}
+import {
+  Injectable,
+  UnauthorizedException,
+  ConflictException,
+} from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
+import { JwtService } from '@nestjs/jwt';
+import * as bcrypt from 'bcrypt';
+import { LoginDto } from './dto/login.dto';
+import { RegisterDto } from './dto/register.dto';
+import { User } from './entities/user.entity';
 
 @Injectable()
 export class AuthService {
-  private users: User[] = []
-
-  constructor(private jwtService: JwtService) {}
+  constructor(
+    @InjectRepository(User)
+    private readonly userRepository: Repository<User>,
+    private jwtService: JwtService,
+  ) {}
 
   async register(registerDto: RegisterDto) {
-    const existingUser = this.users.find((u) => u.email === registerDto.email)
+    const existingUser = await this.userRepository.findOne({
+      where: { email: registerDto.email },
+    });
+
     if (existingUser) {
-      throw new ConflictException('User with this email already exists')
+      throw new ConflictException('User with this email already exists');
     }
 
-    const hashedPassword = await bcrypt.hash(registerDto.password, 10)
-    const user: User = {
-      id: Date.now().toString(),
+    const hashedPassword = await bcrypt.hash(registerDto.password, 10);
+
+    const user = this.userRepository.create({
       email: registerDto.email,
       name: registerDto.name,
       password: hashedPassword,
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    }
+    });
 
-    this.users.push(user)
+    const savedUser = await this.userRepository.save(user);
 
-    const payload = { sub: user.id, email: user.email }
-    const access_token = this.jwtService.sign(payload)
+    const payload = { sub: savedUser.id, email: savedUser.email };
+    const access_token = this.jwtService.sign(payload);
 
     return {
       access_token,
       user: {
-        id: user.id,
-        email: user.email,
-        name: user.name,
-        createdAt: user.createdAt.toISOString(),
-        updatedAt: user.updatedAt.toISOString(),
+        id: savedUser.id,
+        email: savedUser.email,
+        name: savedUser.name,
+        createdAt: savedUser.createdAt.toISOString(),
+        updatedAt: savedUser.updatedAt.toISOString(),
       },
-    }
+    };
   }
 
   async login(loginDto: LoginDto) {
-    const user = this.users.find((u) => u.email === loginDto.email)
+    const user = await this.userRepository.findOne({
+      where: { email: loginDto.email },
+    });
+
     if (!user) {
-      throw new UnauthorizedException('Invalid credentials')
+      throw new UnauthorizedException('Invalid credentials');
     }
 
-    const isPasswordValid = await bcrypt.compare(loginDto.password, user.password)
+    const isPasswordValid = await bcrypt.compare(
+      loginDto.password,
+      user.password,
+    );
     if (!isPasswordValid) {
-      throw new UnauthorizedException('Invalid credentials')
+      throw new UnauthorizedException('Invalid credentials');
     }
 
-    const payload = { sub: user.id, email: user.email }
-    const access_token = this.jwtService.sign(payload)
+    const payload = { sub: user.id, email: user.email };
+    const access_token = this.jwtService.sign(payload);
 
     return {
       access_token,
@@ -76,13 +82,16 @@ export class AuthService {
         createdAt: user.createdAt.toISOString(),
         updatedAt: user.updatedAt.toISOString(),
       },
-    }
+    };
   }
 
   async getProfile(userId: string) {
-    const user = this.users.find((u) => u.id === userId)
+    const user = await this.userRepository.findOne({
+      where: { id: userId },
+    });
+
     if (!user) {
-      throw new UnauthorizedException('User not found')
+      throw new UnauthorizedException('User not found');
     }
 
     return {
@@ -91,7 +100,6 @@ export class AuthService {
       name: user.name,
       createdAt: user.createdAt.toISOString(),
       updatedAt: user.updatedAt.toISOString(),
-    }
+    };
   }
 }
-

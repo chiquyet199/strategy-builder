@@ -1,0 +1,74 @@
+import { authApi } from '../api/authApi'
+import { useAuthStore } from '../stores/authStore'
+import type { LoginRequest, RegisterRequest } from '@/shared/types/auth'
+
+class AuthService {
+  private store = useAuthStore()
+
+  async login(credentials: LoginRequest): Promise<void> {
+    this.store.setLoading(true)
+    this.store.setError(null)
+    
+    try {
+      const response = await authApi.login(credentials)
+      this.store.setToken(response.access_token)
+      this.store.setUser(response.user)
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Login failed'
+      this.store.setError(errorMessage)
+      throw err
+    } finally {
+      this.store.setLoading(false)
+    }
+  }
+
+  async register(data: RegisterRequest): Promise<void> {
+    this.store.setLoading(true)
+    this.store.setError(null)
+    
+    try {
+      const response = await authApi.register(data)
+      this.store.setToken(response.access_token)
+      this.store.setUser(response.user)
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Registration failed'
+      this.store.setError(errorMessage)
+      throw err
+    } finally {
+      this.store.setLoading(false)
+    }
+  }
+
+  async fetchProfile(): Promise<void> {
+    if (!this.store.token) {
+      throw new Error('No token available')
+    }
+
+    this.store.setLoading(true)
+    this.store.setError(null)
+    
+    try {
+      const profile = await authApi.getProfile()
+      this.store.setUser(profile)
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Failed to fetch profile'
+      this.store.setError(errorMessage)
+      
+      if (err instanceof Error && err.message === 'Unauthorized') {
+        this.logout()
+      }
+      throw err
+    } finally {
+      this.store.setLoading(false)
+    }
+  }
+
+  logout(): void {
+    this.store.setToken(null)
+    this.store.setUser(null)
+    this.store.setError(null)
+  }
+}
+
+export const authService = new AuthService()
+

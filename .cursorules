@@ -1,0 +1,550 @@
+# Strategy Project - Cursor Rules
+
+## General Principles
+
+### Pure Functions & Test Coverage
+- **ALWAYS** write pure functions when possible (no side effects, same input = same output)
+- **EVERY** function must have corresponding unit tests with minimum 80% coverage
+- Functions should be small, focused, and do one thing well
+- Avoid mutations - prefer immutability and return new values
+- Test edge cases, error handling, and happy paths
+
+### Code Quality
+- Write self-documenting code with clear variable and function names
+- Keep functions small (max 20-30 lines)
+- Use TypeScript strictly - avoid `any` types
+- Follow SOLID principles
+- DRY (Don't Repeat Yourself) - extract common logic
+
+## Frontend Architecture (Vue 3) - MODULE-BASED
+
+### Module-Based Structure - STRICT ENFORCEMENT
+
+The frontend MUST follow a **module-based architecture** where each feature/module is self-contained with its own layers:
+
+```
+src/
+└── modules/
+    └── auth/                    # Example: Auth Module
+        ├── api/                 # API service layer (HTTP calls)
+        │   └── authApi.ts
+        ├── services/            # Business logic services
+        │   └── authService.ts
+        ├── stores/              # Pinia stores (state management)
+        │   └── authStore.ts
+        ├── views/               # Page-level components
+        │   ├── LoginView.vue
+        │   └── RegisterView.vue
+        └── components/          # Module-specific components
+            ├── LoginForm.vue
+            └── RegisterForm.vue
+```
+
+### Module Structure Rules
+
+**EVERY module MUST have:**
+- `api/` - API service layer (HTTP requests only)
+- `services/` - Business logic services (optional, for complex logic)
+- `stores/` - State management (Pinia stores)
+- `views/` - Page-level components
+- `components/` - Module-specific UI components
+
+### Layer Separation - STRICT ENFORCEMENT
+
+Each module follows a strict 3-layer architecture:
+
+```
+┌─────────────────────────────────────┐
+│    Module Views/Components          │  ← Presentation Layer
+│  (Consume Store & Service)          │
+└──────────────┬──────────────────────┘
+               │
+       ┌───────┴────────┐
+       │                │
+┌──────▼──────┐  ┌──────▼──────┐
+│   Store     │  │   API       │
+│  (State)    │  │   (HTTP)    │
+└─────────────┘  └──────┬──────┘
+                        │
+                        │
+                ┌───────▼──────┐
+                │   Backend    │
+                │     API      │
+                └──────────────┘
+```
+
+### 1. API Layer (`modules/{module}/api/`)
+- **Purpose**: Handle ALL API calls and external data fetching
+- **Rules**:
+  - API files are pure functions/classes that only make HTTP requests
+  - NO state management in API layer
+  - API functions return promises/data, never directly update UI or state
+  - Each API function should have corresponding unit tests
+  - API functions should handle errors and throw meaningful exceptions
+  - Use TypeScript interfaces for request/response types
+  - One API file per module
+
+**Example Structure:**
+```typescript
+// modules/auth/api/authApi.ts
+export const authApi = {
+  async login(credentials: LoginRequest): Promise<LoginResponse> {
+    // Only API calls, no state updates
+  },
+  async register(data: RegisterRequest): Promise<RegisterResponse> {
+    // Only API calls
+  }
+}
+```
+
+### 2. Service Layer (`modules/{module}/services/`) - REQUIRED
+- **Purpose**: Handle ALL async operations and business logic
+- **Rules**:
+  - Services handle ALL async operations (API calls, data fetching)
+  - Services are instantiated with the store: `new Service(store)` or `class Service { private store = useStore() }`
+  - Services import API layer to call backend
+  - Services use store to update state management (call store's sync actions)
+  - Services contain business logic and orchestration
+  - NO state management in services - only call store actions
+  - Each service method should have unit tests
+  - Export a singleton instance: `export const service = new Service()`
+
+**Example Structure:**
+```typescript
+// modules/auth/services/authService.ts
+import { authApi } from '../api/authApi'
+import { useAuthStore } from '../stores/authStore'
+
+class AuthService {
+  private store = useAuthStore()
+
+  async login(credentials: LoginRequest): Promise<void> {
+    this.store.setLoading(true)
+    this.store.setError(null)
+    
+    try {
+      const response = await authApi.login(credentials) // Call API
+      this.store.setToken(response.access_token) // Update store
+      this.store.setUser(response.user) // Update store
+    } catch (err) {
+      this.store.setError(err.message)
+      throw err
+    } finally {
+      this.store.setLoading(false)
+    }
+  }
+}
+
+export const authService = new AuthService()
+```
+
+### 3. Store Layer (`modules/{module}/stores/`)
+- **Purpose**: Manage module-specific state (SYNCHRONOUS ONLY)
+- **Rules**:
+  - Stores handle ALL state mutations for the module
+  - Stores ONLY have SYNCHRONOUS actions (setters, state updates)
+  - NO async operations in stores (no async/await)
+  - NO API calls from stores (must go through Service layer)
+  - Stores expose reactive state, computed properties, and sync actions
+  - Store actions are pure functions that update state
+  - Stores must have unit tests for all actions and state changes
+  - One store file per module (or multiple if module is large)
+
+**Example Structure:**
+```typescript
+// modules/auth/stores/authStore.ts
+export const useAuthStore = defineStore('auth', () => {
+  const user = ref<User | null>(null)
+  const token = ref<string | null>(null)
+  const loading = ref(false)
+  const error = ref<string | null>(null)
+
+  const isAuthenticated = computed(() => !!token.value && !!user.value)
+
+  // Synchronous actions only
+  function setToken(newToken: string | null): void {
+    token.value = newToken
+  }
+
+  function setUser(newUser: User | null): void {
+    user.value = newUser
+  }
+
+  function setLoading(isLoading: boolean): void {
+    loading.value = isLoading
+  }
+
+  function setError(errorMessage: string | null): void {
+    error.value = errorMessage
+  }
+
+  return { user, token, loading, error, isAuthenticated, setToken, setUser, setLoading, setError }
+})
+```
+
+### 4. Views Layer (`modules/{module}/views/`)
+- **Purpose**: Page-level components for the module
+- **Rules**:
+  - Views are route-level components
+  - Views consume stores for state (read-only)
+  - Views call SERVICE methods, NOT store actions directly for async operations
+  - Views can call store sync actions only for simple state updates
+  - Views should be straightforward and easy to understand
+  - NO business logic in views - delegate to services
+  - Use composition API with `<script setup>`
+  - Each view should have unit tests
+
+**Example Structure:**
+```vue
+<!-- modules/auth/views/LoginView.vue -->
+<script setup lang="ts">
+import { useAuthStore } from '../stores/authStore'
+import { authService } from '../services/authService'
+import LoginForm from '../components/LoginForm.vue'
+
+const authStore = useAuthStore()
+
+// View calls service for async operations
+const handleLogin = async () => {
+  await authService.login(credentials)
+}
+</script>
+
+<template>
+  <LoginForm @submit="handleLogin" />
+</template>
+```
+
+### 5. Components Layer (`modules/{module}/components/`)
+- **Purpose**: Module-specific UI components
+- **Rules**:
+  - Components should be SMALL and focused (max 200-300 lines)
+  - Split large components into smaller, reusable components
+  - Components consume stores for state (read-only)
+  - Components call SERVICE methods for async operations, NOT store actions
+  - Components can call store sync actions for simple state updates
+  - Components should be straightforward and easy to understand
+  - NO business logic in components - delegate to services
+  - Use composition API with `<script setup>`
+  - Each component should have unit tests
+
+**Example Structure:**
+```vue
+<!-- modules/auth/components/LoginForm.vue -->
+<script setup lang="ts">
+import { useAuthStore } from '../stores/authStore'
+import { authService } from '../services/authService'
+
+const authStore = useAuthStore()
+
+// Component calls service for async operations
+const handleSubmit = async () => {
+  await authService.login(credentials)
+}
+</script>
+
+<template>
+  <!-- Simple, straightforward template -->
+</template>
+```
+
+### Component Splitting Rules
+- If a component exceeds 300 lines, split it
+- Extract reusable logic into composables (`src/composables/`)
+- One component = one responsibility
+- Use props and emits for parent-child communication
+- Use stores for shared state across components
+
+### Data Flow Pattern (Module-Based)
+```
+User Action → Component/View → Service → API Layer → Backend API
+                                      ↓
+                                   Service calls Store (sync actions)
+                                      ↓
+                                   Store updates State
+                                      ↓
+                                   UI Reacts
+```
+
+**NEVER:**
+- ❌ Call API directly from components/views
+- ❌ Call API directly from stores
+- ❌ Put async operations in stores
+- ❌ Update state directly in components/views (except simple sync updates)
+- ❌ Put business logic in components/views
+- ❌ Make HTTP calls from stores
+- ❌ Mix state management with API calls
+- ❌ Create modules without proper structure (api/services/stores/views/components)
+
+**ALWAYS:**
+- ✅ Components/Views → Service → API Layer → Backend
+- ✅ Service → Store (sync actions) → State updates
+- ✅ Keep components simple and presentational
+- ✅ Keep stores focused on synchronous state management only
+- ✅ Keep services focused on async operations and business logic
+- ✅ Keep API layer focused on HTTP requests
+- ✅ Organize code by modules, not by technical layers
+- ✅ Each module must have: api/, services/, stores/, views/, components/
+
+## Backend Architecture (NestJS) - MODULE-BASED
+
+### Module-Based Structure - STRICT ENFORCEMENT
+
+The backend MUST follow a **module-based architecture** where each feature/module is self-contained:
+
+```
+src/
+└── modules/
+    └── auth/                    # Example: Auth Module
+        ├── auth.controller.ts   # HTTP endpoints
+        ├── auth.service.ts      # Business logic
+        ├── auth.module.ts       # Module definition
+        ├── dto/                 # Data Transfer Objects
+        │   ├── login.dto.ts
+        │   └── register.dto.ts
+        ├── entities/            # Database entities (if using ORM)
+        │   └── user.entity.ts
+        ├── guards/              # Route guards
+        │   └── jwt-auth.guard.ts
+        └── strategies/          # Auth strategies (Passport)
+            └── jwt.strategy.ts
+```
+
+### Module Structure Rules
+
+**EVERY module MUST have:**
+- `{module}.controller.ts` - HTTP endpoints
+- `{module}.service.ts` - Business logic
+- `{module}.module.ts` - Module definition
+- `dto/` - Data Transfer Objects for validation
+- Optional: `entities/`, `guards/`, `strategies/`, `interceptors/`
+
+### Pure Functions
+- Write pure functions for business logic
+- Separate controllers, services, and repositories
+- Controllers handle HTTP, services handle business logic
+- Use dependency injection
+- Each service method should have unit tests
+- Use decorators for route protection (`@Public()`, `@UseGuards()`)
+
+### Route Protection
+- Use `@Public()` decorator for public routes
+- Use `@UseGuards(JwtAuthGuard)` for protected routes
+- Create custom guards per module if needed
+- Implement JWT authentication with Passport
+
+### Testing Requirements
+- Unit tests for all services and utilities
+- Integration tests for API endpoints
+- Minimum 80% code coverage
+- Test error cases and edge conditions
+- Test both public and protected routes
+
+## File Organization
+
+### Frontend Structure - MODULE-BASED
+```
+src/
+├── modules/                    # Feature modules (MODULE-BASED)
+│   ├── auth/                  # Auth module
+│   │   ├── api/              # API layer
+│   │   ├── services/         # Business logic (optional)
+│   │   ├── stores/           # State management
+│   │   ├── views/            # Page components
+│   │   └── components/       # Module components
+│   ├── user/                 # User module
+│   │   ├── api/
+│   │   ├── stores/
+│   │   ├── views/
+│   │   └── components/
+│   └── ...                   # Other modules
+├── shared/                    # Shared across modules
+│   ├── components/           # Shared UI components (Button, Input, etc.)
+│   ├── composables/          # Reusable composition functions
+│   ├── types/                # Shared TypeScript types
+│   ├── utils/                # Pure utility functions
+│   └── constants/            # Shared constants
+└── __tests__/                # Global test utilities
+```
+
+### Module Naming
+- Modules: lowercase, singular (e.g., `auth`, `user`, `product`)
+- Each module is self-contained and independent
+
+### Naming Conventions
+- Modules: lowercase, singular (e.g., `auth`, `user`)
+- API files: camelCase with "Api" suffix (e.g., `authApi.ts`)
+- Service files: camelCase with "Service" suffix (e.g., `authService.ts`)
+- Store files: camelCase with "Store" suffix (e.g., `authStore.ts`)
+- Components: PascalCase (e.g., `LoginForm.vue`)
+- Views: PascalCase with "View" suffix (e.g., `LoginView.vue`)
+- Composables: camelCase with "use" prefix (e.g., `useAuth.ts`)
+- Utils: camelCase (e.g., `formatDate.ts`)
+
+## Testing Standards
+
+### Unit Tests
+- Every function must have unit tests
+- Test pure functions thoroughly
+- Mock external dependencies (API calls, stores)
+- Test edge cases and error scenarios
+- Use descriptive test names: `describe('functionName', () => { it('should do X when Y', ...) })`
+
+### Frontend Testing
+- Test components in isolation
+- Test store actions and state changes
+- Test service functions with mocked fetch/axios
+- Use Vitest for unit tests
+- Use Vue Test Utils for component tests
+
+### Backend Testing
+- Test service methods with mocked dependencies
+- Test controllers with mocked services
+- Use Jest for unit tests
+- Use Supertest for integration tests
+
+## Code Review Checklist
+
+Before submitting code, ensure:
+- [ ] All functions are pure (or clearly documented if not)
+- [ ] Unit tests written with 80%+ coverage
+- [ ] Frontend follows 3-layer architecture (UI → Store → Service)
+- [ ] Components are small and focused
+- [ ] No direct API calls from components
+- [ ] No business logic in components
+- [ ] TypeScript types are properly defined
+- [ ] Code is self-documenting
+- [ ] Error handling is implemented
+- [ ] No console.logs in production code
+
+## Examples
+
+### ❌ BAD - Component calling API directly
+```vue
+<script setup>
+import { authApi } from '@/modules/auth/api/authApi'
+
+onMounted(async () => {
+  await authApi.login() // WRONG!
+})
+</script>
+```
+
+### ❌ BAD - Component calling store async action
+```vue
+<script setup>
+import { useAuthStore } from '@/modules/auth/stores/authStore'
+
+const authStore = useAuthStore()
+onMounted(async () => {
+  await authStore.login() // WRONG! Stores should not have async actions
+})
+</script>
+```
+
+### ✅ GOOD - Component using service (Module-Based)
+```vue
+<script setup>
+import { authService } from '@/modules/auth/services/authService'
+
+onMounted(async () => {
+  await authService.login(credentials) // Service handles async + store updates
+})
+</script>
+```
+
+### ❌ BAD - Store with async operations
+```typescript
+// modules/auth/stores/authStore.ts
+import { authApi } from '../api/authApi'
+
+export const useAuthStore = defineStore('auth', () => {
+  async function login(credentials: LoginRequest) { // WRONG! No async in stores
+    const result = await authApi.login(credentials)
+    // ...
+  }
+})
+```
+
+### ✅ GOOD - Store with sync actions only
+```typescript
+// modules/auth/stores/authStore.ts
+export const useAuthStore = defineStore('auth', () => {
+  const user = ref<User | null>(null)
+  const loading = ref(false)
+
+  // Sync actions only
+  function setUser(newUser: User | null): void {
+    user.value = newUser
+  }
+
+  function setLoading(isLoading: boolean): void {
+    loading.value = isLoading
+  }
+
+  return { user, loading, setUser, setLoading }
+})
+```
+
+### ✅ GOOD - Service handles async and updates store
+```typescript
+// modules/auth/services/authService.ts
+import { authApi } from '../api/authApi'
+import { useAuthStore } from '../stores/authStore'
+
+class AuthService {
+  private store = useAuthStore()
+
+  async login(credentials: LoginRequest): Promise<void> {
+    this.store.setLoading(true)
+    try {
+      const result = await authApi.login(credentials) // Call API
+      this.store.setUser(result.user) // Update store (sync)
+    } finally {
+      this.store.setLoading(false) // Update store (sync)
+    }
+  }
+}
+
+export const authService = new AuthService()
+```
+
+### ❌ BAD - Not using module structure
+```
+src/
+├── services/
+│   └── authService.ts
+├── stores/
+│   └── authStore.ts
+└── components/
+    └── LoginForm.vue
+```
+
+### ✅ GOOD - Module-based structure
+```
+src/
+└── modules/
+    └── auth/
+        ├── api/
+        │   └── authApi.ts
+        ├── stores/
+        │   └── authStore.ts
+        └── components/
+            └── LoginForm.vue
+```
+
+## Enforcement
+
+These rules are MANDATORY. When writing or reviewing code:
+1. Always organize code by modules (not by technical layers)
+2. Always check layer separation within modules
+3. Always verify test coverage (80%+)
+4. Always ensure pure functions where possible
+5. Always split large components
+6. Always follow the data flow: Component/View → Service → API Layer → Backend → Service → Store (sync) → State
+7. Always create modules with proper structure: api/, services/, stores/, views/, components/
+8. Always use module-based structure on both frontend and backend
+9. **Stores MUST only have synchronous actions** - no async/await in stores
+10. **Services MUST handle all async operations** - services call API and update store
+11. **Services MUST be instantiated with store** - `new Service(store)` or `private store = useStore()`
+

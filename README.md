@@ -29,61 +29,75 @@ Before you begin, ensure you have the following installed:
 
 - **Node.js** (v20.19.0 or >=22.12.0)
 - **npm** (>=9.0.0)
-- **PostgreSQL** (v14 or higher) - or use Docker
-- **Docker** (optional, for containerized development)
-- **Docker Compose** (optional, for local Docker setup)
+- **Docker** and **Docker Compose** (for PostgreSQL and Redis)
+  - PostgreSQL is run via Docker
+  - Redis is run via Docker for rate limiting
 
 ## Quick Start
 
 ### Option 1: Using npm workspaces (Recommended for Development)
 
-**1. Start PostgreSQL Database (Docker):**
-
-```bash
-# Start only PostgreSQL in Docker
-npm run db:up
-
-# Check if it's running
-docker ps | grep postgres
-
-# View database logs
-npm run db:logs
-```
-
-**2. Configure Environment Variables:**
-
-Create `apps/backend/.env` file:
-```env
-DB_HOST=localhost
-DB_PORT=5432
-DB_USERNAME=postgres
-DB_PASSWORD=postgres
-DB_NAME=strategy
-JWT_SECRET=your-secret-key-change-in-production
-NODE_ENV=development
-```
-
-**3. Install and Start:**
+**1. Install Dependencies:**
 
 ```bash
 # Install all dependencies (root, backend, and frontend)
 npm install
+```
 
+**2. Start Required Services (PostgreSQL and Redis):**
+
+```bash
+# Start PostgreSQL database
+npm run db:up
+
+# Start Redis (for rate limiting)
+npm run redis:up
+
+# Check if services are running
+docker ps | grep -E "postgres|redis"
+
+# View service logs
+npm run db:logs      # PostgreSQL logs
+npm run redis:logs   # Redis logs
+```
+
+**3. Configure Environment Variables:**
+
+Copy the example environment file and update as needed:
+
+```bash
+# Copy example environment file
+cp apps/backend/.env.example apps/backend/.env
+```
+
+The `.env.example` file includes all required variables with development defaults. For production, see the [Environment Variables](#environment-variables) section below.
+
+**4. Start Development Servers:**
+
+```bash
 # Start both backend and frontend servers simultaneously (with hot reload)
 npm run dev
 ```
 
 This will start:
 - **PostgreSQL** on localhost:5432 (Docker)
+- **Redis** on localhost:6379 (Docker)
 - **Backend** on http://localhost:3000 (with hot reload)
 - **Frontend** on http://localhost:5173 (with hot reload)
 
-**Database Management:**
+**Service Management:**
 ```bash
+# Database
 npm run db:up      # Start PostgreSQL
 npm run db:down    # Stop PostgreSQL
 npm run db:logs    # View PostgreSQL logs
 npm run db:reset   # Reset database (removes all data)
+
+# Redis
+npm run redis:up   # Start Redis
+npm run redis:down # Stop Redis
+npm run redis:logs # View Redis logs
+npm run redis:cli  # Access Redis CLI
 ```
 
 ### Option 2: Using Docker (Includes PostgreSQL)
@@ -120,7 +134,8 @@ npm run dev
 ## Access the Application
 
 - **Frontend**: Open [http://localhost:5173](http://localhost:5173) in your browser
-- **Backend API**: Available at [http://localhost:3000/api](http://localhost:3000/api)
+- **Backend API**: Available at [http://localhost:3000/api/v1](http://localhost:3000/api/v1)
+- **API Documentation**: Available at [http://localhost:3000/api/docs](http://localhost:3000/api/docs) (Swagger UI)
 
 ## Root Scripts (Monorepo)
 
@@ -137,6 +152,12 @@ npm run db:up            # Start PostgreSQL database
 npm run db:down          # Stop PostgreSQL database
 npm run db:logs          # View PostgreSQL logs
 npm run db:reset         # Reset database (removes all data)
+
+# Redis (for rate limiting)
+npm run redis:up         # Start Redis
+npm run redis:down       # Stop Redis
+npm run redis:logs       # View Redis logs
+npm run redis:cli        # Access Redis CLI
 
 # Building
 npm run build            # Build all applications
@@ -194,10 +215,17 @@ npm run type-check     # Type check TypeScript
 
 ## API Endpoints
 
-The backend API is prefixed with `/api`:
+The backend API is prefixed with `/api/v1`:
 
-- `GET /api` - Hello message
-- `GET /api/health` - Health check endpoint
+- `GET /api/v1` - Hello message
+- `GET /api/v1/health` - Health check endpoint
+- `POST /api/v1/auth/register` - User registration
+- `POST /api/v1/auth/login` - User login
+- `POST /api/v1/auth/forgot-password` - Request password reset
+- `POST /api/v1/auth/reset-password` - Reset password with token
+- `GET /api/v1/auth/profile` - Get user profile (protected)
+
+**API Documentation**: Visit [http://localhost:3000/api/docs](http://localhost:3000/api/docs) for interactive Swagger documentation.
 
 The frontend is configured to proxy all `/api/*` requests to the backend server automatically.
 
@@ -211,6 +239,8 @@ The frontend is configured to proxy all `/api/*` requests to the backend server 
 - **TypeORM** - Object-Relational Mapping
 - **JWT** - JSON Web Tokens for authentication
 - **bcrypt** - Password hashing
+- **Redis** - Distributed rate limiting storage
+- **@nestjs/throttler** - Rate limiting middleware
 
 ### Frontend
 - **Vue 3** - Progressive JavaScript framework
@@ -232,7 +262,7 @@ The frontend is configured to proxy all `/api/*` requests to the backend server 
 
 ### CORS Configuration
 
-The backend is configured to allow requests from the frontend development server (`http://localhost:5173`). If you change the frontend port, update the CORS configuration in `apps/backend/src/main.ts`.
+The backend CORS is configured via the `FRONTEND_URL` environment variable. Defaults to `http://localhost:5173` in development. Update `FRONTEND_URL` in your `.env` file if your frontend runs on a different URL.
 
 ### API Proxy
 
@@ -242,7 +272,18 @@ The frontend Vite server is configured to proxy all `/api/*` requests to `http:/
 
 **Backend Environment Variables** (`apps/backend/.env`):
 
+Copy `apps/backend/.env.example` to `apps/backend/.env`:
+
+```bash
+cp apps/backend/.env.example apps/backend/.env
+```
+
+Required variables:
+
 ```env
+# Application Environment
+NODE_ENV=development  # Use 'production' in production
+
 # Database Configuration
 DB_HOST=localhost
 DB_PORT=5432
@@ -251,11 +292,28 @@ DB_PASSWORD=postgres
 DB_NAME=strategy
 
 # JWT Configuration
+# Generate with: openssl rand -base64 32
+# REQUIRED in production (will throw error if missing)
 JWT_SECRET=your-secret-key-change-in-production
 
-# Environment
-NODE_ENV=development
+# Redis Configuration (for rate limiting)
+REDIS_HOST=localhost
+REDIS_PORT=6379
+# REQUIRED in production (will throw error if missing)
+REDIS_PASSWORD=redis
+
+# Frontend URL (for CORS and email links)
+FRONTEND_URL=http://localhost:5173
+
+# Email Configuration (optional)
+EMAIL_FROM=noreply@strategy.app
 ```
+
+**Production Requirements:**
+
+In production (`NODE_ENV=production`), the following are **required** and will throw errors if missing:
+- `JWT_SECRET` - Must be a strong random string
+- `REDIS_PASSWORD` - Must be set for security
 
 **Frontend Environment Variables** (`apps/frontend/.env`):
 
@@ -263,10 +321,11 @@ NODE_ENV=development
 VITE_API_URL=http://localhost:3000
 ```
 
-**Note**: 
+**Important Notes**: 
 - `.env` files are already included in `.gitignore` and should not be committed to version control
-- Copy `apps/backend/.env.example` to `apps/backend/.env` and update values
+- Always copy from `.env.example` and update values for your environment
 - In production, use secure secrets management (AWS Secrets Manager, HashiCorp Vault, etc.)
+- Generate strong secrets: `openssl rand -base64 32`
 
 ## Deployment
 
@@ -343,13 +402,21 @@ Workflows are located in `.github/workflows/ci.yml`.
 
 ### Connection status shows error
 - Make sure both servers are running
-- Check that the backend is accessible at `http://localhost:3000/api/health`
-- Verify CORS is enabled in the backend
+- Check that the backend is accessible at `http://localhost:3000/api/v1/health`
+- Verify CORS is enabled in the backend (check `FRONTEND_URL` in `.env`)
+- Ensure PostgreSQL and Redis are running: `docker ps`
 
 ### Docker issues
 - Ensure Docker is running
 - Check Docker logs: `npm run docker:logs`
 - Rebuild images: `npm run docker:build`
+- Verify services are running: `docker ps`
+
+### Redis connection errors
+- Ensure Redis is running: `npm run redis:up`
+- Check Redis logs: `npm run redis:logs`
+- Verify Redis password matches in `.env` file
+- Test Redis connection: `npm run redis:cli` then type `PING`
 
 ### Workspace issues
 - Delete `node_modules` and reinstall: `rm -rf node_modules apps/*/node_modules && npm install`

@@ -24,9 +24,20 @@ export default defineConfig({
   server: {
     proxy: {
       '/api': {
-        target: 'http://localhost:3000',
+        target: process.env.VITE_API_URL || 'http://localhost:3000',
         changeOrigin: true,
         secure: false,
+      },
+    },
+  },
+  // Build configuration for production
+  build: {
+    outDir: 'dist',
+    sourcemap: process.env.NODE_ENV === 'production' ? false : true,
+    minify: 'terser',
+    terserOptions: {
+      compress: {
+        drop_console: process.env.NODE_ENV === 'production',
       },
     },
   },

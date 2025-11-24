@@ -339,6 +339,34 @@ npm run dev
 npm run build
 ```
 
+### Railway Deployment (Recommended)
+
+Railway is a modern cloud platform that simplifies deployment and infrastructure management. It's cost-effective and perfect for getting started quickly.
+
+**Quick Start:**
+1. Sign up at [railway.app](https://railway.app)
+2. Connect your GitHub repository
+3. Add PostgreSQL and Redis plugins
+4. Deploy backend and frontend services
+5. Configure environment variables
+
+**Detailed Guide:**
+See [solutions/railway-deployment.md](./solutions/railway-deployment.md) for complete step-by-step instructions, including:
+- Service configuration
+- Environment variables setup
+- Database migrations
+- Custom domains
+- Monitoring and troubleshooting
+- Cost optimization tips
+
+**Key Features:**
+- Automatic HTTPS
+- Managed PostgreSQL and Redis
+- Zero-downtime deployments
+- Built-in monitoring and logs
+- Simple scaling
+- Free tier available
+
 ### Docker Deployment
 ```bash
 # Build images

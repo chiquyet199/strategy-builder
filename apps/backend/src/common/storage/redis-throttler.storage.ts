@@ -1,6 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ThrottlerStorage } from '@nestjs/throttler';
 import Redis from 'ioredis';
+import { getRedisConfig } from '../../config/redis.config';
 
 /**
  * Redis-based throttler storage for distributed rate limiting
@@ -12,21 +13,12 @@ export class RedisThrottlerStorage implements ThrottlerStorage {
   private readonly logger = new Logger(RedisThrottlerStorage.name);
 
   constructor() {
-    // Require password in production
-    const redisPassword = process.env.REDIS_PASSWORD;
-    if (process.env.NODE_ENV === 'production' && !redisPassword) {
-      throw new Error(
-        'REDIS_PASSWORD is required in production. Please set it in your environment variables.',
-      );
-    }
+    const redisConfig = getRedisConfig();
 
-    // Use default password 'redis' for development only
-    const password = redisPassword || 'redis';
-
-    const redisConfig: any = {
-      host: process.env.REDIS_HOST || 'localhost',
-      port: parseInt(process.env.REDIS_PORT || '6379', 10),
-      password,
+    const ioredisConfig: any = {
+      host: redisConfig.host,
+      port: redisConfig.port,
+      password: redisConfig.password,
       retryStrategy: (times) => {
         const delay = Math.min(times * 50, 2000);
         return delay;
@@ -34,7 +26,14 @@ export class RedisThrottlerStorage implements ThrottlerStorage {
       maxRetriesPerRequest: 3,
     };
 
-    this.redis = new Redis(redisConfig);
+    // Add TLS configuration if needed
+    if (redisConfig.tls) {
+      ioredisConfig.tls = {
+        rejectUnauthorized: false,
+      };
+    }
+
+    this.redis = new Redis(ioredisConfig);
 
     this.redis.on('error', (err) => {
       this.logger.error({

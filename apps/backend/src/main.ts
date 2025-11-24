@@ -1,5 +1,9 @@
 import { NestFactory, Reflector } from '@nestjs/core';
-import { ValidationPipe, ClassSerializerInterceptor, Logger } from '@nestjs/common';
+import {
+  ValidationPipe,
+  ClassSerializerInterceptor,
+  Logger,
+} from '@nestjs/common';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
 import { AppModule } from './app.module';
@@ -9,10 +13,10 @@ async function bootstrap() {
   const app = await NestFactory.create(AppModule, {
     bufferLogs: true, // Buffer logs until Winston is ready
   });
-  
+
   // Use Winston logger instead of default NestJS logger
   app.useLogger(app.get(WINSTON_MODULE_NEST_PROVIDER));
-  
+
   const logger = new Logger('Bootstrap');
   const reflector = app.get(Reflector);
 
@@ -64,13 +68,16 @@ async function bootstrap() {
     credentials: true,
   });
 
-  await app.listen(3000);
-  
-  logger.log('🚀 Backend server running on http://localhost:3000');
-  logger.log('📡 API available at http://localhost:3000/api/v1');
-  logger.log('📚 API Documentation at http://localhost:3000/api/docs');
+  const port = process.env.PORT || 3000;
+  await app.listen(port);
+
+  logger.log(`🚀 Backend server running on port ${port}`);
+  logger.log(`📡 API available at http://localhost:${port}/api/v1`);
+  logger.log(`📚 API Documentation at http://localhost:${port}/api/docs`);
   logger.log(`Environment: ${process.env.NODE_ENV || 'development'}`);
-  logger.log(`Log Level: ${process.env.LOG_LEVEL || (process.env.NODE_ENV === 'production' ? 'info' : 'debug')}`);
+  logger.log(
+    `Log Level: ${process.env.LOG_LEVEL || (process.env.NODE_ENV === 'production' ? 'info' : 'debug')}`,
+  );
 
   // Graceful shutdown
   process.on('SIGTERM', async () => {

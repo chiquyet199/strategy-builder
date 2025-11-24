@@ -1,4 +1,7 @@
-const API_BASE_URL = '/api/v1'
+// Use environment variable for API URL in production, relative path in development
+const API_BASE_URL = import.meta.env.VITE_API_URL 
+  ? `${import.meta.env.VITE_API_URL}/api/v1`
+  : '/api/v1'
 
 interface ApiResponse<T> {
   data: T

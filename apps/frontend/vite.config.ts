@@ -34,11 +34,7 @@ export default defineConfig({
   build: {
     outDir: 'dist',
     sourcemap: process.env.NODE_ENV === 'production' ? false : true,
-    minify: 'terser',
-    terserOptions: {
-      compress: {
-        drop_console: process.env.NODE_ENV === 'production',
-      },
-    },
+    // esbuild is the default minifier (faster than terser)
+    // To drop console logs, we'd need terser plugin, but esbuild is sufficient for most cases
   },
 })

@@ -1,6 +1,12 @@
 import type { LoginRequest, RegisterRequest, LoginResponse, RegisterResponse, ProfileResponse } from '@/shared/types/auth'
 
-const API_BASE_URL = '/api/auth'
+const API_BASE_URL = '/api/v1/auth'
+
+interface ApiResponse<T> {
+  data: T
+  message?: string
+  meta?: Record<string, unknown>
+}
 
 export const authApi = {
   async login(credentials: LoginRequest): Promise<LoginResponse> {
@@ -17,7 +23,8 @@ export const authApi = {
       throw new Error(error.message || 'Login failed')
     }
 
-    return response.json()
+    const result: ApiResponse<LoginResponse> = await response.json()
+    return result.data
   },
 
   async register(data: RegisterRequest): Promise<RegisterResponse> {
@@ -34,7 +41,8 @@ export const authApi = {
       throw new Error(error.message || 'Registration failed')
     }
 
-    return response.json()
+    const result: ApiResponse<RegisterResponse> = await response.json()
+    return result.data
   },
 
   async getProfile(): Promise<ProfileResponse> {
@@ -60,7 +68,8 @@ export const authApi = {
       throw new Error(error.message || 'Failed to fetch profile')
     }
 
-    return response.json()
+    const result: ApiResponse<ProfileResponse> = await response.json()
+    return result.data
   },
 }
 

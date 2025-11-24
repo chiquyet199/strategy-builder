@@ -1,8 +1,13 @@
-const API_BASE_URL = '/api'
+const API_BASE_URL = '/api/v1'
+
+interface ApiResponse<T> {
+  data: T
+  message?: string
+  meta?: Record<string, any>
+}
 
 export interface HealthResponse {
   status: string
-  message: string
   timestamp: string
 }
 
@@ -12,7 +17,8 @@ export const api = {
     if (!response.ok) {
       throw new Error('Failed to fetch health status')
     }
-    return response.json()
+    const result: ApiResponse<HealthResponse> = await response.json()
+    return result.data
   },
 
   async getHello(): Promise<string> {
@@ -20,7 +26,8 @@ export const api = {
     if (!response.ok) {
       throw new Error('Failed to fetch hello message')
     }
-    return response.text()
+    const result: ApiResponse<{ message: string }> = await response.json()
+    return result.data.message
   },
 }
 

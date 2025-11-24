@@ -1,9 +1,21 @@
-import { NestFactory } from '@nestjs/core';
-import { ValidationPipe } from '@nestjs/common';
+import { NestFactory, Reflector } from '@nestjs/core';
+import { ValidationPipe, ClassSerializerInterceptor } from '@nestjs/common';
+import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import { AppModule } from './app.module';
+import { TransformInterceptor } from './common/interceptors/transform.interceptor';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
+  const reflector = app.get(Reflector);
+  
+  // Set global prefix with versioning
+  app.setGlobalPrefix('api/v1');
+  
+  // Global interceptors for consistent response format
+  app.useGlobalInterceptors(
+    new TransformInterceptor(),
+    new ClassSerializerInterceptor(reflector),
+  );
   
   // Enable validation pipes
   app.useGlobalPipes(
@@ -11,8 +23,31 @@ async function bootstrap() {
       whitelist: true,
       forbidNonWhitelisted: true,
       transform: true,
+      transformOptions: {
+        enableImplicitConversion: true,
+      },
     }),
   );
+  
+  // Swagger/OpenAPI documentation
+  const config = new DocumentBuilder()
+    .setTitle('Strategy API')
+    .setDescription('Strategy API Documentation')
+    .setVersion('1.0')
+    .addBearerAuth(
+      {
+        type: 'http',
+        scheme: 'bearer',
+        bearerFormat: 'JWT',
+        name: 'JWT',
+        description: 'Enter JWT token',
+        in: 'header',
+      },
+      'JWT-auth',
+    )
+    .build();
+  const document = SwaggerModule.createDocument(app, config);
+  SwaggerModule.setup('api/docs', app, document);
   
   // Enable CORS for frontend connection
   app.enableCors({
@@ -22,5 +57,7 @@ async function bootstrap() {
   
   await app.listen(3000);
   console.log('🚀 Backend server running on http://localhost:3000');
+  console.log('📡 API available at http://localhost:3000/api/v1');
+  console.log('📚 API Documentation at http://localhost:3000/api/docs');
 }
 bootstrap();

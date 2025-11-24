@@ -340,6 +340,361 @@ src/
 - Test error cases and edge conditions
 - Test both public and protected routes
 
+## API Design Best Practices
+
+### RESTful API Principles
+
+#### 1. Resource-Based URLs
+- Use nouns, not verbs in URLs
+- Use plural nouns for collections
+- Use hierarchical structure for nested resources
+- Keep URLs simple and intuitive
+
+**✅ GOOD:**
+```
+GET    /api/users
+GET    /api/users/:id
+POST   /api/users
+PUT    /api/users/:id
+DELETE /api/users/:id
+GET    /api/users/:id/posts
+```
+
+**❌ BAD:**
+```
+GET    /api/getUsers
+POST   /api/createUser
+GET    /api/user/:id/getPosts
+```
+
+#### 2. HTTP Methods
+- **GET** - Retrieve resources (idempotent, safe)
+- **POST** - Create new resources
+- **PUT** - Update entire resource (idempotent)
+- **PATCH** - Partial update (idempotent)
+- **DELETE** - Remove resources (idempotent)
+
+**Rules:**
+- Use appropriate HTTP methods for operations
+- GET requests should never modify data
+- POST for creating, PUT/PATCH for updating
+- DELETE for removal
+
+#### 3. HTTP Status Codes
+Use appropriate status codes consistently:
+
+**Success (2xx):**
+- `200 OK` - Successful GET, PUT, PATCH
+- `201 Created` - Successful POST (resource created)
+- `204 No Content` - Successful DELETE
+
+**Client Error (4xx):**
+- `400 Bad Request` - Invalid request syntax/validation
+- `401 Unauthorized` - Authentication required
+- `403 Forbidden` - Authenticated but not authorized
+- `404 Not Found` - Resource doesn't exist
+- `409 Conflict` - Resource conflict (e.g., duplicate email)
+- `422 Unprocessable Entity` - Validation errors
+
+**Server Error (5xx):**
+- `500 Internal Server Error` - Generic server error
+- `502 Bad Gateway` - Invalid response from upstream
+- `503 Service Unavailable` - Service temporarily unavailable
+
+#### 4. Request/Response Format
+
+**Request Headers:**
+- Always include `Content-Type: application/json`
+- Include `Authorization: Bearer <token>` for protected routes
+- Use appropriate `Accept` headers
+
+**Request Body:**
+- Use JSON format
+- Validate all inputs with DTOs
+- Include only necessary fields
+
+**Response Format:**
+```typescript
+// Success Response
+{
+  "data": { ... },           // Single resource or array
+  "message": "Success",      // Optional message
+  "meta": {                  // Optional metadata
+    "total": 100,
+    "page": 1,
+    "limit": 10
+  }
+}
+
+// Error Response
+{
+  "statusCode": 400,
+  "message": "Validation failed",
+  "error": "Bad Request",
+  "errors": [                // Validation errors
+    {
+      "field": "email",
+      "message": "Email is required"
+    }
+  ]
+}
+```
+
+#### 5. Pagination
+Always paginate list endpoints:
+
+**Query Parameters:**
+- `page` - Page number (default: 1)
+- `limit` - Items per page (default: 10, max: 100)
+- `sort` - Sort field (e.g., `createdAt`)
+- `order` - Sort order (`asc` or `desc`)
+
+**Response:**
+```typescript
+{
+  "data": [...],
+  "meta": {
+    "page": 1,
+    "limit": 10,
+    "total": 100,
+    "totalPages": 10,
+    "hasNext": true,
+    "hasPrev": false
+  }
+}
+```
+
+#### 6. Filtering and Searching
+Use query parameters for filtering:
+
+**✅ GOOD:**
+```
+GET /api/users?status=active&role=admin
+GET /api/users?search=john&sort=name&order=asc
+GET /api/posts?category=tech&tags=javascript,typescript
+```
+
+**❌ BAD:**
+```
+GET /api/users/filter/active/admin
+GET /api/searchUsers?q=john
+```
+
+#### 7. Error Handling
+
+**Consistent Error Response:**
+```typescript
+{
+  "statusCode": 400,
+  "message": "Error message",
+  "error": "Error type",
+  "timestamp": "2024-01-01T00:00:00.000Z",
+  "path": "/api/users"
+}
+```
+
+**Validation Errors:**
+```typescript
+{
+  "statusCode": 422,
+  "message": "Validation failed",
+  "errors": [
+    {
+      "field": "email",
+      "message": "Email must be a valid email address",
+      "value": "invalid-email"
+    }
+  ]
+}
+```
+
+**Rules:**
+- Always return consistent error format
+- Include helpful error messages
+- Don't expose sensitive information (stack traces in production)
+- Use appropriate HTTP status codes
+- Log errors server-side for debugging
+
+#### 8. Versioning
+Use URL versioning for API:
+
+**✅ GOOD:**
+```
+/api/v1/users
+/api/v2/users
+```
+
+**Implementation:**
+```typescript
+@Controller('v1/users')  // Version in controller
+// or
+app.setGlobalPrefix('api/v1')  // Global version prefix
+```
+
+#### 9. Security Best Practices
+
+**Authentication & Authorization:**
+- Use JWT tokens for authentication
+- Implement token refresh mechanism
+- Use HTTPS in production
+- Validate and sanitize all inputs
+- Use rate limiting to prevent abuse
+- Implement CORS properly
+
+**Data Protection:**
+- Never expose sensitive data (passwords, tokens, keys)
+- Hash passwords (bcrypt, argon2)
+- Use parameterized queries to prevent SQL injection
+- Validate file uploads (type, size, content)
+- Sanitize user inputs
+
+**Headers:**
+- Set security headers (CORS, CSP, X-Frame-Options)
+- Use secure cookies if using cookie-based auth
+- Implement CSRF protection
+
+#### 10. DTOs and Validation
+
+**Always use DTOs:**
+```typescript
+// dto/create-user.dto.ts
+import { IsEmail, IsString, MinLength, IsOptional } from 'class-validator'
+
+export class CreateUserDto {
+  @IsEmail()
+  @IsNotEmpty()
+  email: string
+
+  @IsString()
+  @MinLength(6)
+  password: string
+
+  @IsString()
+  @IsOptional()
+  name?: string
+}
+```
+
+**Validation Rules:**
+- Validate all inputs with class-validator
+- Use appropriate decorators (`@IsEmail()`, `@MinLength()`, etc.)
+- Return clear validation error messages
+- Validate nested objects
+- Use custom validators for complex validation
+
+#### 11. API Documentation
+
+**Use Swagger/OpenAPI:**
+```typescript
+import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger'
+
+@ApiTags('users')
+@Controller('users')
+export class UsersController {
+  @ApiOperation({ summary: 'Create a new user' })
+  @ApiResponse({ status: 201, description: 'User created successfully' })
+  @ApiResponse({ status: 400, description: 'Bad request' })
+  @Post()
+  create(@Body() createUserDto: CreateUserDto) {
+    // ...
+  }
+}
+```
+
+**Documentation Requirements:**
+- Document all endpoints
+- Include request/response examples
+- Document error responses
+- Include authentication requirements
+- Document query parameters and filters
+
+#### 12. Performance Optimization
+
+**Caching:**
+- Cache frequently accessed data
+- Use appropriate cache headers
+- Implement cache invalidation
+- Cache at appropriate levels (Redis, in-memory)
+
+**Database:**
+- Use indexes for frequently queried fields
+- Implement pagination for large datasets
+- Use eager/lazy loading appropriately
+- Optimize queries (avoid N+1 problems)
+- Use database connection pooling
+
+**Response Optimization:**
+- Return only necessary fields
+- Use field selection/projection
+- Compress responses (gzip)
+- Implement response caching
+
+#### 13. API Naming Conventions
+
+**Endpoints:**
+- Use lowercase with hyphens: `/api/user-profiles`
+- Be consistent across the API
+- Use clear, descriptive names
+
+**Query Parameters:**
+- Use camelCase: `?sortBy=createdAt&orderBy=desc`
+- Be consistent with naming
+
+**Response Fields:**
+- Use camelCase: `{ "firstName": "John", "createdAt": "..." }`
+- Be consistent across all responses
+
+#### 14. Idempotency
+
+**Make operations idempotent:**
+- GET, PUT, DELETE should be idempotent
+- Use idempotency keys for POST operations when needed
+- Return same result for same input
+
+**Example:**
+```typescript
+// Idempotent PUT
+PUT /api/users/:id
+// Same request multiple times = same result
+
+// Idempotent POST with key
+POST /api/orders
+Headers: { "Idempotency-Key": "unique-key" }
+// Same key = same result, no duplicate creation
+```
+
+#### 15. API Response Time
+
+**Performance Targets:**
+- Simple queries: < 100ms
+- Complex queries: < 500ms
+- Database operations: < 1s
+- File uploads: Depends on size
+
+**Monitoring:**
+- Log response times
+- Set up alerts for slow endpoints
+- Monitor database query performance
+- Track API usage and patterns
+
+### API Design Checklist
+
+Before deploying an API endpoint, ensure:
+- [ ] Uses appropriate HTTP method
+- [ ] Returns correct HTTP status codes
+- [ ] Has proper error handling
+- [ ] Validates all inputs with DTOs
+- [ ] Is protected with authentication/authorization if needed
+- [ ] Has proper documentation (Swagger)
+- [ ] Follows RESTful conventions
+- [ ] Returns consistent response format
+- [ ] Implements pagination for list endpoints
+- [ ] Has proper error messages
+- [ ] Doesn't expose sensitive information
+- [ ] Has unit and integration tests
+- [ ] Is performant (meets response time targets)
+- [ ] Is versioned appropriately
+
 ## File Organization
 
 ### Frontend Structure - MODULE-BASED

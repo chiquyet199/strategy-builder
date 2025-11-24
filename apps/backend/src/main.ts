@@ -1,11 +1,19 @@
 import { NestFactory, Reflector } from '@nestjs/core';
-import { ValidationPipe, ClassSerializerInterceptor } from '@nestjs/common';
+import { ValidationPipe, ClassSerializerInterceptor, Logger } from '@nestjs/common';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
+import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
 import { AppModule } from './app.module';
 import { TransformInterceptor } from './common/interceptors/transform.interceptor';
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
+  const app = await NestFactory.create(AppModule, {
+    bufferLogs: true, // Buffer logs until Winston is ready
+  });
+  
+  // Use Winston logger instead of default NestJS logger
+  app.useLogger(app.get(WINSTON_MODULE_NEST_PROVIDER));
+  
+  const logger = new Logger('Bootstrap');
   const reflector = app.get(Reflector);
 
   // Set global prefix with versioning
@@ -57,19 +65,24 @@ async function bootstrap() {
   });
 
   await app.listen(3000);
-  console.log('🚀 Backend server running on http://localhost:3000');
-  console.log('📡 API available at http://localhost:3000/api/v1');
-  console.log('📚 API Documentation at http://localhost:3000/api/docs');
+  
+  logger.log('🚀 Backend server running on http://localhost:3000');
+  logger.log('📡 API available at http://localhost:3000/api/v1');
+  logger.log('📚 API Documentation at http://localhost:3000/api/docs');
+  logger.log(`Environment: ${process.env.NODE_ENV || 'development'}`);
+  logger.log(`Log Level: ${process.env.LOG_LEVEL || (process.env.NODE_ENV === 'production' ? 'info' : 'debug')}`);
 
   // Graceful shutdown
   process.on('SIGTERM', async () => {
-    console.log('SIGTERM received, shutting down gracefully...');
+    logger.log('SIGTERM received, shutting down gracefully...');
     await app.close();
+    process.exit(0);
   });
 
   process.on('SIGINT', async () => {
-    console.log('SIGINT received, shutting down gracefully...');
+    logger.log('SIGINT received, shutting down gracefully...');
     await app.close();
+    process.exit(0);
   });
 }
 bootstrap();

@@ -3,6 +3,7 @@ import {
   UnauthorizedException,
   ConflictException,
   BadRequestException,
+  Logger,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
@@ -18,6 +19,8 @@ import { EmailService } from '../email/email.service';
 
 @Injectable()
 export class AuthService {
+  private readonly logger = new Logger(AuthService.name);
+
   constructor(
     @InjectRepository(User)
     private readonly userRepository: Repository<User>,
@@ -142,8 +145,13 @@ export class AuthService {
       await this.emailService.sendPasswordResetEmail(user.email, resetToken);
     } catch (error) {
       // Log error but don't reveal to user (security best practice)
-      // In production, you might want to log this to a monitoring service
-      console.error('Failed to send password reset email:', error);
+      this.logger.error({
+        message: 'Failed to send password reset email',
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined,
+        userId: user.id,
+        email: user.email,
+      });
     }
 
     // Always return the same message regardless of whether email was sent

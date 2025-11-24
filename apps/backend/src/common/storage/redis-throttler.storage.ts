@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { ThrottlerStorage } from '@nestjs/throttler';
 import Redis from 'ioredis';
 
@@ -9,6 +9,7 @@ import Redis from 'ioredis';
 @Injectable()
 export class RedisThrottlerStorage implements ThrottlerStorage {
   private redis: Redis;
+  private readonly logger = new Logger(RedisThrottlerStorage.name);
 
   constructor() {
     // Require password in production
@@ -36,20 +37,24 @@ export class RedisThrottlerStorage implements ThrottlerStorage {
     this.redis = new Redis(redisConfig);
 
     this.redis.on('error', (err) => {
-      console.error('Redis connection error:', err.message);
+      this.logger.error({
+        message: 'Redis connection error',
+        error: err.message,
+        stack: err.stack,
+      });
       if (err.message.includes('NOAUTH')) {
-        console.error(
+        this.logger.error(
           'Redis authentication failed. Please check REDIS_PASSWORD environment variable.',
         );
       }
     });
 
     this.redis.on('connect', () => {
-      console.log('✅ Redis connected for rate limiting');
+      this.logger.log('Redis connected for rate limiting');
     });
 
     this.redis.on('ready', () => {
-      console.log('✅ Redis ready for rate limiting');
+      this.logger.log('Redis ready for rate limiting');
     });
   }
 

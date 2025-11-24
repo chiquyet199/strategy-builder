@@ -1,19 +1,23 @@
-import { Module } from '@nestjs/common';
-import { APP_GUARD, Reflector } from '@nestjs/core';
+import { Module, NestModule, MiddlewareConsumer } from '@nestjs/common';
+import { APP_GUARD, APP_INTERCEPTOR, Reflector } from '@nestjs/core';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ThrottlerModule } from '@nestjs/throttler';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { AuthModule } from './modules/auth/auth.module';
 import { EmailModule } from './modules/email/email.module';
+import { LoggerModule } from './common/logger/logger.module';
 import { JwtAuthGuard } from './modules/auth/guards/jwt-auth.guard';
 import { CustomThrottlerGuard } from './common/guards/custom-throttler.guard';
 import { ThrottlerStorageModule } from './common/storage/throttler-storage.module';
 import { RedisThrottlerStorage } from './common/storage/redis-throttler.storage';
+import { CorrelationIdMiddleware } from './common/middleware/correlation-id.middleware';
+import { LoggingInterceptor } from './common/interceptors/logging.interceptor';
 import { User } from './modules/auth/entities/user.entity';
 
 @Module({
   imports: [
+    LoggerModule,
     TypeOrmModule.forRoot({
       type: 'postgres',
       host: process.env.DB_HOST || 'localhost',
@@ -65,6 +69,14 @@ import { User } from './modules/auth/entities/user.entity';
       provide: APP_GUARD,
       useClass: CustomThrottlerGuard,
     },
+    {
+      provide: APP_INTERCEPTOR,
+      useClass: LoggingInterceptor,
+    },
   ],
 })
-export class AppModule {}
+export class AppModule implements NestModule {
+  configure(consumer: MiddlewareConsumer) {
+    consumer.apply(CorrelationIdMiddleware).forRoutes('*');
+  }
+}

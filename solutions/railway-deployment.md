@@ -19,7 +19,14 @@ The deployment consists of:
 
 1. **Railway Account**: Sign up at [railway.app](https://railway.app)
 2. **GitHub Repository**: Code should be in a GitHub repository
-3. **Railway CLI** (optional): For advanced operations
+3. **Lock Files Committed**: Ensure all `package-lock.json` files are committed and in sync with `package.json` files
+   ```bash
+   # Update lock files if needed
+   npm install
+   git add package-lock.json apps/*/package-lock.json
+   git commit -m "Update package-lock.json files"
+   ```
+4. **Railway CLI** (optional): For advanced operations
    ```bash
    npm install -g @railway/cli
    railway login
@@ -64,9 +71,11 @@ The deployment consists of:
 3. Configure the service:
    - **Name**: `backend` (or `strategy-backend`)
    - **Root Directory**: `apps/backend`
-   - **Build Command**: `npm run build`
+   - **Build Command**: Leave empty (Railway will auto-detect) OR `npm install && npm run build`
    - **Start Command**: `npm run start:prod`
    - **Health Check Path**: `/api/v1/health`
+
+**Important**: Make sure all `package-lock.json` files are committed to your repository before deploying. Railway uses `npm ci` which requires lock files to be in sync with `package.json`.
 
 4. **Link Services**:
    - Click on the backend service
@@ -96,9 +105,11 @@ The deployment consists of:
 3. Configure the service:
    - **Name**: `frontend` (or `strategy-frontend`)
    - **Root Directory**: `apps/frontend`
-   - **Build Command**: `npm run build`
+   - **Build Command**: Leave empty (Railway will auto-detect) OR `npm install && npm run build`
    - **Start Command**: `npx serve -s dist -l $PORT`
    - **Health Check Path**: `/`
+
+**Important**: Make sure all `package-lock.json` files are committed to your repository before deploying. Railway uses `npm ci` which requires lock files to be in sync with `package.json`.
 
 4. **Set Environment Variables** (Build-time):
    ```
@@ -271,6 +282,29 @@ Access via service dashboard → "Metrics" tab.
    - Scale down when not in use
 
 ## Troubleshooting
+
+### npm ci Error (Package Lock Out of Sync)
+
+**Error**: `npm ci can only install packages when your package.json and package-lock.json are in sync`
+
+**Solution**:
+1. Update lock files locally:
+   ```bash
+   npm install
+   ```
+2. Commit the updated lock files:
+   ```bash
+   git add package-lock.json apps/*/package-lock.json
+   git commit -m "Update package-lock.json files"
+   git push
+   ```
+3. Redeploy on Railway
+
+**Alternative**: If you can't update lock files immediately, you can temporarily change the build command in Railway to:
+```bash
+npm install && npm run build
+```
+But this is not recommended for production as it's slower and less deterministic.
 
 ### Backend Won't Start
 

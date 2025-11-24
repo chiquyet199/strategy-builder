@@ -3,12 +3,13 @@ FROM node:20-alpine AS builder
 
 WORKDIR /app
 
-# Copy root package files
+# Copy root package files and lock files
 COPY package*.json ./
 COPY apps/frontend/package*.json ./apps/frontend/
 
 # Install dependencies
-RUN npm ci --workspace=apps/frontend
+# Use npm install if npm ci fails (for Railway compatibility)
+RUN npm ci --workspace=apps/frontend || npm install --workspace=apps/frontend
 
 # Copy frontend source
 COPY apps/frontend ./apps/frontend

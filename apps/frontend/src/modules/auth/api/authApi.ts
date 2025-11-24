@@ -1,4 +1,14 @@
-import type { LoginRequest, RegisterRequest, LoginResponse, RegisterResponse, ProfileResponse } from '@/shared/types/auth'
+import type {
+  LoginRequest,
+  RegisterRequest,
+  LoginResponse,
+  RegisterResponse,
+  ProfileResponse,
+  ForgotPasswordRequest,
+  ForgotPasswordResponse,
+  ResetPasswordRequest,
+  ResetPasswordResponse,
+} from '@/shared/types/auth'
 
 const API_BASE_URL = '/api/v1/auth'
 
@@ -69,6 +79,42 @@ export const authApi = {
     }
 
     const result: ApiResponse<ProfileResponse> = await response.json()
+    return result.data
+  },
+
+  async forgotPassword(data: ForgotPasswordRequest): Promise<ForgotPasswordResponse> {
+    const response = await fetch(`${API_BASE_URL}/forgot-password`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(data),
+    })
+
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({ message: 'Failed to send reset email' }))
+      throw new Error(error.message || 'Failed to send reset email')
+    }
+
+    const result: ApiResponse<ForgotPasswordResponse> = await response.json()
+    return result.data
+  },
+
+  async resetPassword(data: ResetPasswordRequest): Promise<ResetPasswordResponse> {
+    const response = await fetch(`${API_BASE_URL}/reset-password`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(data),
+    })
+
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({ message: 'Failed to reset password' }))
+      throw new Error(error.message || 'Failed to reset password')
+    }
+
+    const result: ApiResponse<ResetPasswordResponse> = await response.json()
     return result.data
   },
 }

@@ -14,9 +14,12 @@ import {
   ApiResponse,
   ApiBearerAuth,
 } from '@nestjs/swagger';
+import { Throttle } from '@nestjs/throttler';
 import { AuthService } from './auth.service';
 import { LoginDto } from './dto/login.dto';
 import { RegisterDto } from './dto/register.dto';
+import { ForgotPasswordDto } from './dto/forgot-password.dto';
+import { ResetPasswordDto } from './dto/reset-password.dto';
 import { Public } from './guards/public.decorator';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
 
@@ -91,6 +94,61 @@ export class AuthController {
     return {
       data: result,
       message: 'Login successful',
+    };
+  }
+
+  @Public()
+  @Throttle({ default: { limit: 5, ttl: 60000 } }) // 5 requests per minute
+  @Post('forgot-password')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Request password reset' })
+  @ApiResponse({
+    status: 200,
+    description: 'Password reset email sent (if email exists)',
+    schema: {
+      example: {
+        data: {
+          message: 'If the email exists, a password reset link has been sent',
+        },
+        message: 'Password reset request processed',
+      },
+    },
+  })
+  @ApiResponse({ status: 400, description: 'Bad request - validation failed' })
+  @ApiResponse({
+    status: 429,
+    description: 'Too many requests - rate limit exceeded',
+  })
+  async forgotPassword(@Body() forgotPasswordDto: ForgotPasswordDto) {
+    const result = await this.authService.forgotPassword(forgotPasswordDto);
+    return {
+      data: result,
+      message: 'Password reset request processed',
+    };
+  }
+
+  @Public()
+  @Post('reset-password')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Reset password with token' })
+  @ApiResponse({
+    status: 200,
+    description: 'Password reset successfully',
+    schema: {
+      example: {
+        data: {
+          message: 'Password has been reset successfully',
+        },
+        message: 'Password reset successful',
+      },
+    },
+  })
+  @ApiResponse({ status: 400, description: 'Bad request - invalid or expired token' })
+  async resetPassword(@Body() resetPasswordDto: ResetPasswordDto) {
+    const result = await this.authService.resetPassword(resetPasswordDto);
+    return {
+      data: result,
+      message: 'Password reset successful',
     };
   }
 

@@ -2,14 +2,19 @@ import {
   Injectable,
   UnauthorizedException,
   ConflictException,
+  BadRequestException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
+import * as crypto from 'crypto';
 import { LoginDto } from './dto/login.dto';
 import { RegisterDto } from './dto/register.dto';
+import { ForgotPasswordDto } from './dto/forgot-password.dto';
+import { ResetPasswordDto } from './dto/reset-password.dto';
 import { User } from './entities/user.entity';
+import { EmailService } from '../email/email.service';
 
 @Injectable()
 export class AuthService {
@@ -17,6 +22,7 @@ export class AuthService {
     @InjectRepository(User)
     private readonly userRepository: Repository<User>,
     private jwtService: JwtService,
+    private emailService: EmailService,
   ) {}
 
   async register(registerDto: RegisterDto) {
@@ -100,6 +106,82 @@ export class AuthService {
       name: user.name,
       createdAt: user.createdAt.toISOString(),
       updatedAt: user.updatedAt.toISOString(),
+    };
+  }
+
+  async forgotPassword(forgotPasswordDto: ForgotPasswordDto) {
+    const user = await this.userRepository.findOne({
+      where: { email: forgotPasswordDto.email },
+    });
+
+    // Don't reveal if user exists or not (security best practice)
+    if (!user) {
+      // Return success even if user doesn't exist to prevent email enumeration
+      return {
+        message: 'If the email exists, a password reset link has been sent',
+      };
+    }
+
+    // Generate reset token
+    const resetToken = crypto.randomBytes(32).toString('hex');
+    const resetTokenExpiry = new Date();
+    resetTokenExpiry.setHours(resetTokenExpiry.getHours() + 1); // Token valid for 1 hour
+
+    // Hash the token before storing
+    const hashedToken = crypto
+      .createHash('sha256')
+      .update(resetToken)
+      .digest('hex');
+
+    user.resetPasswordToken = hashedToken;
+    user.resetPasswordExpires = resetTokenExpiry;
+    await this.userRepository.save(user);
+
+    // Send email with reset link (never return token in response for security)
+    try {
+      await this.emailService.sendPasswordResetEmail(user.email, resetToken);
+    } catch (error) {
+      // Log error but don't reveal to user (security best practice)
+      // In production, you might want to log this to a monitoring service
+      console.error('Failed to send password reset email:', error);
+    }
+
+    // Always return the same message regardless of whether email was sent
+    // This prevents information leakage
+    return {
+      message: 'If the email exists, a password reset link has been sent',
+    };
+  }
+
+  async resetPassword(resetPasswordDto: ResetPasswordDto) {
+    // Hash the provided token to compare with stored hash
+    const hashedToken = crypto
+      .createHash('sha256')
+      .update(resetPasswordDto.token)
+      .digest('hex');
+
+    const user = await this.userRepository.findOne({
+      where: { resetPasswordToken: hashedToken },
+    });
+
+    if (!user) {
+      throw new BadRequestException('Invalid or expired reset token');
+    }
+
+    // Check if token has expired
+    if (!user.resetPasswordExpires || user.resetPasswordExpires < new Date()) {
+      throw new BadRequestException('Reset token has expired');
+    }
+
+    // Update password
+    const hashedPassword = await bcrypt.hash(resetPasswordDto.newPassword, 10);
+    user.password = hashedPassword;
+    user.resetPasswordToken = null;
+    user.resetPasswordExpires = null;
+    await this.userRepository.save(user);
+
+    return {
+      message: 'Password has been reset successfully',
     };
   }
 }

@@ -26,11 +26,18 @@ const handleSuccess = () => {
         <h2 class="text-center text-2xl font-bold mb-0">Sign in to your account</h2>
       </template>
       <LoginForm @success="handleSuccess" />
-      <div class="text-center mt-4">
-        <span class="text-gray-600">Don't have an account? </span>
-        <RouterLink to="/register" class="text-blue-500 hover:text-blue-600">
-          Register here
-        </RouterLink>
+      <div class="text-center mt-4 space-y-2">
+        <div>
+          <RouterLink to="/forgot-password" class="text-blue-500 hover:text-blue-600">
+            Forgot your password?
+          </RouterLink>
+        </div>
+        <div>
+          <span class="text-gray-600">Don't have an account? </span>
+          <RouterLink to="/register" class="text-blue-500 hover:text-blue-600">
+            Register here
+          </RouterLink>
+        </div>
       </div>
     </a-card>
   </div>

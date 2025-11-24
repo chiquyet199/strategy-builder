@@ -1,9 +1,11 @@
 import { Module } from '@nestjs/common';
 import { APP_GUARD } from '@nestjs/core';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { AuthModule } from './modules/auth/auth.module';
+import { EmailModule } from './modules/email/email.module';
 import { JwtAuthGuard } from './modules/auth/guards/jwt-auth.guard';
 import { User } from './modules/auth/entities/user.entity';
 
@@ -20,6 +22,13 @@ import { User } from './modules/auth/entities/user.entity';
       synchronize: process.env.NODE_ENV !== 'production', // Auto-sync schema in dev, use migrations in prod
       logging: process.env.NODE_ENV === 'development',
     }),
+    ThrottlerModule.forRoot([
+      {
+        ttl: 60000, // 1 minute
+        limit: 10, // 10 requests per minute (default)
+      },
+    ]),
+    EmailModule,
     AuthModule,
   ],
   controllers: [AppController],
@@ -28,6 +37,10 @@ import { User } from './modules/auth/entities/user.entity';
     {
       provide: APP_GUARD,
       useClass: JwtAuthGuard,
+    },
+    {
+      provide: APP_GUARD,
+      useClass: ThrottlerGuard,
     },
   ],
 })

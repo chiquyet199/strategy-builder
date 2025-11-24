@@ -1,6 +1,11 @@
 import { authApi } from '../api/authApi'
 import { useAuthStore } from '../stores/authStore'
-import type { LoginRequest, RegisterRequest } from '@/shared/types/auth'
+import type {
+  LoginRequest,
+  RegisterRequest,
+  ForgotPasswordRequest,
+  ResetPasswordRequest,
+} from '@/shared/types/auth'
 
 class AuthService {
   private store = useAuthStore()
@@ -67,6 +72,38 @@ class AuthService {
     this.store.setToken(null)
     this.store.setUser(null)
     this.store.setError(null)
+  }
+
+  async forgotPassword(data: ForgotPasswordRequest): Promise<void> {
+    this.store.setLoading(true)
+    this.store.setError(null)
+
+    try {
+      await authApi.forgotPassword(data)
+      // Token is sent via email, never returned in response for security
+    } catch (err) {
+      const errorMessage =
+        err instanceof Error ? err.message : 'Failed to send reset email'
+      this.store.setError(errorMessage)
+      throw err
+    } finally {
+      this.store.setLoading(false)
+    }
+  }
+
+  async resetPassword(data: ResetPasswordRequest): Promise<void> {
+    this.store.setLoading(true)
+    this.store.setError(null)
+
+    try {
+      await authApi.resetPassword(data)
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Failed to reset password'
+      this.store.setError(errorMessage)
+      throw err
+    } finally {
+      this.store.setLoading(false)
+    }
   }
 }
 

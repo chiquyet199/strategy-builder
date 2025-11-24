@@ -1,0 +1,20 @@
+FROM node:20-alpine
+
+WORKDIR /app
+
+# Copy package files
+COPY package*.json ./
+COPY apps/backend/package*.json ./apps/backend/
+
+# Install dependencies
+RUN npm ci --workspace=apps/backend
+
+# Copy backend source
+COPY apps/backend ./apps/backend
+
+WORKDIR /app/apps/backend
+
+EXPOSE 3000
+
+CMD ["npm", "run", "start:dev"]
+

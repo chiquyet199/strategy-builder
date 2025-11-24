@@ -1,0 +1,12 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+resources:
+  - backend/deployment.yaml
+  - frontend/deployment.yaml
+  - ingress.yaml
+
+commonLabels:
+  app: strategy
+  version: v1
+

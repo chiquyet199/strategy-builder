@@ -1,0 +1,38 @@
+{
+  "name": "strategy",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Full-stack monorepo with NestJS backend and Vue 3 frontend",
+  "workspaces": [
+    "apps/*"
+  ],
+  "scripts": {
+    "dev": "concurrently \"npm run dev:backend\" \"npm run dev:frontend\"",
+    "dev:backend": "npm run start:dev --workspace=apps/backend",
+    "dev:frontend": "npm run dev --workspace=apps/frontend",
+    "build": "npm run build --workspaces --if-present",
+    "build:backend": "npm run build --workspace=apps/backend",
+    "build:frontend": "npm run build --workspace=apps/frontend",
+    "test": "npm run test --workspaces --if-present",
+    "test:backend": "npm run test --workspace=apps/backend",
+    "test:frontend": "npm run test:unit --workspace=apps/frontend",
+    "lint": "npm run lint --workspaces --if-present",
+    "lint:backend": "npm run lint --workspace=apps/backend",
+    "lint:frontend": "npm run lint --workspace=apps/frontend",
+    "format": "npm run format --workspaces --if-present",
+    "format:backend": "npm run format --workspace=apps/backend",
+    "format:frontend": "npm run format --workspace=apps/frontend",
+    "docker:up": "docker-compose up -d",
+    "docker:down": "docker-compose down",
+    "docker:build": "docker-compose build",
+    "docker:logs": "docker-compose logs -f"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  },
+  "engines": {
+    "node": "^20.19.0 || >=22.12.0",
+    "npm": ">=9.0.0"
+  }
+}
+

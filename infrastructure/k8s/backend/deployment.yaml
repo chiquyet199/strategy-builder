@@ -1,0 +1,64 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: strategy-backend
+  labels:
+    app: strategy-backend
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: strategy-backend
+  template:
+    metadata:
+      labels:
+        app: strategy-backend
+    spec:
+      containers:
+      - name: backend
+        image: strategy-backend:latest
+        imagePullPolicy: IfNotPresent
+        ports:
+        - containerPort: 3000
+          name: http
+        env:
+        - name: NODE_ENV
+          value: "production"
+        - name: PORT
+          value: "3000"
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "250m"
+          limits:
+            memory: "512Mi"
+            cpu: "500m"
+        livenessProbe:
+          httpGet:
+            path: /api/health
+            port: 3000
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /api/health
+            port: 3000
+          initialDelaySeconds: 5
+          periodSeconds: 5
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: strategy-backend-service
+  labels:
+    app: strategy-backend
+spec:
+  type: ClusterIP
+  selector:
+    app: strategy-backend
+  ports:
+  - port: 3000
+    targetPort: 3000
+    protocol: TCP
+    name: http
+

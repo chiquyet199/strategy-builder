@@ -64,3 +64,19 @@ Thumbs.db
 *.temp
 .cache/
 
+# Monorepo
+.pnpm-store/
+.turbo/
+
+# Docker
+*.log
+.docker/
+
+# Kubernetes
+*.kubeconfig
+
+# Infrastructure
+*.tfstate
+*.tfstate.*
+.terraform/
+

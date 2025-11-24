@@ -50,8 +50,9 @@ async function bootstrap() {
   SwaggerModule.setup('api/docs', app, document);
 
   // Enable CORS for frontend connection
+  const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
   app.enableCors({
-    origin: 'http://localhost:5173', // Vite default port
+    origin: frontendUrl,
     credentials: true,
   });
 
@@ -59,5 +60,16 @@ async function bootstrap() {
   console.log('🚀 Backend server running on http://localhost:3000');
   console.log('📡 API available at http://localhost:3000/api/v1');
   console.log('📚 API Documentation at http://localhost:3000/api/docs');
+
+  // Graceful shutdown
+  process.on('SIGTERM', async () => {
+    console.log('SIGTERM received, shutting down gracefully...');
+    await app.close();
+  });
+
+  process.on('SIGINT', async () => {
+    console.log('SIGINT received, shutting down gracefully...');
+    await app.close();
+  });
 }
 bootstrap();

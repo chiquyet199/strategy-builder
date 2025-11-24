@@ -13,7 +13,15 @@ import { User } from './entities/user.entity';
     TypeOrmModule.forFeature([User]),
     PassportModule,
     JwtModule.register({
-      secret: process.env.JWT_SECRET || 'your-secret-key-change-in-production',
+      secret: (() => {
+        const secret = process.env.JWT_SECRET;
+        if (process.env.NODE_ENV === 'production' && !secret) {
+          throw new Error(
+            'JWT_SECRET is required in production. Please set it in your environment variables.',
+          );
+        }
+        return secret || 'your-secret-key-change-in-production';
+      })(),
       signOptions: { expiresIn: '24h' },
     }),
     EmailModule,

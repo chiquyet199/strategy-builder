@@ -29,6 +29,7 @@ export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
   @Public()
+  @Throttle({ long: { limit: 3, ttl: 3600000 } }) // 3 requests per hour
   @Post('register')
   @HttpCode(HttpStatus.CREATED)
   @ApiOperation({ summary: 'Register a new user' })
@@ -53,6 +54,10 @@ export class AuthController {
   })
   @ApiResponse({ status: 400, description: 'Bad request - validation failed' })
   @ApiResponse({ status: 409, description: 'Conflict - user already exists' })
+  @ApiResponse({
+    status: 429,
+    description: 'Too many requests - rate limit exceeded',
+  })
   async register(@Body() registerDto: RegisterDto) {
     const result = await this.authService.register(registerDto);
     return {
@@ -62,6 +67,7 @@ export class AuthController {
   }
 
   @Public()
+  @Throttle({ short: { limit: 5, ttl: 60000 } }) // 5 requests per minute
   @Post('login')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Login user' })
@@ -89,6 +95,10 @@ export class AuthController {
     status: 401,
     description: 'Unauthorized - invalid credentials',
   })
+  @ApiResponse({
+    status: 429,
+    description: 'Too many requests - rate limit exceeded',
+  })
   async login(@Body() loginDto: LoginDto) {
     const result = await this.authService.login(loginDto);
     return {
@@ -98,7 +108,7 @@ export class AuthController {
   }
 
   @Public()
-  @Throttle({ default: { limit: 5, ttl: 60000 } }) // 5 requests per minute
+  @Throttle({ long: { limit: 3, ttl: 3600000 } }) // 3 requests per hour
   @Post('forgot-password')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Request password reset' })
@@ -128,6 +138,7 @@ export class AuthController {
   }
 
   @Public()
+  @Throttle({ medium: { limit: 5, ttl: 300000 } }) // 5 requests per 5 minutes
   @Post('reset-password')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Reset password with token' })
@@ -143,7 +154,14 @@ export class AuthController {
       },
     },
   })
-  @ApiResponse({ status: 400, description: 'Bad request - invalid or expired token' })
+  @ApiResponse({
+    status: 400,
+    description: 'Bad request - invalid or expired token',
+  })
+  @ApiResponse({
+    status: 429,
+    description: 'Too many requests - rate limit exceeded',
+  })
   async resetPassword(@Body() resetPasswordDto: ResetPasswordDto) {
     const result = await this.authService.resetPassword(resetPasswordDto);
     return {

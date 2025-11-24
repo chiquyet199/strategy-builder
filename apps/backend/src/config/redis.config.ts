@@ -1,7 +1,7 @@
 /**
  * Redis Configuration Utility
- * Parses REDIS_URL (Railway format) or uses individual connection parameters
- * Supports both connection string and individual environment variables
+ * Parses REDIS_URL connection string or uses individual connection parameters
+ * Supports both connection string (common in cloud platforms) and individual environment variables
  */
 
 export interface RedisConfig {
@@ -36,7 +36,7 @@ function parseRedisUrl(url: string): RedisConfig {
  * Priority: REDIS_URL > individual environment variables
  */
 export function getRedisConfig(): RedisConfig {
-  // Check if REDIS_URL is provided (Railway, Heroku, etc.)
+  // Check if REDIS_URL is provided (common in cloud platforms like Heroku, Render, etc.)
   if (process.env.REDIS_URL) {
     return parseRedisUrl(process.env.REDIS_URL);
   }

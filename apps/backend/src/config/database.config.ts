@@ -1,7 +1,7 @@
 /**
  * Database Configuration Utility
- * Parses DATABASE_URL (Railway format) or uses individual connection parameters
- * Supports both connection string and individual environment variables
+ * Parses DATABASE_URL connection string or uses individual connection parameters
+ * Supports both connection string (common in cloud platforms) and individual environment variables
  */
 
 export interface DatabaseConfig {
@@ -45,7 +45,7 @@ function parseDatabaseUrl(url: string): DatabaseConfig {
  * Priority: DATABASE_URL > individual environment variables
  */
 export function getDatabaseConfig(): DatabaseConfig {
-  // Check if DATABASE_URL is provided (Railway, Heroku, etc.)
+  // Check if DATABASE_URL is provided (common in cloud platforms like Heroku, Render, etc.)
   if (process.env.DATABASE_URL) {
     return parseDatabaseUrl(process.env.DATABASE_URL);
   }

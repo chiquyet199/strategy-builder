@@ -8,7 +8,7 @@ COPY package*.json ./
 COPY apps/frontend/package*.json ./apps/frontend/
 
 # Install dependencies
-# Use npm install if npm ci fails (for Railway compatibility)
+# Use npm install if npm ci fails (fallback for lock file sync issues)
 RUN npm ci --workspace=apps/frontend || npm install --workspace=apps/frontend
 
 # Copy frontend source
@@ -33,7 +33,7 @@ RUN npm install -g serve
 # Copy built files from builder stage
 COPY --from=builder /app/apps/frontend/dist ./dist
 
-# Expose port (Railway will provide PORT env var)
+# Expose port (PORT env var will be provided by deployment platform)
 EXPOSE 3000
 
 # Health check
@@ -41,7 +41,7 @@ HEALTHCHECK --interval=30s --timeout=3s --start-period=10s --retries=3 \
   CMD wget --no-verbose --tries=1 --spider http://localhost:${PORT:-3000} || exit 1
 
 # Start server (serve static files)
-# Railway provides PORT environment variable
+# PORT environment variable will be provided by deployment platform
 # Use sh -c to properly expand PORT variable
 CMD ["sh", "-c", "serve -s dist -l tcp://0.0.0.0:${PORT:-3000}"]
 

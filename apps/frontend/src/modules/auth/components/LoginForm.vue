@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref } from 'vue'
+import { useForm } from 'ant-design-vue/es/form'
 import { useAuthStore } from '../stores/authStore'
 import { authService } from '../services/authService'
 import type { LoginRequest } from '@/shared/types/auth'
@@ -10,33 +11,53 @@ const emit = defineEmits<{
 
 const authStore = useAuthStore()
 
-const email = ref('')
-const password = ref('')
+const formState = ref({
+  email: '',
+  password: '',
+})
+
 const localError = ref<string | null>(null)
+
+const rules = {
+  email: [
+    { required: true, message: 'Please enter your email', trigger: 'blur' },
+    { type: 'email', message: 'Please enter a valid email', trigger: 'blur' },
+  ],
+  password: [
+    { required: true, message: 'Please enter your password', trigger: 'blur' },
+  ],
+}
+
+const { validate, validateInfos } = useForm(formState, {
+  rules,
+  validateTrigger: ['blur', 'change'],
+})
 
 const handleSubmit = async () => {
   localError.value = null
   
-  if (!email.value || !password.value) {
-    localError.value = 'Please fill in all fields'
-    return
-  }
-
   try {
+    await validate()
+    
     const credentials: LoginRequest = {
-      email: email.value,
-      password: password.value,
+      email: formState.value.email,
+      password: formState.value.password,
     }
+    
     await authService.login(credentials)
     emit('success')
   } catch (error) {
+    if (error && typeof error === 'object' && 'errorFields' in error) {
+      // Validation errors are handled by form
+      return
+    }
     localError.value = error instanceof Error ? error.message : 'Login failed'
   }
 }
 </script>
 
 <template>
-  <a-form @submit.prevent="handleSubmit" layout="vertical">
+  <a-form layout="vertical" @submit.prevent="handleSubmit">
     <a-alert
       v-if="localError || authStore.error"
       :message="localError || authStore.error"
@@ -46,18 +67,18 @@ const handleSubmit = async () => {
       class="mb-4"
     />
 
-    <a-form-item label="Email" name="email" :rules="[{ required: true, type: 'email', message: 'Please enter a valid email' }]">
+    <a-form-item label="Email" v-bind="validateInfos.email">
       <a-input
-        v-model:value="email"
+        v-model:value="formState.email"
         type="email"
         placeholder="Enter your email"
         size="large"
       />
     </a-form-item>
 
-    <a-form-item label="Password" name="password" :rules="[{ required: true, message: 'Please enter your password' }]">
+    <a-form-item label="Password" v-bind="validateInfos.password">
       <a-input-password
-        v-model:value="password"
+        v-model:value="formState.password"
         placeholder="Enter your password"
         size="large"
       />

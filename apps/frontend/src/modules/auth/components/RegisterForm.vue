@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref } from 'vue'
+import { useForm } from 'ant-design-vue/es/form'
 import { useAuthStore } from '../stores/authStore'
 import { authService } from '../services/authService'
 import type { RegisterRequest } from '@/shared/types/auth'
@@ -10,56 +11,72 @@ const emit = defineEmits<{
 
 const authStore = useAuthStore()
 
-const name = ref('')
-const email = ref('')
-const password = ref('')
-const confirmPassword = ref('')
+const formState = ref({
+  name: '',
+  email: '',
+  password: '',
+  confirmPassword: '',
+})
+
 const localError = ref<string | null>(null)
 
-const validatePasswordMatch = (_rule: any, value: string) => {
+const validatePasswordMatch = async (_rule: unknown, value: string) => {
   if (!value) {
     return Promise.reject('Please confirm your password')
   }
-  if (value !== password.value) {
+  if (value !== formState.value.password) {
     return Promise.reject('Passwords do not match')
   }
   return Promise.resolve()
 }
 
+const rules = {
+  name: [{ required: true, message: 'Please enter your name', trigger: 'blur' }],
+  email: [
+    { required: true, message: 'Please enter your email', trigger: 'blur' },
+    { type: 'email', message: 'Please enter a valid email', trigger: 'blur' },
+  ],
+  password: [
+    { required: true, message: 'Please enter your password', trigger: 'blur' },
+    { min: 6, message: 'Password must be at least 6 characters', trigger: 'blur' },
+  ],
+  confirmPassword: [
+    { required: true, message: 'Please confirm your password', trigger: 'blur' },
+    { validator: validatePasswordMatch, trigger: 'blur' },
+  ],
+}
+
+const { validate, validateInfos } = useForm(formState, {
+  rules,
+  validateTrigger: ['blur', 'change'],
+})
+
 const handleSubmit = async () => {
   localError.value = null
   
-  if (!name.value || !email.value || !password.value || !confirmPassword.value) {
-    localError.value = 'Please fill in all fields'
-    return
-  }
-
-  if (password.value !== confirmPassword.value) {
-    localError.value = 'Passwords do not match'
-    return
-  }
-
-  if (password.value.length < 6) {
-    localError.value = 'Password must be at least 6 characters'
-    return
-  }
-
   try {
+    await validate()
+    
     const data: RegisterRequest = {
-      name: name.value,
-      email: email.value,
-      password: password.value,
+      name: formState.value.name,
+      email: formState.value.email,
+      password: formState.value.password,
     }
+    
     await authService.register(data)
     emit('success')
   } catch (error) {
+    if (error && typeof error === 'object' && 'errorFields' in error) {
+      // Validation errors are handled by form
+      return
+    }
     localError.value = error instanceof Error ? error.message : 'Registration failed'
   }
 }
 </script>
 
 <template>
-  <a-form @submit.prevent="handleSubmit" layout="vertical">
+  <a-form layout="vertical" @submit.prevent="handleSubmit">
     <a-alert
       v-if="localError || authStore.error"
       :message="localError || authStore.error"
@@ -69,38 +86,35 @@ const handleSubmit = async () => {
       class="mb-4"
     />
 
-    <a-form-item label="Name" name="name" :rules="[{ required: true, message: 'Please enter your name' }]">
+    <a-form-item label="Name" v-bind="validateInfos.name">
       <a-input
-        v-model:value="name"
+        v-model:value="formState.name"
         type="text"
         placeholder="Enter your name"
         size="large"
       />
     </a-form-item>
 
-    <a-form-item label="Email" name="email" :rules="[{ required: true, type: 'email', message: 'Please enter a valid email' }]">
+    <a-form-item label="Email" v-bind="validateInfos.email">
       <a-input
-        v-model:value="email"
+        v-model:value="formState.email"
         type="email"
         placeholder="Enter your email"
         size="large"
       />
     </a-form-item>
 
-    <a-form-item label="Password" name="password" :rules="[{ required: true, min: 6, message: 'Password must be at least 6 characters' }]">
+    <a-form-item label="Password" v-bind="validateInfos.password">
       <a-input-password
-        v-model:value="password"
+        v-model:value="formState.password"
         placeholder="Enter your password"
         size="large"
       />
     </a-form-item>
 
-    <a-form-item label="Confirm Password" name="confirmPassword" :rules="[
-      { required: true, message: 'Please confirm your password' },
-      { validator: validatePasswordMatch }
-    ]">
+    <a-form-item label="Confirm Password" v-bind="validateInfos.confirmPassword">
       <a-input-password
-        v-model:value="confirmPassword"
+        v-model:value="formState.confirmPassword"
         placeholder="Confirm your password"
         size="large"
       />

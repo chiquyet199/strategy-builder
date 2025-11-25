@@ -95,26 +95,68 @@ ssh root@YOUR_VPS_IP
 
 ### Step 3: Run the Setup Script
 
-We've created an automated setup script that installs everything you need:
+We've created an automated setup script that installs everything you need. Since you're learning, we'll use the manual copy method so you can see what the script does.
+
+#### Method 1: Manual Copy (Recommended for Learning)
+
+1. **On your local machine**, view the script content:
+   ```bash
+   cat infrastructure/scripts/setup-vps.sh
+   ```
+
+2. **On your VPS**, create the script file:
+   ```bash
+   nano setup-vps.sh
+   ```
+
+3. **Copy and paste** the entire script content into Nano:
+   - On macOS: Use `Command + V` to paste
+   - Or right-click and select "Paste" in your terminal
+
+4. **Save and exit** Nano:
+   - Press `Control + X` (not Command!)
+   - Press `Y` to confirm saving
+   - Press `Enter` to confirm the filename
+
+5. **Make the script executable**:
+   ```bash
+   chmod +x setup-vps.sh
+   ```
+   (This gives the file permission to run as a program)
+
+6. **Run the script**:
+   ```bash
+   ./setup-vps.sh
+   ```
+
+**What the script does:**
+- Updates system packages (gets latest security patches)
+- Installs essential tools (curl, git, etc.)
+- Installs Docker (for running containers)
+- Installs Docker Compose (for managing multiple containers)
+- Configures firewall (UFW) - allows only necessary ports
+- Installs Certbot for SSL certificates
+- Creates application directory at `/opt/strategy`
+
+**Note:** The script has detailed comments explaining each line - read through it to understand what's happening!
+
+#### Method 2: Copy via SCP (Alternative)
+
+If you prefer, you can copy the file directly from your local machine:
 
 ```bash
-# Download and run the setup script
-curl -fsSL https://raw.githubusercontent.com/YOUR_USERNAME/YOUR_REPO/main/infrastructure/scripts/setup-vps.sh | bash
+# From your local machine (in the project directory)
+scp -i ~/.ssh/id_rsa infrastructure/scripts/setup-vps.sh root@YOUR_VPS_IP:/root/
 
-# OR if you prefer to review it first:
-wget https://raw.githubusercontent.com/YOUR_USERNAME/YOUR_REPO/main/infrastructure/scripts/setup-vps.sh
+# Then SSH in and run it
+ssh -i ~/.ssh/id_rsa root@YOUR_VPS_IP
 chmod +x setup-vps.sh
 ./setup-vps.sh
 ```
 
-**What the script does:**
-- Updates system packages
-- Installs Docker and Docker Compose
-- Configures firewall (UFW)
-- Installs Certbot for SSL certificates
-- Creates application directory
+#### Method 3: Manual Setup (Step by Step)
 
-**Manual Setup** (if you prefer to do it step by step):
+If you prefer to run each command manually to understand what's happening:
 
 ```bash
 # Update system

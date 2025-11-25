@@ -266,6 +266,7 @@ nano .env.production
 DB_USERNAME=postgres
 DB_PASSWORD=YOUR_STRONG_DATABASE_PASSWORD  # Generate a strong password
 DB_NAME=strategy
+DB_SSL=false  # Disable SSL for Docker internal network (SSL not needed)
 
 # Redis Configuration
 REDIS_PASSWORD=YOUR_STRONG_REDIS_PASSWORD  # Generate a strong password
@@ -285,6 +286,8 @@ VITE_API_URL=http://YOUR_VPS_IP
 # Logging
 LOG_LEVEL=info
 ```
+
+**Important**: `DB_SSL=false` is required for Docker Compose deployments. Since all services communicate on the same internal Docker network, SSL is not needed. Only set `DB_SSL=true` if you're using an external database service that requires SSL.
 
 **Note**: Replace `YOUR_VPS_IP` with your actual VPS IP address (e.g., `http://206.189.91.220`). If you have a domain, use that instead (see [Domain Setup Guide](./vps-domain-setup.md)).
 
@@ -594,6 +597,25 @@ docker-compose -f docker-compose.prod.yml logs
 - **Database connection failed**: Check database credentials
 
 ### Database Connection Issues
+
+**Error: "The server does not support SSL connections"**
+
+This happens when the backend tries to connect to PostgreSQL with SSL, but PostgreSQL in Docker doesn't have SSL enabled.
+
+**Solution**: Add `DB_SSL=false` to your `.env.production` file:
+
+```bash
+# Edit .env.production
+nano .env.production
+
+# Add this line in the Database Configuration section:
+DB_SSL=false
+
+# Restart backend
+docker-compose -f docker-compose.prod.yml restart backend
+```
+
+**Other database issues:**
 
 ```bash
 # Check if database is running

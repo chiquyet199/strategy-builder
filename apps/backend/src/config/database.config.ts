@@ -51,6 +51,11 @@ export function getDatabaseConfig(): DatabaseConfig {
   }
 
   // Fall back to individual environment variables
+  // SSL is disabled by default for Docker internal networks
+  // Set DB_SSL=true explicitly if you need SSL (e.g., for external database services)
+  // For Docker Compose deployments, SSL is not needed (services communicate internally)
+  const enableSSL = process.env.DB_SSL === 'true';
+  
   return {
     type: 'postgres',
     host: process.env.DB_HOST || 'localhost',
@@ -58,9 +63,7 @@ export function getDatabaseConfig(): DatabaseConfig {
     username: process.env.DB_USERNAME || 'postgres',
     password: process.env.DB_PASSWORD || 'postgres',
     database: process.env.DB_NAME || 'strategy',
-    ssl: process.env.NODE_ENV === 'production' && process.env.DB_SSL !== 'false'
-      ? { rejectUnauthorized: false }
-      : false,
+    ssl: enableSSL ? { rejectUnauthorized: false } : false,
   };
 }
 

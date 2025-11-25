@@ -9,12 +9,14 @@ This guide will walk you through deploying the Strategy application to a Virtual
 1. [Prerequisites](#prerequisites)
 2. [Choosing a VPS Provider](#choosing-a-vps-provider)
 3. [Initial VPS Setup](#initial-vps-setup)
-4. [Domain Configuration](#domain-configuration)
+4. [Domain Configuration](#domain-configuration-optional) (Optional)
 5. [Application Deployment](#application-deployment)
-6. [SSL Certificate Setup](#ssl-certificate-setup)
+6. [SSL Certificate Setup](#ssl-certificate-setup-optional) (Optional)
 7. [Post-Deployment](#post-deployment)
 8. [Maintenance & Backups](#maintenance--backups)
 9. [Troubleshooting](#troubleshooting)
+
+**Quick Start**: You can deploy using just your VPS IP address - domain and SSL are optional! See [Domain Setup Guide](./vps-domain-setup.md) for adding a domain later.
 
 ---
 
@@ -196,41 +198,37 @@ sudo ufw status
 
 ---
 
-## Domain Configuration
+## Domain Configuration (Optional)
 
-### Step 1: Point Your Domain to VPS
+**You can skip this section and use your VPS IP address directly!** A domain is optional but recommended for production use.
 
-1. Go to your domain registrar (GoDaddy, Namecheap, etc.)
-2. Find DNS settings
-3. Add an **A record**:
-   - **Name**: `@` (or leave blank for root domain)
-   - **Type**: `A`
-   - **Value**: Your VPS IP address
-   - **TTL**: 3600 (or default)
+### Quick Start Without Domain
 
-4. (Optional) Add a subdomain for API:
-   - **Name**: `api`
-   - **Type**: `A`
-   - **Value**: Your VPS IP address
+If you want to deploy quickly without a domain:
 
-**Example DNS Records:**
-```
-Type    Name    Value           TTL
-A       @       123.45.67.89    3600
-A       api     123.45.67.89    3600
-```
+1. **Use your VPS IP address** in environment variables (see Step 2 below)
+2. **Skip SSL setup** (or use self-signed certificates for testing)
+3. **Access your app** via `http://YOUR_VPS_IP`
 
-### Step 2: Wait for DNS Propagation
+**Limitations without domain:**
+- No free SSL certificates (Let's Encrypt requires a domain)
+- Browser security warnings with self-signed certificates
+- Harder to remember IP addresses
+- Less professional appearance
 
-DNS changes can take 5 minutes to 48 hours to propagate. Check if it's working:
+### Setting Up a Domain (Optional)
 
-```bash
-# Check if domain points to your VPS
-ping yourdomain.com
-# Should show your VPS IP address
-```
+If you want to set up a custom domain and SSL certificates, see the detailed guide:
 
-You can use [whatsmydns.net](https://www.whatsmydns.net) to check DNS propagation globally.
+📖 **[Domain and SSL Setup Guide](./vps-domain-setup.md)**
+
+This guide covers:
+- Purchasing a domain
+- Configuring DNS records
+- Obtaining free SSL certificates (Let's Encrypt)
+- Setting up automatic certificate renewal
+
+**You can add a domain later** - your application will work fine with just an IP address for now.
 
 ---
 
@@ -275,15 +273,20 @@ REDIS_PASSWORD=YOUR_STRONG_REDIS_PASSWORD  # Generate a strong password
 # JWT Secret (generate with: openssl rand -base64 32)
 JWT_SECRET=YOUR_GENERATED_JWT_SECRET  # Generate with: openssl rand -base64 32
 
-# Frontend URL (your domain with https)
-FRONTEND_URL=https://yourdomain.com
+# Frontend URL
+# Option 1: Use IP address (for quick testing)
+FRONTEND_URL=http://YOUR_VPS_IP
+VITE_API_URL=http://YOUR_VPS_IP
 
-# Frontend API URL (same as FRONTEND_URL, used during build)
-VITE_API_URL=https://yourdomain.com
+# Option 2: Use domain (if you have one set up)
+# FRONTEND_URL=https://yourdomain.com
+# VITE_API_URL=https://yourdomain.com
 
 # Logging
 LOG_LEVEL=info
 ```
+
+**Note**: Replace `YOUR_VPS_IP` with your actual VPS IP address (e.g., `http://206.189.91.220`). If you have a domain, use that instead (see [Domain Setup Guide](./vps-domain-setup.md)).
 
 **Generate Strong Passwords:**
 
@@ -300,20 +303,44 @@ openssl rand -base64 24
 
 **Save the file**: Press `Ctrl+X`, then `Y`, then `Enter`
 
-### Step 3: Update Nginx Configuration
+### Step 3: Configure Nginx
+
+#### Option A: Using IP Address (No Domain)
+
+The default Nginx configuration works with IP addresses. No changes needed!
+
+The config uses `server_name _;` which accepts any hostname/IP address.
+
+#### Option B: Using Domain (If You Have One)
+
+If you have a domain set up, update the Nginx configuration:
 
 ```bash
 # Edit Nginx configuration
 nano infrastructure/nginx/conf.d/default.conf
 ```
 
-Replace `server_name _;` with your domain:
+Replace `server_name _;` with your domain in both HTTP and HTTPS blocks:
 
 ```nginx
-server_name yourdomain.com www.yourdomain.com;
+# HTTP server
+server {
+    listen 80;
+    server_name yourdomain.com www.yourdomain.com;
+    # ... rest of config
+}
+
+# HTTPS server
+server {
+    listen 443 ssl http2;
+    server_name yourdomain.com www.yourdomain.com;
+    # ... rest of config
+}
 ```
 
-Save and exit.
+**Note**: If using a domain, you'll also need SSL certificates. See [Domain Setup Guide](./vps-domain-setup.md) for details.
+
+Save and exit: Press `Ctrl+X`, then `Y`, then `Enter`
 
 ### Step 4: Deploy the Application
 
@@ -367,96 +394,44 @@ curl http://localhost/api/v1/health
 
 ---
 
-## SSL Certificate Setup
+## SSL Certificate Setup (Optional)
 
-### Step 1: Install Certbot (if not already installed)
+**Skip this section if you're using IP address only!**
 
-```bash
-sudo apt-get update
-sudo apt-get install -y certbot python3-certbot-nginx
-```
+SSL certificates require a domain name. If you're using just an IP address, you can:
+- Use HTTP only (not recommended for production)
+- Use self-signed certificates (browsers will show warnings)
 
-### Step 2: Stop Nginx Container Temporarily
+### For Domain Setup
 
-```bash
-# Stop nginx container (we'll use standalone mode)
-docker-compose -f docker-compose.prod.yml stop nginx
-```
+If you have a domain set up, see the detailed guide:
 
-### Step 3: Obtain SSL Certificate
+📖 **[Domain and SSL Setup Guide](./vps-domain-setup.md)**
 
-```bash
-# Request certificate (replace with your domain)
-sudo certbot certonly --standalone -d yourdomain.com -d www.yourdomain.com
+This covers:
+- Obtaining free SSL certificates from Let's Encrypt
+- Configuring Nginx for HTTPS
+- Setting up automatic certificate renewal
 
-# Follow the prompts:
-# - Enter your email
-# - Agree to terms
-# - Choose whether to share email (optional)
-```
+### Quick Self-Signed Certificate (For Testing)
 
-### Step 4: Copy Certificates to Nginx Directory
+If you want HTTPS with IP address (for testing only):
 
 ```bash
 # Create SSL directory
 mkdir -p infrastructure/nginx/ssl
 
-# Copy certificates
-sudo cp /etc/letsencrypt/live/yourdomain.com/fullchain.pem infrastructure/nginx/ssl/
-sudo cp /etc/letsencrypt/live/yourdomain.com/privkey.pem infrastructure/nginx/ssl/
+# Generate self-signed certificate
+openssl req -x509 -nodes -days 365 -newkey rsa:2048 \
+  -keyout infrastructure/nginx/ssl/privkey.pem \
+  -out infrastructure/nginx/ssl/fullchain.pem \
+  -subj "/C=US/ST=State/L=City/O=Organization/CN=YOUR_VPS_IP"
 
-# Set proper permissions
-sudo chown $USER:$USER infrastructure/nginx/ssl/*.pem
-chmod 644 infrastructure/nginx/ssl/*.pem
+# Restart nginx
+docker-compose -f docker-compose.prod.yml restart nginx
 ```
 
-### Step 5: Restart Services
-
-```bash
-# Start nginx again
-docker-compose -f docker-compose.prod.yml up -d nginx
-
-# Verify SSL is working
-curl https://yourdomain.com
-```
-
-### Step 6: Set Up Auto-Renewal
-
-SSL certificates expire every 90 days. Set up automatic renewal:
-
-```bash
-# Test renewal
-sudo certbot renew --dry-run
-
-# Add to crontab (runs twice daily)
-sudo crontab -e
-
-# Add this line:
-0 0,12 * * * certbot renew --quiet --deploy-hook "docker exec strategy-nginx-prod nginx -s reload"
-```
-
-**Alternative**: Create a renewal script:
-
-```bash
-# Create renewal script
-sudo nano /usr/local/bin/renew-ssl.sh
-```
-
-Add this content:
-
-```bash
-#!/bin/bash
-certbot renew --quiet
-docker cp /etc/letsencrypt/live/yourdomain.com/fullchain.pem strategy-nginx-prod:/etc/nginx/ssl/fullchain.pem
-docker cp /etc/letsencrypt/live/yourdomain.com/privkey.pem strategy-nginx-prod:/etc/nginx/ssl/privkey.pem
-docker exec strategy-nginx-prod nginx -s reload
-```
-
-Make it executable:
-
-```bash
-sudo chmod +x /usr/local/bin/renew-ssl.sh
-```
+**Note**: Browsers will show security warnings with self-signed certificates. This is fine for testing but not for production.
 
 ---
 
@@ -464,6 +439,13 @@ sudo chmod +x /usr/local/bin/renew-ssl.sh
 
 ### Step 1: Test Your Application
 
+**If using IP address:**
+1. **Visit your app**: `http://YOUR_VPS_IP` (or `https://YOUR_VPS_IP` if using self-signed cert)
+2. **Test API**: `http://YOUR_VPS_IP/api/v1/health`
+3. **Test registration/login**: Create an account
+4. **Check Swagger docs**: `http://YOUR_VPS_IP/api/docs`
+
+**If using domain:**
 1. **Visit your domain**: `https://yourdomain.com`
 2. **Test API**: `https://yourdomain.com/api/v1/health`
 3. **Test registration/login**: Create an account
@@ -776,5 +758,14 @@ You've successfully deployed your application to a VPS! Here's what we accomplis
 - ✅ Configured automatic backups
 - ✅ Set up monitoring
 
-Your application is now live and accessible at `https://yourdomain.com`!
+**Your application is now live!**
+
+- **Using IP**: Access at `http://YOUR_VPS_IP`
+- **Using Domain**: Access at `https://yourdomain.com` (see [Domain Setup Guide](./vps-domain-setup.md))
+
+**Next Steps:**
+- Set up a domain and SSL certificates (optional) - see [Domain Setup Guide](./vps-domain-setup.md)
+- Configure monitoring and alerts
+- Set up regular backups
+- Test all features thoroughly
 

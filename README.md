@@ -340,6 +340,8 @@ npm run build
 ```
 
 ### Docker Deployment
+
+#### Local Development with Docker
 ```bash
 # Build images
 npm run docker:build
@@ -347,6 +349,34 @@ npm run docker:build
 # Start services
 npm run docker:up
 ```
+
+#### Production Deployment on VPS
+
+Deploy to a Virtual Private Server (VPS) using Docker Compose. This is a cost-effective option ($5-12/month) with full control.
+
+**Quick Start:**
+1. Set up a VPS (Ubuntu 22.04 recommended)
+2. Run the setup script on your VPS
+3. Clone your repository
+4. Configure environment variables
+5. Deploy with the deployment script
+
+**Detailed Guide:**
+See [solutions/vps-deployment.md](./solutions/vps-deployment.md) for complete step-by-step instructions, including:
+- VPS provider recommendations
+- Initial server setup
+- Domain configuration
+- SSL certificate setup
+- Deployment process
+- Backup and maintenance
+- Troubleshooting
+
+**Key Features:**
+- Production-ready Docker Compose configuration
+- Nginx reverse proxy with SSL
+- Automated deployment scripts
+- Database backup scripts
+- Security best practices
 
 ### Kubernetes Deployment
 

@@ -1,0 +1,367 @@
+# ============================================================================
+# PRODUCTION DOCKER COMPOSE CONFIGURATION
+# ============================================================================
+# This file defines all the services (containers) that make up your application
+# in production. Docker Compose reads this file to know what to build and run.
+#
+# Usage:
+#   docker-compose -f docker-compose.prod.yml up -d    # Start all services
+#   docker-compose -f docker-compose.prod.yml down     # Stop all services
+#   docker-compose -f docker-compose.prod.yml ps       # Check service status
+# ============================================================================
+
+# Docker Compose file format version
+# Version 3.8 supports most modern Docker features
+version: '3.8'
+
+# ============================================================================
+# SERVICES SECTION
+# ============================================================================
+# Services are the different parts of your application. Each service runs in
+# its own container (like a separate virtual machine, but lighter).
+# ============================================================================
+services:
+
+  # --------------------------------------------------------------------------
+  # POSTGRES DATABASE SERVICE
+  # --------------------------------------------------------------------------
+  # This service runs PostgreSQL, which stores all your application data
+  # (users, posts, etc.). It's like a digital filing cabinet.
+  # --------------------------------------------------------------------------
+  postgres:
+    # Use the official PostgreSQL 16 image from Docker Hub
+    # Alpine version is smaller and more secure (uses less disk space)
+    image: postgres:16-alpine
+    
+    # Give the container a friendly name (easier to identify in logs)
+    container_name: strategy-postgres-prod
+    
+    # EXPOSE vs PORTS:
+    # - "expose" makes the port available to other containers in the same network
+    # - "ports" would make it accessible from outside (your computer/VPS)
+    # In production, we only expose it internally for security (only backend can access it)
+    expose:
+      - "5432"  # PostgreSQL's default port
+    
+    # Environment variables for PostgreSQL configuration
+    # These are like settings that tell PostgreSQL how to set itself up
+    environment:
+      # Database username (who can access the database)
+      - POSTGRES_USER=${DB_USERNAME:-postgres}
+      # ${DB_USERNAME:-postgres} means: use DB_USERNAME from .env.production,
+      # or if not set, use "postgres" as default
+      
+      # Database password (the key to unlock the database)
+      # IMPORTANT: This comes from your .env.production file
+      - POSTGRES_PASSWORD=${DB_PASSWORD}
+      
+      # Name of the database to create
+      - POSTGRES_DB=${DB_NAME:-strategy}
+    
+    # Volumes are like external hard drives for your containers
+    # They persist data even if the container is deleted
+    volumes:
+      # This volume stores all your database data
+      # If you delete the container, your data stays safe here
+      - postgres_data:/var/lib/postgresql/data
+      
+      # This mounts a local folder for database backups
+      # ./backups/postgres on your VPS -> /backups inside container
+      - ./backups/postgres:/backups
+    
+    # Networks allow containers to talk to each other
+    # All services in "strategy-network" can communicate
+    networks:
+      - strategy-network
+    
+    # Restart policy: automatically restart container if it crashes
+    # "unless-stopped" means: restart always, unless we manually stop it
+    restart: unless-stopped
+    
+    # Health check: Docker periodically checks if PostgreSQL is working
+    # If it fails, Docker knows the service is unhealthy
+    healthcheck:
+      # Command to run to check if PostgreSQL is ready
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USERNAME:-postgres}"]
+      # Check every 10 seconds
+      interval: 10s
+      # Wait 5 seconds for response
+      timeout: 5s
+      # If it fails 5 times in a row, mark as unhealthy
+      retries: 5
+    
+    # Security: run PostgreSQL as a non-root user (user ID 999)
+    # This is safer - if someone breaks in, they can't do as much damage
+    user: "999:999"
+
+  # --------------------------------------------------------------------------
+  # REDIS CACHE SERVICE
+  # --------------------------------------------------------------------------
+  # Redis is like a super-fast temporary storage. It's used for:
+  # - Rate limiting (preventing too many requests)
+  # - Caching (storing frequently accessed data for speed)
+  # - Session storage (keeping track of logged-in users)
+  # --------------------------------------------------------------------------
+  redis:
+    # Use the official Redis 7 image (Alpine = smaller size)
+    image: redis:7-alpine
+    
+    # Friendly container name
+    container_name: strategy-redis-prod
+    
+    # Only expose to other containers (not to the internet)
+    expose:
+      - "6379"  # Redis's default port
+    
+    # Redis command with security and persistence options
+    command: redis-server --appendonly yes --requirepass ${REDIS_PASSWORD}
+    # --appendonly yes: Save data to disk (so it survives restarts)
+    # --requirepass: Require password to access Redis
+    
+    # Volume to store Redis data
+    volumes:
+      - redis_data:/data
+    
+    # Connect to our application network
+    networks:
+      - strategy-network
+    
+    # Auto-restart if it crashes
+    restart: unless-stopped
+    
+    # Health check: test if Redis is responding
+    healthcheck:
+      # Try to increment a "ping" key (tests if Redis works)
+      test: ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD}", "--raw", "incr", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+
+  # --------------------------------------------------------------------------
+  # BACKEND API SERVICE
+  # --------------------------------------------------------------------------
+  # This is your NestJS backend - the brain of your application.
+  # It handles API requests, processes data, talks to the database, etc.
+  # --------------------------------------------------------------------------
+  backend:
+    # Instead of using a pre-built image, we BUILD our own from a Dockerfile
+    build:
+      # Build context: where to look for files (root of your project)
+      context: .
+      
+      # Which Dockerfile to use for building
+      # This Dockerfile contains instructions on how to build your backend
+      dockerfile: infrastructure/docker/Dockerfile.backend
+    
+    # Friendly container name
+    container_name: strategy-backend-prod
+    
+    # Only expose to other containers (Nginx will access it)
+    # We don't expose it directly to the internet for security
+    expose:
+      - "3000"  # Your backend runs on port 3000
+    
+    # Environment variables that your backend code will use
+    # These are like configuration settings for your application
+    environment:
+      # Tell the app it's running in production mode
+      - NODE_ENV=production
+      
+      # Port the backend should listen on
+      - PORT=3000
+      
+      # Database connection settings
+      # These point to the "postgres" service (Docker Compose resolves service names)
+      - DB_HOST=postgres        # Service name = hostname in Docker network
+      - DB_PORT=5432            # PostgreSQL port
+      - DB_USERNAME=${DB_USERNAME:-postgres}
+      - DB_PASSWORD=${DB_PASSWORD}
+      - DB_NAME=${DB_NAME:-strategy}
+      
+      # JWT secret for signing authentication tokens
+      # IMPORTANT: Must be a strong random string (from .env.production)
+      - JWT_SECRET=${JWT_SECRET}
+      
+      # Redis connection settings
+      - REDIS_HOST=redis        # Service name = hostname in Docker network
+      - REDIS_PORT=6379
+      - REDIS_PASSWORD=${REDIS_PASSWORD}
+      
+      # Frontend URL (for CORS - allowing frontend to make API requests)
+      - FRONTEND_URL=${FRONTEND_URL}
+      
+      # Logging level (info = normal, debug = more detailed)
+      - LOG_LEVEL=${LOG_LEVEL:-info}
+    
+    # Connect to our application network
+    networks:
+      - strategy-network
+    
+    # Dependencies: wait for these services to be healthy before starting
+    # This ensures database and Redis are ready before backend starts
+    depends_on:
+      postgres:
+        condition: service_healthy  # Wait until PostgreSQL health check passes
+      redis:
+        condition: service_healthy  # Wait until Redis health check passes
+    
+    # Auto-restart if it crashes
+    restart: unless-stopped
+    
+    # Resource limits: prevent one service from using all server resources
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'      # Maximum 1 CPU core
+          memory: 512M     # Maximum 512MB RAM
+        reservations:
+          cpus: '0.5'      # Reserve at least 0.5 CPU core
+          memory: 256M     # Reserve at least 256MB RAM
+
+  # --------------------------------------------------------------------------
+  # FRONTEND SERVICE
+  # --------------------------------------------------------------------------
+  # This is your Vue.js frontend - what users see in their browser.
+  # It's built into static files (HTML, CSS, JavaScript) and served.
+  # --------------------------------------------------------------------------
+  frontend:
+    # Build the frontend from a Dockerfile
+    build:
+      context: .
+      dockerfile: infrastructure/docker/Dockerfile.frontend
+      
+      # Build arguments: values passed during the build process
+      # VITE_API_URL is used at BUILD TIME to configure the frontend
+      args:
+        - VITE_API_URL=${VITE_API_URL}
+        # This tells the frontend where to find the backend API
+    
+    # Friendly container name
+    container_name: strategy-frontend-prod
+    
+    # Only expose to other containers (Nginx will serve it)
+    expose:
+      - "3000"  # Frontend web server runs on port 3000
+    
+    # Environment variables
+    environment:
+      - NODE_ENV=production
+      - PORT=3000
+    
+    # Connect to our application network
+    networks:
+      - strategy-network
+    
+    # Wait for backend to start first (frontend needs to know backend exists)
+    depends_on:
+      - backend
+    
+    # Auto-restart if it crashes
+    restart: unless-stopped
+    
+    # Resource limits (frontend needs less resources than backend)
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'      # Maximum 0.5 CPU core
+          memory: 256M     # Maximum 256MB RAM
+        reservations:
+          cpus: '0.25'     # Reserve at least 0.25 CPU core
+          memory: 128M     # Reserve at least 128MB RAM
+
+  # --------------------------------------------------------------------------
+  # NGINX REVERSE PROXY SERVICE
+  # --------------------------------------------------------------------------
+  # Nginx is like a traffic director. It:
+  # - Receives requests from the internet (ports 80 and 443)
+  # - Routes them to the right service (frontend or backend)
+  # - Handles SSL/HTTPS encryption
+  # - Serves static files efficiently
+  # --------------------------------------------------------------------------
+  nginx:
+    # Use the official Nginx image (Alpine = smaller)
+    image: nginx:alpine
+    
+    # Friendly container name
+    container_name: strategy-nginx-prod
+    
+    # PORTS (not expose) - these ARE accessible from the internet
+    ports:
+      - "80:80"    # HTTP port (redirects to HTTPS)
+      - "443:443"  # HTTPS port (secure connections)
+    # Format: "HOST_PORT:CONTAINER_PORT"
+    # Port 80 on your VPS -> Port 80 in container
+    
+    # Volumes: mount configuration files and SSL certificates
+    volumes:
+      # Main Nginx configuration file
+      - ./infrastructure/nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      # :ro means "read-only" - container can't modify the file
+      
+      # Server-specific configurations (like which domains to serve)
+      - ./infrastructure/nginx/conf.d:/etc/nginx/conf.d:ro
+      
+      # SSL certificates (for HTTPS encryption)
+      - ./infrastructure/nginx/ssl:/etc/nginx/ssl:ro
+      
+      # Log files (Nginx writes access and error logs here)
+      - ./infrastructure/nginx/logs:/var/log/nginx
+    
+    # Connect to our application network
+    networks:
+      - strategy-network
+    
+    # Wait for backend and frontend to start
+    depends_on:
+      - backend
+      - frontend
+    
+    # Auto-restart if it crashes
+    restart: unless-stopped
+
+# ============================================================================
+# NETWORKS SECTION
+# ============================================================================
+# Networks allow containers to communicate with each other.
+# Services in the same network can talk to each other by service name.
+# ============================================================================
+networks:
+  # Define a network called "strategy-network"
+  strategy-network:
+    # Use the bridge driver (default, works for single-host deployments)
+    # Bridge = creates a virtual network on your VPS
+    driver: bridge
+
+# ============================================================================
+# VOLUMES SECTION
+# ============================================================================
+# Volumes are persistent storage that survives container deletion.
+# Think of them as external hard drives that containers can use.
+# ============================================================================
+volumes:
+  # PostgreSQL data volume
+  # All your database data is stored here
+  # Even if you delete the postgres container, this data remains
+  postgres_data:
+    # Use local driver (stores data on your VPS's hard drive)
+    driver: local
+  
+  # Redis data volume
+  # Stores Redis cache data
+  redis_data:
+    driver: local
+
+# ============================================================================
+# HOW IT ALL WORKS TOGETHER
+# ============================================================================
+# 1. User visits https://yourdomain.com in their browser
+# 2. Request goes to Nginx (port 443)
+# 3. Nginx checks the URL:
+#    - If it's /api/* -> forwards to backend service
+#    - Otherwise -> serves from frontend service
+# 4. Backend talks to PostgreSQL and Redis when needed
+# 5. Response goes back through Nginx to the user
+#
+# All services communicate through the "strategy-network" network.
+# They can find each other by service name (e.g., "postgres", "backend").
+# ============================================================================

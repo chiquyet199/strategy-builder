@@ -80,3 +80,12 @@ Thumbs.db
 *.tfstate.*
 .terraform/
 
+# Production files
+.env.production
+backups/postgres/*.sql
+backups/postgres/*.sql.gz
+infrastructure/nginx/ssl/*.pem
+infrastructure/nginx/logs/*
+!infrastructure/nginx/ssl/.gitkeep
+!infrastructure/nginx/logs/.gitkeep
+

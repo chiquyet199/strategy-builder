@@ -23,7 +23,7 @@ const handleSuccess = () => {
   <div class="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4">
     <a-card class="w-full max-w-md">
       <template #title>
-        <h2 class="text-center text-2xl font-bold mb-0">Sign in to your account</h2>
+        <h2 class="text-center text-2xl font-bold mb-0">Sign in to your account.</h2>
       </template>
       <LoginForm @success="handleSuccess" />
       <div class="text-center mt-4 space-y-2">

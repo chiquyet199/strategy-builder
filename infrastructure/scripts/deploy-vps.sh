@@ -22,7 +22,13 @@ if [ ! -f .env.production ]; then
 fi
 
 # Load environment variables
-export $(cat .env.production | grep -v '^#' | xargs)
+# Filter out comments (lines starting with # or whitespace before #)
+# Filter out empty lines
+# Remove inline comments
+echo "📋 Loading environment variables..."
+set -a
+source <(grep -v '^[[:space:]]*#' .env.production | grep -v '^[[:space:]]*$' | sed 's/#.*$//')
+set +a
 
 # Check required variables
 if [ -z "$JWT_SECRET" ] || [ "$JWT_SECRET" = "CHANGE_THIS_GENERATE_STRONG_SECRET" ]; then

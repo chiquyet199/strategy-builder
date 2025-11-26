@@ -31,12 +31,40 @@ jobs:
             echo "🚀 Starting deployment..."
             
             # Navigate to application directory
-            cd /opt/strategy
+            APP_DIR="/opt/strategy/strategy-builder"
             
-            # Pull latest code
-            echo "📥 Pulling latest code..."
-            git fetch origin
-            git reset --hard origin/main
+            # Check if directory exists, if not create it
+            if [ ! -d "$APP_DIR" ]; then
+              echo "📁 Creating application directory..."
+              sudo mkdir -p "$APP_DIR"
+              sudo chown $USER:$USER "$APP_DIR"
+            fi
+            
+            cd "$APP_DIR"
+            
+            # Check if it's a git repository
+            if [ -d .git ]; then
+              echo "📥 Pulling latest code..."
+              git fetch origin
+              git reset --hard origin/main || git reset --hard origin/master
+            else
+              echo "❌ Error: $APP_DIR is not a git repository"
+              echo ""
+              echo "Please clone the repository manually on your VPS first:"
+              echo "  cd /opt/strategy"
+              echo "  git clone https://github.com/${{ github.repository }}.git strategy-builder"
+              echo "  cd strategy-builder"
+              echo ""
+              echo "Or if using SSH (recommended for private repos):"
+              echo "  cd /opt/strategy"
+              echo "  git clone git@github.com:${{ github.repository }}.git strategy-builder"
+              echo "  cd strategy-builder"
+              echo ""
+              echo "After cloning, make sure to:"
+              echo "  1. Create .env.production file"
+              echo "  2. Set up the repository for automated deployments"
+              exit 1
+            fi
             
             # Check if .env.production exists
             if [ ! -f .env.production ]; then
@@ -72,7 +100,7 @@ jobs:
           port: ${{ secrets.VPS_SSH_PORT || 22 }}
           script: |
             echo "🔍 Verifying deployment..."
-            cd /opt/strategy
+            cd /opt/strategy/strategy-builder
             docker-compose -f docker-compose.prod.yml ps
             echo "✅ Services are running!"
 

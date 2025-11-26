@@ -35,6 +35,14 @@ ssh-keygen -t ed25519 -C "github-actions-deploy" -f ~/.ssh/github_actions_deploy
 # This creates two files:
 # ~/.ssh/github_actions_deploy (private key - keep secret!)
 # ~/.ssh/github_actions_deploy.pub (public key - add to VPS)
+
+# View your public key content:
+cat ~/.ssh/github_actions_deploy.pub
+
+# This will output something like:
+# ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAI... github-actions-deploy
+#
+# Copy this entire line - this is YOUR_PUBLIC_KEY_CONTENT
 ```
 
 ---
@@ -48,10 +56,27 @@ ssh-keygen -t ed25519 -C "github-actions-deploy" -f ~/.ssh/github_actions_deploy
 mkdir -p ~/.ssh
 chmod 700 ~/.ssh
 
-# Copy the public key content from your local machine
-# Then on VPS:
-echo "YOUR_PUBLIC_KEY_CONTENT" >> ~/.ssh/authorized_keys
+# Get your public key content from your local machine:
+# On your LOCAL machine, run:
+cat ~/.ssh/github_actions_deploy.pub
+
+# This will output something like:
+# ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAI... github-actions-deploy
+#
+# Copy the ENTIRE output (all on one line)
+
+# Then on VPS, paste the public key:
+echo "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAI... github-actions-deploy" >> ~/.ssh/authorized_keys
 chmod 600 ~/.ssh/authorized_keys
+```
+
+**Quick method using ssh-copy-id (if you have password access):**
+
+```bash
+# On your LOCAL machine
+ssh-copy-id -i ~/.ssh/github_actions_deploy.pub root@YOUR_VPS_IP
+
+# This automatically copies the key to the VPS
 ```
 
 ### Option B: Create a dedicated deployment user (Recommended for security)
@@ -68,7 +93,14 @@ su - deployer
 # Add SSH key
 mkdir -p ~/.ssh
 chmod 700 ~/.ssh
-echo "YOUR_PUBLIC_KEY_CONTENT" >> ~/.ssh/authorized_keys
+
+# Get your public key content from your local machine:
+# On your LOCAL machine, run:
+# cat ~/.ssh/github_actions_deploy.pub
+# Copy the entire output
+
+# Then on VPS, paste the public key:
+echo "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAI... github-actions-deploy" >> ~/.ssh/authorized_keys
 chmod 600 ~/.ssh/authorized_keys
 
 # Give deployer access to the application directory
@@ -88,11 +120,14 @@ Test that you can connect to your VPS:
 
 ```bash
 # From your local machine
-ssh -i ~/.ssh/github_actions_deploy root@YOUR_VPS_IP
+# Use -o IdentitiesOnly=yes to prevent "Too many authentication failures" error
+ssh -i ~/.ssh/github_actions_deploy -o IdentitiesOnly=yes root@YOUR_VPS_IP
 
 # Or if using deployer user
-ssh -i ~/.ssh/github_actions_deploy deployer@YOUR_VPS_IP
+ssh -i ~/.ssh/github_actions_deploy -o IdentitiesOnly=yes deployer@YOUR_VPS_IP
 ```
+
+**Important**: The `-o IdentitiesOnly=yes` flag tells SSH to only use the key you specify, preventing the "Too many authentication failures" error that occurs when SSH tries multiple keys.
 
 If connection works, you're ready for the next step!
 
@@ -174,8 +209,10 @@ git push origin main
 
 3. **Verify on VPS**:
    ```bash
-   # SSH into your VPS
-   ssh root@YOUR_VPS_IP
+   # SSH into your VPS (use IdentitiesOnly if you have multiple SSH keys)
+   ssh -i ~/.ssh/github_actions_deploy -o IdentitiesOnly=yes deployer@YOUR_VPS_IP
+   # Or if using root:
+   # ssh -i ~/.ssh/github_actions_deploy -o IdentitiesOnly=yes root@YOUR_VPS_IP
    
    # Check if deployment ran
    cd /opt/strategy
@@ -200,14 +237,46 @@ You can also trigger deployment manually:
 
 ## Troubleshooting
 
-### Error: "Permission denied (publickey)"
+### Error: "Permission denied (publickey)" or "Too many authentication failures"
 
-**Problem**: SSH key not set up correctly
+**Problem**: SSH key not set up correctly or SSH trying too many keys
 
 **Solution**:
-1. Verify public key is in `~/.ssh/authorized_keys` on VPS
-2. Check file permissions: `chmod 600 ~/.ssh/authorized_keys`
-3. Verify private key in GitHub Secrets is correct (include BEGIN/END lines)
+1. **Use `IdentitiesOnly` flag** when testing:
+   ```bash
+   ssh -i ~/.ssh/github_actions_deploy -o IdentitiesOnly=yes deployer@YOUR_VPS_IP
+   ```
+
+2. **Verify public key is in `~/.ssh/authorized_keys` on VPS**:
+   ```bash
+   # On VPS
+   cat ~/.ssh/authorized_keys
+   # Should see your public key
+   ```
+
+3. **Check file permissions on VPS**:
+   ```bash
+   # On VPS
+   chmod 700 ~/.ssh
+   chmod 600 ~/.ssh/authorized_keys
+   ```
+
+4. **Verify private key in GitHub Secrets is correct** (include BEGIN/END lines)
+
+5. **Alternative: Configure SSH config** (recommended for repeated use):
+   ```bash
+   # On your local machine
+   nano ~/.ssh/config
+   ```
+   Add:
+   ```
+   Host YOUR_VPS_IP
+       HostName YOUR_VPS_IP
+       User deployer
+       IdentityFile ~/.ssh/github_actions_deploy
+       IdentitiesOnly yes
+   ```
+   Then connect with: `ssh YOUR_VPS_IP`
 
 ### Error: "git: command not found"
 

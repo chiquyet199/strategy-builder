@@ -104,13 +104,25 @@ echo "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAI... github-actions-deploy" >> ~/.ssh/
 chmod 600 ~/.ssh/authorized_keys
 
 # Give deployer access to the application directory
-sudo chown -R deployer:deployer /opt/strategy
+# Note: Adjust path if your repo is in a subdirectory (e.g., /opt/strategy/strategy-builder)
+sudo chown -R deployer:deployer /opt/strategy/strategy-builder
+# Or if repo is directly in /opt/strategy:
+# sudo chown -R deployer:deployer /opt/strategy
 ```
 
 **Note**: If using a deployment user, make sure they have:
-- Access to `/opt/strategy` directory
+- Access to the repository directory (e.g., `/opt/strategy/strategy-builder`)
 - Docker permissions (in `docker` group)
 - Ability to run `docker-compose` commands
+- **Correct ownership** of the repository directory (prevents git "dubious ownership" errors)
+
+**Important**: After cloning the repository, fix ownership to prevent git errors:
+```bash
+# Fix ownership (adjust path based on where you cloned the repo)
+sudo chown -R deployer:deployer /opt/strategy/strategy-builder
+# Or if using root:
+# sudo chown -R root:root /opt/strategy/strategy-builder
+```
 
 ---
 
@@ -215,8 +227,11 @@ git push origin main
    # ssh -i ~/.ssh/github_actions_deploy -o IdentitiesOnly=yes root@YOUR_VPS_IP
    
    # Check if deployment ran
-   cd /opt/strategy
+   cd /opt/strategy/strategy-builder  # Adjust path if your repo is in a different location
    git log -1  # Should show latest commit
+   
+   # If you get "dubious ownership" error, fix ownership:
+   # sudo chown -R deployer:deployer /opt/strategy/strategy-builder
    
    # Check services
    docker-compose -f docker-compose.prod.yml ps
@@ -277,6 +292,33 @@ You can also trigger deployment manually:
        IdentitiesOnly yes
    ```
    Then connect with: `ssh YOUR_VPS_IP`
+
+### Error: "detected dubious ownership in repository" or "fatal: detected dubious ownership"
+
+**Problem**: Git repository is owned by a different user than the one running git commands
+
+**Solution**: Fix the ownership of the repository directory:
+
+```bash
+# On VPS
+# If using deployer user:
+sudo chown -R deployer:deployer /opt/strategy/strategy-builder
+
+# Or if using root user:
+sudo chown -R root:root /opt/strategy/strategy-builder
+
+# Verify ownership
+ls -la /opt/strategy/strategy-builder
+```
+
+**Alternative**: Add to git's safe directory list (less secure):
+
+```bash
+# On VPS
+git config --global --add safe.directory /opt/strategy/strategy-builder
+```
+
+**Recommended**: Fix ownership (first solution) is more secure and proper.
 
 ### Error: "git: command not found"
 

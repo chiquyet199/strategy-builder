@@ -18,6 +18,7 @@ import {
   Legend,
   type ChartConfiguration,
 } from 'chart.js'
+import dayjs from 'dayjs'
 import type { StrategyResult } from '@/shared/types/backtest'
 
 Chart.register(
@@ -60,10 +61,10 @@ function createChart() {
     chartInstance.destroy()
   }
 
-  // Prepare data
+  // Prepare data - format dates for x-axis
   const datasets = props.results.map((result, index) => {
     const data = result.portfolioValueHistory.map((point) => ({
-      x: point.date,
+      x: dayjs(point.date).format('DD-MM-YYYY'),
       y: point.value,
     }))
 
@@ -79,14 +80,14 @@ function createChart() {
     }
   })
 
-  // Get all unique dates
+  // Get all unique dates and format them
   const allDates = new Set<string>()
   props.results.forEach((result) => {
     result.portfolioValueHistory.forEach((point) => {
       allDates.add(point.date)
     })
   })
-  const labels = Array.from(allDates).sort()
+  const labels = Array.from(allDates).sort().map((date) => dayjs(date).format('DD-MM-YYYY'))
 
   const config: ChartConfiguration<'line'> = {
     type: 'line',
@@ -114,6 +115,14 @@ function createChart() {
         },
         tooltip: {
           callbacks: {
+            title: (context) => {
+              const label = context[0].label
+              if (label) {
+                // Label is already formatted as DD-MM-YYYY
+                return label
+              }
+              return ''
+            },
             label: (context) => {
               const value = context.parsed.y
               return `${context.dataset.label}: $${value.toLocaleString('en-US', {

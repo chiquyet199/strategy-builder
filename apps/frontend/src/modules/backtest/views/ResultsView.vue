@@ -18,18 +18,20 @@
         v-model:open="transactionsModalVisible"
         :title="selectedStrategyName ? t('backtest.results.transactions.modalTitle', { strategy: selectedStrategyName }) : t('backtest.results.transactions.title')"
         :footer="null"
-        width="900px"
+        width="95%"
+        :style="{ maxWidth: '1400px' }"
       >
         <a-table
           v-if="selectedTransactions"
           :columns="transactionColumns"
           :data-source="selectedTransactions"
           :pagination="{ pageSize: 10 }"
+          :scroll="{ x: 'max-content', y: '60vh' }"
           row-key="date"
         >
           <template #bodyCell="{ column, record }">
             <template v-if="column.key === 'date'">
-              {{ formatDateTime(record.date) }}
+              {{ formatDate(record.date) }}
             </template>
             <template v-else-if="column.key === 'price'">
               ${{ formatNumber(record.price) }}
@@ -300,12 +302,12 @@ const tableData = computed(() => backtestStore.strategyResults)
 
 function formatDate(dateString?: string): string {
   if (!dateString) return ''
-  return dayjs(dateString).format('MMM DD, YYYY')
+  return dayjs(dateString).format('DD-MM-YYYY')
 }
 
 function formatDateTime(dateString?: string): string {
   if (!dateString) return ''
-  return dayjs(dateString).format('MMM DD, YYYY HH:mm:ss')
+  return dayjs(dateString).format('DD-MM-YYYY HH:mm:ss')
 }
 
 function formatPercentage(value: number | null | undefined): string {

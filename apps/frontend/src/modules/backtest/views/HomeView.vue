@@ -28,7 +28,7 @@
                 v-model:value="formState.startDate"
                 style="width: 100%"
                 size="large"
-                format="YYYY-MM-DD"
+                format="DD-MM-YYYY"
               />
             </a-form-item>
           </a-col>
@@ -38,7 +38,7 @@
                 v-model:value="formState.endDate"
                 style="width: 100%"
                 size="large"
-                format="YYYY-MM-DD"
+                format="DD-MM-YYYY"
               />
             </a-form-item>
           </a-col>
@@ -100,10 +100,13 @@ import { useRouter } from 'vue-router'
 import { useBacktestStore } from '../stores/backtestStore'
 import { backtestService } from '../services/backtestService'
 import dayjs, { type Dayjs } from 'dayjs'
-import type { StrategyMetadata } from '@/shared/types/backtest'
-
 const router = useRouter()
 const backtestStore = useBacktestStore()
+
+interface StrategyMetadata {
+  id: string
+  name: string
+}
 
 const availableStrategies: StrategyMetadata[] = [
   { id: 'lump-sum', name: 'Lump Sum' },

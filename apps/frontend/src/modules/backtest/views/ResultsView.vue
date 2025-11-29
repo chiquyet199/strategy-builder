@@ -13,6 +13,41 @@
         </div>
       </template>
 
+      <!-- Transactions Modal -->
+      <a-modal
+        v-model:open="transactionsModalVisible"
+        :title="selectedStrategyName ? `Transactions - ${selectedStrategyName}` : 'Transactions'"
+        :footer="null"
+        width="900px"
+      >
+        <a-table
+          v-if="selectedTransactions"
+          :columns="transactionColumns"
+          :data-source="selectedTransactions"
+          :pagination="{ pageSize: 10 }"
+          row-key="date"
+        >
+          <template #bodyCell="{ column, record }">
+            <template v-if="column.key === 'date'">
+              {{ formatDateTime(record.date) }}
+            </template>
+            <template v-else-if="column.key === 'price'">
+              ${{ formatNumber(record.price) }}
+            </template>
+            <template v-else-if="column.key === 'amount'">
+              ${{ formatNumber(record.amount) }}
+            </template>
+            <template v-else-if="column.key === 'quantityPurchased'">
+              {{ formatQuantity(record.quantityPurchased) }}
+            </template>
+            <template v-else-if="column.key === 'reason'">
+              <a-tag v-if="record.reason" color="blue">{{ record.reason }}</a-tag>
+              <span v-else class="text-gray-400">-</span>
+            </template>
+          </template>
+        </a-table>
+      </a-modal>
+
       <div v-if="backtestStore.isLoading" class="loading-container">
         <a-spin size="large" tip="Calculating strategies...">
           <div style="height: 400px"></div>
@@ -88,6 +123,16 @@
               <template v-else-if="column.key === 'sharpeRatio'">
                 {{ formatSharpeRatio(record.metrics?.sharpeRatio) }}
               </template>
+              <template v-else-if="column.key === 'actions'">
+                <a-button
+                  type="link"
+                  size="small"
+                  @click="showTransactions(record)"
+                  :disabled="!record.transactions || record.transactions.length === 0"
+                >
+                  View Transactions ({{ record.transactions?.length || 0 }})
+                </a-button>
+              </template>
             </template>
           </a-table>
         </a-card>
@@ -103,18 +148,23 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useBacktestStore } from '../stores/backtestStore'
 import PortfolioChart from '../components/PortfolioChart.vue'
 import dayjs from 'dayjs'
-import type { StrategyResult } from '@/shared/types/backtest'
+import type { StrategyResult, Transaction } from '@/shared/types/backtest'
 
 const router = useRouter()
 const backtestStore = useBacktestStore()
 
 // Computed properties for safe metadata access
 const metadata = computed(() => backtestStore.results?.metadata || null)
+
+// Transactions modal state
+const transactionsModalVisible = ref(false)
+const selectedTransactions = ref<Transaction[] | null>(null)
+const selectedStrategyName = ref<string>('')
 
 const columns = [
   {
@@ -176,6 +226,40 @@ const columns = [
       return aVal - bVal
     },
   },
+  {
+    title: 'Actions',
+    key: 'actions',
+    fixed: 'right' as const,
+    width: 120,
+  },
+]
+
+const transactionColumns = [
+  {
+    title: 'Date',
+    dataIndex: 'date',
+    key: 'date',
+    sorter: (a: any, b: any) => new Date(a.date).getTime() - new Date(b.date).getTime(),
+  },
+  {
+    title: 'Price',
+    key: 'price',
+    sorter: (a: any, b: any) => a.price - b.price,
+  },
+  {
+    title: 'Amount (USD)',
+    key: 'amount',
+    sorter: (a: any, b: any) => a.amount - b.amount,
+  },
+  {
+    title: 'Quantity Purchased',
+    key: 'quantityPurchased',
+    sorter: (a: any, b: any) => a.quantityPurchased - b.quantityPurchased,
+  },
+  {
+    title: 'Reason',
+    key: 'reason',
+  },
 ]
 
 const tableData = computed(() => backtestStore.strategyResults)
@@ -226,6 +310,12 @@ function downloadChart() {
   // TODO: Implement chart download functionality
   // This would require getting the chart canvas and converting to image
   console.log('Download chart functionality to be implemented')
+}
+
+function showTransactions(strategy: StrategyResult) {
+  selectedTransactions.value = strategy.transactions || []
+  selectedStrategyName.value = strategy.strategyName
+  transactionsModalVisible.value = true
 }
 </script>
 

@@ -30,12 +30,19 @@ export const backtestService = {
 
     if (!response.ok) {
       const error = await response.json().catch(() => ({ message: 'Failed to compare strategies' }))
-      throw new Error(error.message || 'Failed to compare strategies')
+      throw new Error(error.message || error.data?.message || 'Failed to compare strategies')
     }
 
-    // Backtest endpoint returns data directly, not wrapped in ApiResponse
-    const data: BacktestResponse = await response.json()
-    return data
+    // Parse response (may be wrapped or direct depending on backend configuration)
+    const responseData = await response.json()
+    
+    // Check if response is wrapped in { data: ... } format
+    if (responseData && typeof responseData === 'object' && 'data' in responseData) {
+      return responseData.data as BacktestResponse
+    }
+    
+    // Response is direct (not wrapped)
+    return responseData as BacktestResponse
   },
 
   /**

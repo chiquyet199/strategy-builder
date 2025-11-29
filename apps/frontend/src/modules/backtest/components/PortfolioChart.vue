@@ -12,6 +12,7 @@ import {
   LinearScale,
   PointElement,
   LineElement,
+  LineController,
   Title,
   Tooltip,
   Legend,
@@ -19,7 +20,16 @@ import {
 } from 'chart.js'
 import type { StrategyResult } from '@/shared/types/backtest'
 
-Chart.register(CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend)
+Chart.register(
+  CategoryScale,
+  LinearScale,
+  PointElement,
+  LineElement,
+  LineController,
+  Title,
+  Tooltip,
+  Legend,
+)
 
 interface Props {
   results: StrategyResult[]

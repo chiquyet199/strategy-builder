@@ -64,29 +64,29 @@
           >
             <template #bodyCell="{ column, record }">
               <template v-if="column.key === 'totalReturn'">
-                <span :class="getReturnClass(record.metrics.totalReturn)">
-                  {{ formatPercentage(record.metrics.totalReturn) }}
+                <span :class="getReturnClass(record.metrics?.totalReturn)">
+                  {{ formatPercentage(record.metrics?.totalReturn) }}
                 </span>
               </template>
               <template v-else-if="column.key === 'finalValue'">
-                ${{ formatNumber(record.metrics.finalValue) }}
+                ${{ formatNumber(record.metrics?.finalValue) }}
               </template>
               <template v-else-if="column.key === 'avgBuyPrice'">
-                ${{ formatNumber(record.metrics.avgBuyPrice) }}
+                ${{ formatNumber(record.metrics?.avgBuyPrice) }}
               </template>
               <template v-else-if="column.key === 'maxDrawdown'">
                 <span class="negative-value">
-                  {{ formatPercentage(record.metrics.maxDrawdown) }}
+                  {{ formatPercentage(record.metrics?.maxDrawdown) }}
                 </span>
               </template>
               <template v-else-if="column.key === 'totalInvestment'">
-                ${{ formatNumber(record.metrics.totalInvestment) }}
+                ${{ formatNumber(record.metrics?.totalInvestment) }}
               </template>
               <template v-else-if="column.key === 'totalQuantity'">
-                {{ formatQuantity(record.metrics.totalQuantity) }}
+                {{ formatQuantity(record.metrics?.totalQuantity) }}
               </template>
               <template v-else-if="column.key === 'sharpeRatio'">
-                {{ record.metrics.sharpeRatio.toFixed(2) }}
+                {{ formatSharpeRatio(record.metrics?.sharpeRatio) }}
               </template>
             </template>
           </a-table>
@@ -126,26 +126,38 @@ const columns = [
   {
     title: 'Total Return',
     key: 'totalReturn',
-    sorter: (a: StrategyResult, b: StrategyResult) =>
-      a.metrics.totalReturn - b.metrics.totalReturn,
+    sorter: (a: StrategyResult, b: StrategyResult) => {
+      const aVal = a.metrics?.totalReturn ?? 0
+      const bVal = b.metrics?.totalReturn ?? 0
+      return aVal - bVal
+    },
   },
   {
     title: 'Final Value',
     key: 'finalValue',
-    sorter: (a: StrategyResult, b: StrategyResult) =>
-      a.metrics.finalValue - b.metrics.finalValue,
+    sorter: (a: StrategyResult, b: StrategyResult) => {
+      const aVal = a.metrics?.finalValue ?? 0
+      const bVal = b.metrics?.finalValue ?? 0
+      return aVal - bVal
+    },
   },
   {
     title: 'Avg Buy Price',
     key: 'avgBuyPrice',
-    sorter: (a: StrategyResult, b: StrategyResult) =>
-      a.metrics.avgBuyPrice - b.metrics.avgBuyPrice,
+    sorter: (a: StrategyResult, b: StrategyResult) => {
+      const aVal = a.metrics?.avgBuyPrice ?? 0
+      const bVal = b.metrics?.avgBuyPrice ?? 0
+      return aVal - bVal
+    },
   },
   {
     title: 'Max Drawdown',
     key: 'maxDrawdown',
-    sorter: (a: StrategyResult, b: StrategyResult) =>
-      a.metrics.maxDrawdown - b.metrics.maxDrawdown,
+    sorter: (a: StrategyResult, b: StrategyResult) => {
+      const aVal = a.metrics?.maxDrawdown ?? 0
+      const bVal = b.metrics?.maxDrawdown ?? 0
+      return aVal - bVal
+    },
   },
   {
     title: 'Total Investment',
@@ -158,8 +170,11 @@ const columns = [
   {
     title: 'Sharpe Ratio',
     key: 'sharpeRatio',
-    sorter: (a: StrategyResult, b: StrategyResult) =>
-      a.metrics.sharpeRatio - b.metrics.sharpeRatio,
+    sorter: (a: StrategyResult, b: StrategyResult) => {
+      const aVal = a.metrics?.sharpeRatio ?? 0
+      const bVal = b.metrics?.sharpeRatio ?? 0
+      return aVal - bVal
+    },
   },
 ]
 
@@ -175,22 +190,31 @@ function formatDateTime(dateString?: string): string {
   return dayjs(dateString).format('MMM DD, YYYY HH:mm:ss')
 }
 
-function formatPercentage(value: number): string {
+function formatPercentage(value: number | null | undefined): string {
+  if (value == null || isNaN(value)) return 'N/A'
   return `${value >= 0 ? '+' : ''}${value.toFixed(2)}%`
 }
 
-function formatNumber(value: number): string {
+function formatNumber(value: number | null | undefined): string {
+  if (value == null || isNaN(value)) return 'N/A'
   return value.toLocaleString('en-US', {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
   })
 }
 
-function formatQuantity(value: number): string {
+function formatQuantity(value: number | null | undefined): string {
+  if (value == null || isNaN(value)) return 'N/A'
   return value.toFixed(8)
 }
 
-function getReturnClass(returnValue: number): string {
+function formatSharpeRatio(value: number | null | undefined): string {
+  if (value == null || isNaN(value)) return 'N/A'
+  return value.toFixed(2)
+}
+
+function getReturnClass(returnValue: number | null | undefined): string {
+  if (returnValue == null || isNaN(returnValue)) return ''
   return returnValue >= 0 ? 'positive-value' : 'negative-value'
 }
 

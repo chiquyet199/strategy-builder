@@ -144,9 +144,10 @@ async function handleCompare() {
 
   // Update store with form values
   backtestStore.setInvestmentAmount(formState.investmentAmount)
+  // Format dates as ISO 8601 with time (required by backend)
   backtestStore.setDateRange(
-    formState.startDate.format('YYYY-MM-DD'),
-    formState.endDate.format('YYYY-MM-DD'),
+    formState.startDate.startOf('day').toISOString(),
+    formState.endDate.endOf('day').toISOString(),
   )
 
   // Build strategy configs (no parameters for MVP)

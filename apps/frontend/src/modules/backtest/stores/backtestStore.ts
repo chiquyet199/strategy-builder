@@ -59,6 +59,11 @@ export const useBacktestStore = defineStore('backtest', () => {
         timeframe: timeframe.value,
       })
 
+      // Debug logging
+      console.log('Backtest response:', response)
+      console.log('Results:', response?.results)
+      console.log('Results length:', response?.results?.length)
+
       results.value = response
     } catch (err) {
       error.value = err instanceof Error ? err.message : 'Failed to compare strategies'

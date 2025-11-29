@@ -113,7 +113,9 @@ export class AuthService {
   }
 
   async forgotPassword(forgotPasswordDto: ForgotPasswordDto) {
-    this.logger.log(`Processing forgot password request for email: ${forgotPasswordDto.email}`);
+    this.logger.log(
+      `Processing forgot password request for email: ${forgotPasswordDto.email}`,
+    );
     const user = await this.userRepository.findOne({
       where: { email: forgotPasswordDto.email },
     });
@@ -147,8 +149,13 @@ export class AuthService {
     // Send email with reset link (never return token in response for security)
     try {
       this.logger.log(`Sending password reset email to ${user.email}`);
-      const emailResult = await this.emailService.sendPasswordResetEmail(user.email, resetToken);
-      this.logger.log(`Password reset email sent successfully: ${JSON.stringify(emailResult)}`);
+      const emailResult = await this.emailService.sendPasswordResetEmail(
+        user.email,
+        resetToken,
+      );
+      this.logger.log(
+        `Password reset email sent successfully: ${JSON.stringify(emailResult)}`,
+      );
     } catch (error) {
       // Log error but don't reveal to user (security best practice)
       this.logger.error({

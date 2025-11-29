@@ -104,13 +104,13 @@ export class DipBuyerDcaStrategy extends BaseStrategy {
           reason = `Dip detected: ${(dropPercent * 100).toFixed(2)}% drop from recent high - ${buyMultiplier}x purchase`;
         }
 
-        const btcPurchased = buyAmount / currentPrice;
+        const quantityPurchased = buyAmount / currentPrice;
 
         transactions.push({
           date: candle.timestamp,
           price: currentPrice,
           amount: buyAmount,
-          btcPurchased,
+          quantityPurchased,
           reason,
         });
 

@@ -38,13 +38,13 @@ export class LumpSumStrategy extends BaseStrategy {
     // Buy at the first candle (start date)
     const firstCandle = candles[0];
     const price = firstCandle.close;
-    const btcPurchased = investmentAmount / price;
+    const quantityPurchased = investmentAmount / price;
 
     const transaction: Transaction = {
       date: firstCandle.timestamp,
       price,
       amount: investmentAmount,
-      btcPurchased,
+      quantityPurchased,
       reason: 'Initial lump sum purchase',
     };
 

@@ -21,8 +21,9 @@ export class MarketDataService {
     );
 
     // For MVP, only BTC/USD is supported
+    // TODO: Extend to support multiple symbols (ETH/USD, etc.)
     if (symbol !== 'BTC/USD') {
-      throw new Error(`Symbol ${symbol} is not supported. Only BTC/USD is available.`);
+      throw new Error(`Symbol ${symbol} is not supported. Only BTC/USD is available in MVP.`);
     }
 
     const start = new Date(startDate);

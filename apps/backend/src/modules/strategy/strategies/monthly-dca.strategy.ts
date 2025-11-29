@@ -58,13 +58,13 @@ export class MonthlyDcaStrategy extends BaseStrategy {
       if (candleYear > lastPurchaseYear || 
           (candleYear === lastPurchaseYear && candleMonth > lastPurchaseMonth)) {
         const price = candle.close;
-        const btcPurchased = monthlyAmount / price;
+        const quantityPurchased = monthlyAmount / price;
 
         transactions.push({
           date: candle.timestamp,
           price,
           amount: monthlyAmount,
-          btcPurchased,
+          quantityPurchased,
           reason: 'Monthly DCA purchase',
         });
 

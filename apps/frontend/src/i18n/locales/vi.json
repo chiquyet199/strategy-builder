@@ -124,7 +124,7 @@
       "avgBuyPrice": "Giá mua trung bình",
       "maxDrawdown": "Mức giảm tối đa",
       "totalInvestment": "Tổng đầu tư",
-      "totalBTC": "Tổng BTC",
+      "totalQuantity": "Tổng Số lượng",
       "sharpeRatio": "Tỷ lệ Sharpe",
       "investmentAmount": "Số tiền đầu tư",
       "dateRange": "Khoảng thời gian",

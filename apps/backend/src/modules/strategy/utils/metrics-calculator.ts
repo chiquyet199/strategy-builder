@@ -19,13 +19,13 @@ export class MetricsCalculator {
     }
 
     const finalValue = portfolioHistory[portfolioHistory.length - 1].value;
-    const totalBTC = portfolioHistory[portfolioHistory.length - 1].btcHeld;
+    const totalQuantity = portfolioHistory[portfolioHistory.length - 1].quantityHeld;
 
     // Total return percentage
     const totalReturn = ((finalValue - totalInvestment) / totalInvestment) * 100;
 
     // Average buy price
-    const avgBuyPrice = totalInvestment / totalBTC;
+    const avgBuyPrice = totalQuantity > 0 ? totalInvestment / totalQuantity : 0;
 
     // Maximum drawdown
     const maxDrawdown = this.calculateMaxDrawdown(portfolioHistory);
@@ -40,7 +40,7 @@ export class MetricsCalculator {
       finalValue,
       sharpeRatio,
       totalInvestment,
-      totalBTC,
+      totalQuantity,
     };
   }
 
@@ -109,7 +109,7 @@ export class MetricsCalculator {
     startDate: string,
   ): PortfolioValuePoint[] {
     const history: PortfolioValuePoint[] = [];
-    let totalBTC = 0;
+    let totalQuantity = 0;
     let totalInvested = 0;
 
     // Create a map of transactions by date for quick lookup
@@ -132,17 +132,17 @@ export class MetricsCalculator {
 
       // Process transactions for this day
       for (const tx of dayTransactions) {
-        totalBTC += tx.btcPurchased;
+        totalQuantity += tx.quantityPurchased;
         totalInvested += tx.amount;
       }
 
       // Calculate portfolio value at this point
-      const portfolioValue = totalBTC * candle.close;
+      const portfolioValue = totalQuantity * candle.close;
 
       history.push({
         date: candleDateFull,
         value: portfolioValue,
-        btcHeld: totalBTC,
+        quantityHeld: totalQuantity,
         price: candle.close,
       });
     }

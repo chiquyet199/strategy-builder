@@ -100,13 +100,13 @@ export class MovingAverageDcaStrategy extends BaseStrategy {
           reason = `Price above ${maPeriod}-day MA - normal purchase`;
         }
 
-        const btcPurchased = buyAmount / currentPrice;
+        const quantityPurchased = buyAmount / currentPrice;
 
         transactions.push({
           date: candle.timestamp,
           price: currentPrice,
           amount: buyAmount,
-          btcPurchased,
+          quantityPurchased,
           reason,
         });
 

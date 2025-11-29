@@ -2,8 +2,9 @@ import { Candlestick, Timeframe } from '../interfaces/candlestick.interface';
 
 /**
  * Mock Data Generator
- * Generates realistic BTC price data for backtesting
+ * Generates realistic cryptocurrency price data for backtesting
  * Uses historical price ranges and realistic volatility patterns
+ * Currently generates BTC-like price data, but can be extended for other assets
  */
 export class MockDataGenerator {
   /**
@@ -17,7 +18,7 @@ export class MockDataGenerator {
     const candles: Candlestick[] = [];
     const currentDate = new Date(startDate);
 
-    // Historical BTC price ranges (approximate)
+    // Historical cryptocurrency price ranges (approximate, BTC-like)
     // 2020: ~$7,000 - $29,000
     // 2021: ~$29,000 - $69,000 (peak)
     // 2022: ~$69,000 - $15,000 (crash)

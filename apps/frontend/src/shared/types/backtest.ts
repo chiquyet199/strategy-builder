@@ -18,14 +18,14 @@ export interface Transaction {
   date: string; // ISO 8601
   price: number;
   amount: number; // USD
-  btcPurchased: number;
+  quantityPurchased: number; // Amount of asset purchased
   reason?: string;
 }
 
 export interface PortfolioValuePoint {
   date: string; // ISO 8601
   value: number; // USD
-  btcHeld: number;
+  quantityHeld: number; // Amount of asset held
   price: number;
 }
 
@@ -36,7 +36,7 @@ export interface StrategyMetrics {
   finalValue: number; // USD
   sharpeRatio: number;
   totalInvestment: number; // USD
-  totalBTC: number;
+  totalQuantity: number; // Total asset quantity accumulated
 }
 
 export interface StrategyResult {

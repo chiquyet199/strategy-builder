@@ -56,13 +56,13 @@ export class WeeklyDcaStrategy extends BaseStrategy {
       // Buy every 7 days
       if (daysSinceLastPurchase >= 7) {
         const price = candle.close;
-        const btcPurchased = weeklyAmount / price;
+        const quantityPurchased = weeklyAmount / price;
 
         transactions.push({
           date: candle.timestamp,
           price,
           amount: weeklyAmount,
-          btcPurchased,
+          quantityPurchased,
           reason: 'Weekly DCA purchase',
         });
 

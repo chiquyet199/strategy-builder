@@ -82,8 +82,8 @@
               <template v-else-if="column.key === 'totalInvestment'">
                 ${{ formatNumber(record.metrics.totalInvestment) }}
               </template>
-              <template v-else-if="column.key === 'totalBTC'">
-                {{ formatBTC(record.metrics.totalBTC) }}
+              <template v-else-if="column.key === 'totalQuantity'">
+                {{ formatQuantity(record.metrics.totalQuantity) }}
               </template>
               <template v-else-if="column.key === 'sharpeRatio'">
                 {{ record.metrics.sharpeRatio.toFixed(2) }}
@@ -152,8 +152,8 @@ const columns = [
     key: 'totalInvestment',
   },
   {
-    title: 'Total BTC',
-    key: 'totalBTC',
+    title: 'Total Quantity',
+    key: 'totalQuantity',
   },
   {
     title: 'Sharpe Ratio',
@@ -186,7 +186,7 @@ function formatNumber(value: number): string {
   })
 }
 
-function formatBTC(value: number): string {
+function formatQuantity(value: number): string {
   return value.toFixed(8)
 }
 

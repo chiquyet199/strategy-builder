@@ -124,7 +124,7 @@
       "avgBuyPrice": "Avg Buy Price",
       "maxDrawdown": "Max Drawdown",
       "totalInvestment": "Total Investment",
-      "totalBTC": "Total BTC",
+      "totalQuantity": "Total Quantity",
       "sharpeRatio": "Sharpe Ratio",
       "investmentAmount": "Investment Amount",
       "dateRange": "Date Range",

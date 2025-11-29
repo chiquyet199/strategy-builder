@@ -127,13 +127,13 @@ export class RsiDcaStrategy extends BaseStrategy {
         }
 
         const price = candle.close;
-        const btcPurchased = buyAmount / price;
+        const quantityPurchased = buyAmount / price;
 
         transactions.push({
           date: candle.timestamp,
           price,
           amount: buyAmount,
-          btcPurchased,
+          quantityPurchased,
           reason,
         });
 

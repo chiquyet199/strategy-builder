@@ -3,9 +3,9 @@
  */
 export interface Transaction {
   date: string; // ISO 8601
-  price: number; // Price at which BTC was purchased
+  price: number; // Price at which the asset was purchased
   amount: number; // USD amount invested
-  btcPurchased: number; // Amount of BTC purchased
+  quantityPurchased: number; // Amount of asset purchased
   reason?: string; // Optional reason for the purchase (e.g., "RSI < 30", "Dip detected")
 }
 
@@ -15,8 +15,8 @@ export interface Transaction {
 export interface PortfolioValuePoint {
   date: string; // ISO 8601
   value: number; // Portfolio value in USD
-  btcHeld: number; // Amount of BTC held
-  price: number; // BTC price at this point
+  quantityHeld: number; // Amount of asset held
+  price: number; // Asset price at this point
 }
 
 /**
@@ -29,7 +29,7 @@ export interface StrategyMetrics {
   finalValue: number; // Final portfolio value in USD
   sharpeRatio: number; // Sharpe ratio (risk-adjusted return)
   totalInvestment: number; // Total USD invested
-  totalBTC: number; // Total BTC accumulated
+  totalQuantity: number; // Total asset quantity accumulated
 }
 
 /**

@@ -159,13 +159,13 @@ export class CombinedSmartDcaStrategy extends BaseStrategy {
           ? `Combined signals: ${reasons.join(', ')} - ${multiplier.toFixed(2)}x purchase`
           : 'Weekly DCA purchase';
 
-        const btcPurchased = buyAmount / currentPrice;
+        const quantityPurchased = buyAmount / currentPrice;
 
         transactions.push({
           date: candle.timestamp,
           price: currentPrice,
           amount: buyAmount,
-          btcPurchased,
+          quantityPurchased,
           reason,
         });
 

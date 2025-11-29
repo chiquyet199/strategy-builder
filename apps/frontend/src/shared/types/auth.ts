@@ -19,10 +19,13 @@ export interface RegisterResponse {
   user: User
 }
 
+export type UserRole = 'user' | 'admin' | 'master'
+
 export interface User {
   id: string
   email: string
   name: string
+  role: UserRole
   createdAt: string
   updatedAt: string
 }
@@ -31,6 +34,7 @@ export interface ProfileResponse {
   id: string
   email: string
   name: string
+  role: UserRole
   createdAt: string
   updatedAt: string
 }

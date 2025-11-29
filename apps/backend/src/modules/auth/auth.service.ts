@@ -47,7 +47,11 @@ export class AuthService {
 
     const savedUser = await this.userRepository.save(user);
 
-    const payload = { sub: savedUser.id, email: savedUser.email };
+    const payload = {
+      sub: savedUser.id,
+      email: savedUser.email,
+      role: savedUser.role,
+    };
     const access_token = this.jwtService.sign(payload);
 
     return {
@@ -56,6 +60,7 @@ export class AuthService {
         id: savedUser.id,
         email: savedUser.email,
         name: savedUser.name,
+        role: savedUser.role,
         createdAt: savedUser.createdAt.toISOString(),
         updatedAt: savedUser.updatedAt.toISOString(),
       },
@@ -79,7 +84,11 @@ export class AuthService {
       throw new UnauthorizedException('Invalid credentials');
     }
 
-    const payload = { sub: user.id, email: user.email };
+    const payload = {
+      sub: user.id,
+      email: user.email,
+      role: user.role,
+    };
     const access_token = this.jwtService.sign(payload);
 
     return {
@@ -88,6 +97,7 @@ export class AuthService {
         id: user.id,
         email: user.email,
         name: user.name,
+        role: user.role,
         createdAt: user.createdAt.toISOString(),
         updatedAt: user.updatedAt.toISOString(),
       },
@@ -107,6 +117,7 @@ export class AuthService {
       id: user.id,
       email: user.email,
       name: user.name,
+      role: user.role,
       createdAt: user.createdAt.toISOString(),
       updatedAt: user.updatedAt.toISOString(),
     };

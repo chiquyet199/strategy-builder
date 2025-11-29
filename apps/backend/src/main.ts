@@ -1,3 +1,12 @@
+// Load environment variables from .env file
+// This must be done before any other imports that use process.env
+import { config } from 'dotenv';
+import { resolve } from 'path';
+
+// Load .env file from apps/backend directory
+// __dirname in compiled code will be apps/backend/dist, so we go up one level to apps/backend
+config({ path: resolve(__dirname, '../.env') });
+
 import { NestFactory, Reflector } from '@nestjs/core';
 import {
   ValidationPipe,

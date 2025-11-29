@@ -16,6 +16,8 @@ import { LoggingInterceptor } from './common/interceptors/logging.interceptor';
 import { getDatabaseConfig } from './config/database.config';
 import { User } from './modules/auth/entities/user.entity';
 
+// Database config is loaded lazily to ensure .env file is loaded first
+// The .env file is loaded in main.ts before AppModule is imported
 const dbConfig = getDatabaseConfig();
 
 @Module({

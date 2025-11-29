@@ -113,17 +113,21 @@ export class AuthService {
   }
 
   async forgotPassword(forgotPasswordDto: ForgotPasswordDto) {
+    this.logger.log(`Processing forgot password request for email: ${forgotPasswordDto.email}`);
     const user = await this.userRepository.findOne({
       where: { email: forgotPasswordDto.email },
     });
 
     // Don't reveal if user exists or not (security best practice)
     if (!user) {
+      this.logger.log(`User not found for email: ${forgotPasswordDto.email}`);
       // Return success even if user doesn't exist to prevent email enumeration
       return {
         message: 'If the email exists, a password reset link has been sent',
       };
     }
+
+    this.logger.log(`User found, generating reset token for user: ${user.id}`);
 
     // Generate reset token
     const resetToken = crypto.randomBytes(32).toString('hex');
@@ -142,7 +146,9 @@ export class AuthService {
 
     // Send email with reset link (never return token in response for security)
     try {
-      await this.emailService.sendPasswordResetEmail(user.email, resetToken);
+      this.logger.log(`Sending password reset email to ${user.email}`);
+      const emailResult = await this.emailService.sendPasswordResetEmail(user.email, resetToken);
+      this.logger.log(`Password reset email sent successfully: ${JSON.stringify(emailResult)}`);
     } catch (error) {
       // Log error but don't reveal to user (security best practice)
       this.logger.error({

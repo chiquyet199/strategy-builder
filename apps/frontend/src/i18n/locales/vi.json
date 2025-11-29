@@ -1,0 +1,95 @@
+{
+  "common": {
+    "email": "Email",
+    "password": "Mật khẩu",
+    "name": "Tên",
+    "submit": "Gửi",
+    "cancel": "Hủy",
+    "loading": "Đang tải...",
+    "error": "Lỗi",
+    "success": "Thành công",
+    "logout": "Đăng xuất"
+  },
+  "auth": {
+    "login": {
+      "title": "Đăng nhập vào tài khoản của bạn",
+      "button": "Đăng nhập",
+      "emailPlaceholder": "Nhập email của bạn",
+      "passwordPlaceholder": "Nhập mật khẩu của bạn",
+      "forgotPassword": "Quên mật khẩu?",
+      "noAccount": "Chưa có tài khoản?",
+      "registerLink": "Đăng ký tại đây",
+      "emailRequired": "Vui lòng nhập email",
+      "emailInvalid": "Vui lòng nhập email hợp lệ",
+      "passwordRequired": "Vui lòng nhập mật khẩu",
+      "loginFailed": "Đăng nhập thất bại"
+    },
+    "register": {
+      "title": "Tạo tài khoản của bạn",
+      "button": "Đăng ký",
+      "hasAccount": "Đã có tài khoản?",
+      "signInLink": "Đăng nhập tại đây",
+      "namePlaceholder": "Nhập tên của bạn",
+      "emailPlaceholder": "Nhập email của bạn",
+      "passwordPlaceholder": "Nhập mật khẩu của bạn",
+      "confirmPassword": "Xác nhận mật khẩu",
+      "confirmPasswordPlaceholder": "Xác nhận mật khẩu của bạn",
+      "nameRequired": "Vui lòng nhập tên",
+      "nameMinLength": "Mật khẩu phải có ít nhất 6 ký tự",
+      "emailRequired": "Vui lòng nhập email",
+      "emailInvalid": "Vui lòng nhập email hợp lệ",
+      "passwordRequired": "Vui lòng nhập mật khẩu",
+      "passwordMinLength": "Mật khẩu phải có ít nhất 6 ký tự",
+      "confirmPasswordRequired": "Vui lòng xác nhận mật khẩu",
+      "passwordMismatch": "Mật khẩu không khớp",
+      "registerFailed": "Đăng ký thất bại"
+    },
+    "forgotPassword": {
+      "title": "Quên mật khẩu",
+      "description": "Nhập địa chỉ email của bạn và chúng tôi sẽ gửi cho bạn liên kết để đặt lại mật khẩu.",
+      "button": "Gửi liên kết đặt lại",
+      "backToLogin": "Quay lại đăng nhập",
+      "rememberPassword": "Nhớ mật khẩu?",
+      "signInLink": "Đăng nhập tại đây",
+      "emailPlaceholder": "Nhập email của bạn",
+      "emailRequired": "Vui lòng nhập email",
+      "emailInvalid": "Vui lòng nhập email hợp lệ",
+      "successMessage": "Nếu email tồn tại, một liên kết đặt lại mật khẩu đã được gửi đến địa chỉ email của bạn. Vui lòng kiểm tra hộp thư và làm theo hướng dẫn để đặt lại mật khẩu.",
+      "failed": "Gửi email đặt lại thất bại"
+    },
+    "resetPassword": {
+      "title": "Đặt lại mật khẩu",
+      "button": "Đặt lại mật khẩu",
+      "newPassword": "Mật khẩu mới",
+      "newPasswordPlaceholder": "Nhập mật khẩu mới",
+      "confirmPassword": "Xác nhận mật khẩu",
+      "confirmPasswordPlaceholder": "Xác nhận mật khẩu mới",
+      "rememberPassword": "Nhớ mật khẩu?",
+      "signInLink": "Đăng nhập tại đây",
+      "passwordRequired": "Vui lòng nhập mật khẩu mới",
+      "passwordMinLength": "Mật khẩu phải có ít nhất 6 ký tự",
+      "confirmPasswordRequired": "Vui lòng xác nhận mật khẩu",
+      "passwordMismatch": "Mật khẩu không khớp",
+      "resetFailed": "Đặt lại mật khẩu thất bại",
+      "invalidToken": "Liên kết đặt lại không hợp lệ. Vui lòng yêu cầu liên kết đặt lại mật khẩu mới.",
+      "invalidTokenMessage": "Liên kết đặt lại không hợp lệ. Vui lòng kiểm tra email và sử dụng liên kết được cung cấp, hoặc yêu cầu đặt lại mật khẩu mới.",
+      "resetSuccess": "Đặt lại mật khẩu thành công! Bây giờ bạn có thể đăng nhập bằng mật khẩu mới."
+    },
+    "profile": {
+      "title": "Hồ sơ",
+      "loadingProfile": "Đang tải hồ sơ...",
+      "id": "ID",
+      "name": "Tên",
+      "email": "Email",
+      "createdAt": "Ngày tạo",
+      "loadFailed": "Tải hồ sơ thất bại"
+    }
+  },
+  "validation": {
+    "required": "Trường này là bắt buộc",
+    "email": "Vui lòng nhập địa chỉ email hợp lệ",
+    "minLength": "Tối thiểu {min} ký tự",
+    "maxLength": "Tối đa {max} ký tự"
+  }
+}
+

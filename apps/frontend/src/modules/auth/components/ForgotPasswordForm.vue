@@ -1,9 +1,11 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import { useForm } from 'ant-design-vue/es/form'
+import { useI18n } from 'vue-i18n'
 import { useAuthStore } from '../stores/authStore'
 import { authService } from '../services/authService'
 
+const { t } = useI18n()
 const emit = defineEmits<{
   success: []
 }>()
@@ -19,8 +21,8 @@ const successMessage = ref<string | null>(null)
 
 const rules = {
   email: [
-    { required: true, message: 'Please enter your email', trigger: 'blur' },
-    { type: 'email', message: 'Please enter a valid email', trigger: 'blur' },
+    { required: true, message: t('auth.forgotPassword.emailRequired'), trigger: 'blur' },
+    { type: 'email', message: t('auth.forgotPassword.emailInvalid'), trigger: 'blur' },
   ],
 }
 
@@ -36,15 +38,14 @@ const handleSubmit = async () => {
   try {
     await validate()
     await authService.forgotPassword({ email: formState.value.email })
-    successMessage.value =
-      'If the email exists, a password reset link has been sent to your email address. Please check your inbox and follow the instructions to reset your password.'
+    successMessage.value = t('auth.forgotPassword.successMessage')
     emit('success')
   } catch (error) {
     if (error && typeof error === 'object' && 'errorFields' in error) {
       return
     }
     localError.value =
-      error instanceof Error ? error.message : 'Failed to send reset email'
+      error instanceof Error ? error.message : t('auth.forgotPassword.failed')
   }
 }
 </script>
@@ -69,11 +70,11 @@ const handleSubmit = async () => {
       class="mb-4"
     />
 
-    <a-form-item label="Email" v-bind="validateInfos.email">
+    <a-form-item :label="t('common.email')" v-bind="validateInfos.email">
       <a-input
         v-model:value="formState.email"
         type="email"
-        placeholder="Enter your email"
+        :placeholder="t('auth.forgotPassword.emailPlaceholder')"
         size="large"
       />
     </a-form-item>
@@ -86,7 +87,7 @@ const handleSubmit = async () => {
         block
         size="large"
       >
-        Send Reset Link
+        {{ t('auth.forgotPassword.button') }}
       </a-button>
     </a-form-item>
   </a-form>

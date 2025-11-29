@@ -1,0 +1,95 @@
+{
+  "common": {
+    "email": "Email",
+    "password": "Password",
+    "name": "Name",
+    "submit": "Submit",
+    "cancel": "Cancel",
+    "loading": "Loading...",
+    "error": "Error",
+    "success": "Success",
+    "logout": "Logout"
+  },
+  "auth": {
+    "login": {
+      "title": "Sign in to your account",
+      "button": "Login",
+      "emailPlaceholder": "Enter your email",
+      "passwordPlaceholder": "Enter your password",
+      "forgotPassword": "Forgot your password?",
+      "noAccount": "Don't have an account?",
+      "registerLink": "Register here",
+      "emailRequired": "Please enter your email",
+      "emailInvalid": "Please enter a valid email",
+      "passwordRequired": "Please enter your password",
+      "loginFailed": "Login failed"
+    },
+    "register": {
+      "title": "Create your account",
+      "button": "Register",
+      "hasAccount": "Already have an account?",
+      "signInLink": "Sign in here",
+      "namePlaceholder": "Enter your name",
+      "emailPlaceholder": "Enter your email",
+      "passwordPlaceholder": "Enter your password",
+      "confirmPassword": "Confirm Password",
+      "confirmPasswordPlaceholder": "Confirm your password",
+      "nameRequired": "Please enter your name",
+      "nameMinLength": "Password must be at least 6 characters",
+      "emailRequired": "Please enter your email",
+      "emailInvalid": "Please enter a valid email",
+      "passwordRequired": "Please enter your password",
+      "passwordMinLength": "Password must be at least 6 characters",
+      "confirmPasswordRequired": "Please confirm your password",
+      "passwordMismatch": "Passwords do not match",
+      "registerFailed": "Registration failed"
+    },
+    "forgotPassword": {
+      "title": "Forgot Password",
+      "description": "Enter your email address and we'll send you a link to reset your password.",
+      "button": "Send Reset Link",
+      "backToLogin": "Back to login",
+      "rememberPassword": "Remember your password?",
+      "signInLink": "Sign in here",
+      "emailPlaceholder": "Enter your email",
+      "emailRequired": "Please enter your email",
+      "emailInvalid": "Please enter a valid email",
+      "successMessage": "If the email exists, a password reset link has been sent to your email address. Please check your inbox and follow the instructions to reset your password.",
+      "failed": "Failed to send reset email"
+    },
+    "resetPassword": {
+      "title": "Reset Password",
+      "button": "Reset Password",
+      "newPassword": "New Password",
+      "newPasswordPlaceholder": "Enter your new password",
+      "confirmPassword": "Confirm Password",
+      "confirmPasswordPlaceholder": "Confirm your new password",
+      "rememberPassword": "Remember your password?",
+      "signInLink": "Sign in here",
+      "passwordRequired": "Please enter your new password",
+      "passwordMinLength": "Password must be at least 6 characters",
+      "confirmPasswordRequired": "Please confirm your password",
+      "passwordMismatch": "Passwords do not match",
+      "resetFailed": "Failed to reset password",
+      "invalidToken": "Invalid reset link. Please request a new password reset link.",
+      "invalidTokenMessage": "Invalid reset link. Please check your email and use the link provided, or request a new password reset.",
+      "resetSuccess": "Password reset successful! You can now login with your new password."
+    },
+    "profile": {
+      "title": "Profile",
+      "loadingProfile": "Loading profile...",
+      "id": "ID",
+      "name": "Name",
+      "email": "Email",
+      "createdAt": "Created At",
+      "loadFailed": "Failed to load profile"
+    }
+  },
+  "validation": {
+    "required": "This field is required",
+    "email": "Please enter a valid email address",
+    "minLength": "Minimum {min} characters required",
+    "maxLength": "Maximum {max} characters allowed"
+  }
+}
+

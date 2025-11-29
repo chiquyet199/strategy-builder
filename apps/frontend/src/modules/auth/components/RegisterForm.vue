@@ -1,10 +1,12 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import { useForm } from 'ant-design-vue/es/form'
+import { useI18n } from 'vue-i18n'
 import { useAuthStore } from '../stores/authStore'
 import { authService } from '../services/authService'
 import type { RegisterRequest } from '@/shared/types/auth'
 
+const { t } = useI18n()
 const emit = defineEmits<{
   success: []
 }>()
@@ -22,26 +24,26 @@ const localError = ref<string | null>(null)
 
 const validatePasswordMatch = async (_rule: unknown, value: string) => {
   if (!value) {
-    return Promise.reject('Please confirm your password')
+    return Promise.reject(t('auth.register.confirmPasswordRequired'))
   }
   if (value !== formState.value.password) {
-    return Promise.reject('Passwords do not match')
+    return Promise.reject(t('auth.register.passwordMismatch'))
   }
   return Promise.resolve()
 }
 
 const rules = {
-  name: [{ required: true, message: 'Please enter your name', trigger: 'blur' }],
+  name: [{ required: true, message: t('auth.register.nameRequired'), trigger: 'blur' }],
   email: [
-    { required: true, message: 'Please enter your email', trigger: 'blur' },
-    { type: 'email', message: 'Please enter a valid email', trigger: 'blur' },
+    { required: true, message: t('auth.register.emailRequired'), trigger: 'blur' },
+    { type: 'email', message: t('auth.register.emailInvalid'), trigger: 'blur' },
   ],
   password: [
-    { required: true, message: 'Please enter your password', trigger: 'blur' },
-    { min: 6, message: 'Password must be at least 6 characters', trigger: 'blur' },
+    { required: true, message: t('auth.register.passwordRequired'), trigger: 'blur' },
+    { min: 6, message: t('auth.register.passwordMinLength'), trigger: 'blur' },
   ],
   confirmPassword: [
-    { required: true, message: 'Please confirm your password', trigger: 'blur' },
+    { required: true, message: t('auth.register.confirmPasswordRequired'), trigger: 'blur' },
     { validator: validatePasswordMatch, trigger: 'blur' },
   ],
 }
@@ -70,7 +72,7 @@ const handleSubmit = async () => {
       // Validation errors are handled by form
       return
     }
-    localError.value = error instanceof Error ? error.message : 'Registration failed'
+    localError.value = error instanceof Error ? error.message : t('auth.register.registerFailed')
   }
 }
 </script>
@@ -86,36 +88,36 @@ const handleSubmit = async () => {
       class="mb-4"
     />
 
-    <a-form-item label="Name" v-bind="validateInfos.name">
+    <a-form-item :label="t('common.name')" v-bind="validateInfos.name">
       <a-input
         v-model:value="formState.name"
         type="text"
-        placeholder="Enter your name"
+        :placeholder="t('auth.register.namePlaceholder')"
         size="large"
       />
     </a-form-item>
 
-    <a-form-item label="Email" v-bind="validateInfos.email">
+    <a-form-item :label="t('common.email')" v-bind="validateInfos.email">
       <a-input
         v-model:value="formState.email"
         type="email"
-        placeholder="Enter your email"
+        :placeholder="t('auth.register.emailPlaceholder')"
         size="large"
       />
     </a-form-item>
 
-    <a-form-item label="Password" v-bind="validateInfos.password">
+    <a-form-item :label="t('common.password')" v-bind="validateInfos.password">
       <a-input-password
         v-model:value="formState.password"
-        placeholder="Enter your password"
+        :placeholder="t('auth.register.passwordPlaceholder')"
         size="large"
       />
     </a-form-item>
 
-    <a-form-item label="Confirm Password" v-bind="validateInfos.confirmPassword">
+    <a-form-item :label="t('auth.register.confirmPassword')" v-bind="validateInfos.confirmPassword">
       <a-input-password
         v-model:value="formState.confirmPassword"
-        placeholder="Confirm your password"
+        :placeholder="t('auth.register.confirmPasswordPlaceholder')"
         size="large"
       />
     </a-form-item>
@@ -128,7 +130,7 @@ const handleSubmit = async () => {
         block
         size="large"
       >
-        Register
+        {{ t('auth.register.button') }}
       </a-button>
     </a-form-item>
   </a-form>

@@ -2,9 +2,11 @@
 import { ref, onMounted, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useForm } from 'ant-design-vue/es/form'
+import { useI18n } from 'vue-i18n'
 import { useAuthStore } from '../stores/authStore'
 import { authService } from '../services/authService'
 
+const { t } = useI18n()
 const route = useRoute()
 const router = useRouter()
 const authStore = useAuthStore()
@@ -23,21 +25,21 @@ const resetToken = computed(() => {
 
 const validatePasswordMatch = async (_rule: unknown, value: string) => {
   if (!value) {
-    return Promise.reject('Please confirm your password')
+    return Promise.reject(t('auth.resetPassword.confirmPasswordRequired'))
   }
   if (value !== formState.value.newPassword) {
-    return Promise.reject('Passwords do not match')
+    return Promise.reject(t('auth.resetPassword.passwordMismatch'))
   }
   return Promise.resolve()
 }
 
 const rules = {
   newPassword: [
-    { required: true, message: 'Please enter your new password', trigger: 'blur' },
-    { min: 6, message: 'Password must be at least 6 characters', trigger: 'blur' },
+    { required: true, message: t('auth.resetPassword.passwordRequired'), trigger: 'blur' },
+    { min: 6, message: t('auth.resetPassword.passwordMinLength'), trigger: 'blur' },
   ],
   confirmPassword: [
-    { required: true, message: 'Please confirm your password', trigger: 'blur' },
+    { required: true, message: t('auth.resetPassword.confirmPasswordRequired'), trigger: 'blur' },
     { validator: validatePasswordMatch, trigger: 'blur' },
   ],
 }
@@ -50,8 +52,7 @@ const { validate, validateInfos } = useForm(formState, {
 onMounted(() => {
   // Check if token exists in URL
   if (!resetToken.value) {
-    localError.value =
-      'Invalid reset link. Please request a new password reset link.'
+    localError.value = t('auth.resetPassword.invalidToken')
   }
 })
 
@@ -60,8 +61,7 @@ const handleSubmit = async () => {
 
   // Validate token exists
   if (!resetToken.value) {
-    localError.value =
-      'Invalid reset link. Please request a new password reset link.'
+    localError.value = t('auth.resetPassword.invalidToken')
     return
   }
 
@@ -80,7 +80,7 @@ const handleSubmit = async () => {
       return
     }
     localError.value =
-      error instanceof Error ? error.message : 'Failed to reset password'
+      error instanceof Error ? error.message : t('auth.resetPassword.resetFailed')
   }
 }
 </script>
@@ -98,24 +98,24 @@ const handleSubmit = async () => {
 
     <a-alert
       v-if="!resetToken"
-      message="Invalid reset link. Please check your email and use the link provided, or request a new password reset."
+      :message="t('auth.resetPassword.invalidTokenMessage')"
       type="warning"
       show-icon
       class="mb-4"
     />
 
-    <a-form-item label="New Password" v-bind="validateInfos.newPassword">
+    <a-form-item :label="t('auth.resetPassword.newPassword')" v-bind="validateInfos.newPassword">
       <a-input-password
         v-model:value="formState.newPassword"
-        placeholder="Enter your new password"
+        :placeholder="t('auth.resetPassword.newPasswordPlaceholder')"
         size="large"
       />
     </a-form-item>
 
-    <a-form-item label="Confirm Password" v-bind="validateInfos.confirmPassword">
+    <a-form-item :label="t('auth.resetPassword.confirmPassword')" v-bind="validateInfos.confirmPassword">
       <a-input-password
         v-model:value="formState.confirmPassword"
-        placeholder="Confirm your new password"
+        :placeholder="t('auth.resetPassword.confirmPasswordPlaceholder')"
         size="large"
       />
     </a-form-item>
@@ -128,7 +128,7 @@ const handleSubmit = async () => {
         block
         size="large"
       >
-        Reset Password
+        {{ t('auth.resetPassword.button') }}
       </a-button>
     </a-form-item>
   </a-form>

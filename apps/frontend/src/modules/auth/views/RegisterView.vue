@@ -2,9 +2,11 @@
 import { onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { RouterLink } from 'vue-router'
+import { useI18n } from 'vue-i18n'
 import RegisterForm from '../components/RegisterForm.vue'
 import { useAuthStore } from '../stores/authStore'
 
+const { t } = useI18n()
 const router = useRouter()
 const authStore = useAuthStore()
 
@@ -23,13 +25,13 @@ const handleSuccess = () => {
   <div class="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4">
     <a-card class="w-full max-w-md">
       <template #title>
-        <h2 class="text-center text-2xl font-bold mb-0">Create your account</h2>
+        <h2 class="text-center text-2xl font-bold mb-0">{{ t('auth.register.title') }}</h2>
       </template>
       <RegisterForm @success="handleSuccess" />
       <div class="text-center mt-4">
-        <span class="text-gray-600">Already have an account? </span>
+        <span class="text-gray-600">{{ t('auth.register.hasAccount') }} </span>
         <RouterLink to="/login" class="text-blue-500 hover:text-blue-600">
-          Sign in here
+          {{ t('auth.register.signInLink') }}
         </RouterLink>
       </div>
     </a-card>

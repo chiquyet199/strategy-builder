@@ -1,10 +1,12 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import { useForm } from 'ant-design-vue/es/form'
+import { useI18n } from 'vue-i18n'
 import { useAuthStore } from '../stores/authStore'
 import { authService } from '../services/authService'
 import type { LoginRequest } from '@/shared/types/auth'
 
+const { t } = useI18n()
 const emit = defineEmits<{
   success: []
 }>()
@@ -20,11 +22,11 @@ const localError = ref<string | null>(null)
 
 const rules = {
   email: [
-    { required: true, message: 'Please enter your email', trigger: 'blur' },
-    { type: 'email', message: 'Please enter a valid email', trigger: 'blur' },
+    { required: true, message: t('auth.login.emailRequired'), trigger: 'blur' },
+    { type: 'email', message: t('auth.login.emailInvalid'), trigger: 'blur' },
   ],
   password: [
-    { required: true, message: 'Please enter your password', trigger: 'blur' },
+    { required: true, message: t('auth.login.passwordRequired'), trigger: 'blur' },
   ],
 }
 
@@ -51,7 +53,7 @@ const handleSubmit = async () => {
       // Validation errors are handled by form
       return
     }
-    localError.value = error instanceof Error ? error.message : 'Login failed'
+    localError.value = error instanceof Error ? error.message : t('auth.login.loginFailed')
   }
 }
 </script>
@@ -67,19 +69,19 @@ const handleSubmit = async () => {
       class="mb-4"
     />
 
-    <a-form-item label="Email" v-bind="validateInfos.email">
+    <a-form-item :label="t('common.email')" v-bind="validateInfos.email">
       <a-input
         v-model:value="formState.email"
         type="email"
-        placeholder="Enter your email"
+        :placeholder="t('auth.login.emailPlaceholder')"
         size="large"
       />
     </a-form-item>
 
-    <a-form-item label="Password" v-bind="validateInfos.password">
+    <a-form-item :label="t('common.password')" v-bind="validateInfos.password">
       <a-input-password
         v-model:value="formState.password"
-        placeholder="Enter your password"
+        :placeholder="t('auth.login.passwordPlaceholder')"
         size="large"
       />
     </a-form-item>
@@ -92,7 +94,7 @@ const handleSubmit = async () => {
         block
         size="large"
       >
-        Login
+        {{ t('auth.login.button') }}
       </a-button>
     </a-form-item>
   </a-form>

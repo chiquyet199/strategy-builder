@@ -76,6 +76,8 @@ export class MovingAverageDcaStrategy extends BaseStrategy {
     const transactions: Transaction[] = [];
     let lastPurchaseDate = new Date(start);
     lastPurchaseDate.setDate(lastPurchaseDate.getDate() - 7);
+    let totalQuantityHeld = 0;
+    let totalInvested = 0;
 
     // Process each candle (skip first maPeriod-1 candles as MA is not available)
     for (let i = maPeriod - 1; i < candles.length; i++) {
@@ -101,6 +103,12 @@ export class MovingAverageDcaStrategy extends BaseStrategy {
         }
 
         const quantityPurchased = buyAmount / currentPrice;
+        totalQuantityHeld += quantityPurchased;
+        totalInvested += buyAmount;
+
+        const coinValue = totalQuantityHeld * currentPrice;
+        const usdcValue = investmentAmount - totalInvested;
+        const totalValue = coinValue + usdcValue;
 
         transactions.push({
           date: candle.timestamp,
@@ -108,6 +116,12 @@ export class MovingAverageDcaStrategy extends BaseStrategy {
           amount: buyAmount,
           quantityPurchased,
           reason,
+          portfolioValue: {
+            coinValue,
+            usdcValue,
+            totalValue,
+            quantityHeld: totalQuantityHeld,
+          },
         });
 
         lastPurchaseDate = new Date(candleDate);
@@ -121,10 +135,7 @@ export class MovingAverageDcaStrategy extends BaseStrategy {
       startDate,
     );
 
-    // Calculate total invested
-    const totalInvested = transactions.reduce((sum, tx) => sum + tx.amount, 0);
-
-    // Calculate metrics
+    // Calculate metrics (totalInvested is already tracked in the loop)
     const metrics = MetricsCalculator.calculate(transactions, portfolioHistory, totalInvested);
 
     return {

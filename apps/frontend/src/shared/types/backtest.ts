@@ -20,6 +20,12 @@ export interface Transaction {
   amount: number; // USD
   quantityPurchased: number; // Amount of asset purchased
   reason?: string;
+  portfolioValue: {
+    coinValue: number; // Value of coin holdings (quantityHeld * price)
+    usdcValue: number; // Value of USDC holdings (remaining cash)
+    totalValue: number; // Total portfolio value (coinValue + usdcValue)
+    quantityHeld: number; // Total quantity of coin held after this transaction
+  };
 }
 
 export interface PortfolioValuePoint {

@@ -98,6 +98,8 @@ export class RsiDcaStrategy extends BaseStrategy {
     const transactions: Transaction[] = [];
     let lastPurchaseDate = new Date(start);
     lastPurchaseDate.setDate(lastPurchaseDate.getDate() - 7);
+    let totalQuantityHeld = 0;
+    let totalInvested = 0;
 
     // Process each candle (skip first rsiPeriod candles as RSI is not available)
     for (let i = rsiPeriod; i < candles.length; i++) {
@@ -128,6 +130,12 @@ export class RsiDcaStrategy extends BaseStrategy {
 
         const price = candle.close;
         const quantityPurchased = buyAmount / price;
+        totalQuantityHeld += quantityPurchased;
+        totalInvested += buyAmount;
+
+        const coinValue = totalQuantityHeld * price;
+        const usdcValue = investmentAmount - totalInvested;
+        const totalValue = coinValue + usdcValue;
 
         transactions.push({
           date: candle.timestamp,
@@ -135,6 +143,12 @@ export class RsiDcaStrategy extends BaseStrategy {
           amount: buyAmount,
           quantityPurchased,
           reason,
+          portfolioValue: {
+            coinValue,
+            usdcValue,
+            totalValue,
+            quantityHeld: totalQuantityHeld,
+          },
         });
 
         lastPurchaseDate = new Date(candleDate);
@@ -148,10 +162,7 @@ export class RsiDcaStrategy extends BaseStrategy {
       startDate,
     );
 
-    // Calculate total invested
-    const totalInvested = transactions.reduce((sum, tx) => sum + tx.amount, 0);
-
-    // Calculate metrics
+    // Calculate metrics (totalInvested is already tracked in the loop)
     const metrics = MetricsCalculator.calculate(transactions, portfolioHistory, totalInvested);
 
     return {

@@ -44,9 +44,11 @@ export class MonthlyDcaStrategy extends BaseStrategy {
                        (end.getMonth() - start.getMonth()) + 1;
     const monthlyAmount = investmentAmount / monthsDiff;
 
-    // Track last purchase month
+    // Track last purchase month and portfolio state
     let lastPurchaseMonth = start.getMonth();
     let lastPurchaseYear = start.getFullYear() - 1; // Initialize to before start
+    let totalQuantityHeld = 0;
+    let totalInvested = 0;
 
     // Process each candle
     for (const candle of candles) {
@@ -59,6 +61,12 @@ export class MonthlyDcaStrategy extends BaseStrategy {
           (candleYear === lastPurchaseYear && candleMonth > lastPurchaseMonth)) {
         const price = candle.close;
         const quantityPurchased = monthlyAmount / price;
+        totalQuantityHeld += quantityPurchased;
+        totalInvested += monthlyAmount;
+
+        const coinValue = totalQuantityHeld * price;
+        const usdcValue = investmentAmount - totalInvested;
+        const totalValue = coinValue + usdcValue;
 
         transactions.push({
           date: candle.timestamp,
@@ -66,6 +74,12 @@ export class MonthlyDcaStrategy extends BaseStrategy {
           amount: monthlyAmount,
           quantityPurchased,
           reason: 'Monthly DCA purchase',
+          portfolioValue: {
+            coinValue,
+            usdcValue,
+            totalValue,
+            quantityHeld: totalQuantityHeld,
+          },
         });
 
         lastPurchaseMonth = candleMonth;
@@ -80,10 +94,7 @@ export class MonthlyDcaStrategy extends BaseStrategy {
       startDate,
     );
 
-    // Calculate total invested
-    const totalInvested = transactions.reduce((sum, tx) => sum + tx.amount, 0);
-
-    // Calculate metrics
+    // Calculate metrics (totalInvested is already tracked in the loop)
     const metrics = MetricsCalculator.calculate(transactions, portfolioHistory, totalInvested);
 
     return {

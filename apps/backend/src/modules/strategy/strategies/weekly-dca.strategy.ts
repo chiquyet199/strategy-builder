@@ -42,9 +42,11 @@ export class WeeklyDcaStrategy extends BaseStrategy {
     const totalWeeks = Math.ceil(totalDays / 7);
     const weeklyAmount = investmentAmount / totalWeeks;
 
-    // Track last purchase date
+    // Track last purchase date and portfolio state
     let lastPurchaseDate = new Date(start);
     lastPurchaseDate.setDate(lastPurchaseDate.getDate() - 7); // Initialize to before start
+    let totalQuantityHeld = 0;
+    let totalInvested = 0;
 
     // Process each candle
     for (const candle of candles) {
@@ -57,6 +59,12 @@ export class WeeklyDcaStrategy extends BaseStrategy {
       if (daysSinceLastPurchase >= 7) {
         const price = candle.close;
         const quantityPurchased = weeklyAmount / price;
+        totalQuantityHeld += quantityPurchased;
+        totalInvested += weeklyAmount;
+
+        const coinValue = totalQuantityHeld * price;
+        const usdcValue = investmentAmount - totalInvested;
+        const totalValue = coinValue + usdcValue;
 
         transactions.push({
           date: candle.timestamp,
@@ -64,6 +72,12 @@ export class WeeklyDcaStrategy extends BaseStrategy {
           amount: weeklyAmount,
           quantityPurchased,
           reason: 'Weekly DCA purchase',
+          portfolioValue: {
+            coinValue,
+            usdcValue,
+            totalValue,
+            quantityHeld: totalQuantityHeld,
+          },
         });
 
         lastPurchaseDate = new Date(candleDate);
@@ -77,10 +91,7 @@ export class WeeklyDcaStrategy extends BaseStrategy {
       startDate,
     );
 
-    // Calculate total invested (may be less than investmentAmount if not enough weeks)
-    const totalInvested = transactions.reduce((sum, tx) => sum + tx.amount, 0);
-
-    // Calculate metrics
+    // Calculate metrics (totalInvested is already tracked in the loop)
     const metrics = MetricsCalculator.calculate(transactions, portfolioHistory, totalInvested);
 
     return {

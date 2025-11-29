@@ -111,6 +111,8 @@ export class CombinedSmartDcaStrategy extends BaseStrategy {
     const transactions: Transaction[] = [];
     let lastPurchaseDate = new Date(start);
     lastPurchaseDate.setDate(lastPurchaseDate.getDate() - 7);
+    let totalQuantityHeld = 0;
+    let totalInvested = 0;
 
     // Process each candle (start from max required period)
     const startIndex = Math.max(rsiPeriod, maPeriod - 1, lookbackDays - 1);
@@ -160,6 +162,12 @@ export class CombinedSmartDcaStrategy extends BaseStrategy {
           : 'Weekly DCA purchase';
 
         const quantityPurchased = buyAmount / currentPrice;
+        totalQuantityHeld += quantityPurchased;
+        totalInvested += buyAmount;
+
+        const coinValue = totalQuantityHeld * currentPrice;
+        const usdcValue = investmentAmount - totalInvested;
+        const totalValue = coinValue + usdcValue;
 
         transactions.push({
           date: candle.timestamp,
@@ -167,6 +175,12 @@ export class CombinedSmartDcaStrategy extends BaseStrategy {
           amount: buyAmount,
           quantityPurchased,
           reason,
+          portfolioValue: {
+            coinValue,
+            usdcValue,
+            totalValue,
+            quantityHeld: totalQuantityHeld,
+          },
         });
 
         lastPurchaseDate = new Date(candleDate);
@@ -180,10 +194,7 @@ export class CombinedSmartDcaStrategy extends BaseStrategy {
       startDate,
     );
 
-    // Calculate total invested
-    const totalInvested = transactions.reduce((sum, tx) => sum + tx.amount, 0);
-
-    // Calculate metrics
+    // Calculate metrics (totalInvested is already tracked in the loop)
     const metrics = MetricsCalculator.calculate(transactions, portfolioHistory, totalInvested);
 
     return {

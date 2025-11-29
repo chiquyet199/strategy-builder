@@ -7,6 +7,12 @@ export interface Transaction {
   amount: number; // USD amount invested
   quantityPurchased: number; // Amount of asset purchased
   reason?: string; // Optional reason for the purchase (e.g., "RSI < 30", "Dip detected")
+  portfolioValue: {
+    coinValue: number; // Value of coin holdings (quantityHeld * price)
+    usdcValue: number; // Value of USDC holdings (remaining cash)
+    totalValue: number; // Total portfolio value (coinValue + usdcValue)
+    quantityHeld: number; // Total quantity of coin held after this transaction
+  };
 }
 
 /**

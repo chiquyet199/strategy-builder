@@ -75,6 +75,8 @@ export class DipBuyerDcaStrategy extends BaseStrategy {
     const transactions: Transaction[] = [];
     let lastPurchaseDate = new Date(start);
     lastPurchaseDate.setDate(lastPurchaseDate.getDate() - 7);
+    let totalQuantityHeld = 0;
+    let totalInvested = 0;
 
     // Process each candle
     for (let i = 0; i < candles.length; i++) {
@@ -105,6 +107,12 @@ export class DipBuyerDcaStrategy extends BaseStrategy {
         }
 
         const quantityPurchased = buyAmount / currentPrice;
+        totalQuantityHeld += quantityPurchased;
+        totalInvested += buyAmount;
+
+        const coinValue = totalQuantityHeld * currentPrice;
+        const usdcValue = investmentAmount - totalInvested;
+        const totalValue = coinValue + usdcValue;
 
         transactions.push({
           date: candle.timestamp,
@@ -112,6 +120,12 @@ export class DipBuyerDcaStrategy extends BaseStrategy {
           amount: buyAmount,
           quantityPurchased,
           reason,
+          portfolioValue: {
+            coinValue,
+            usdcValue,
+            totalValue,
+            quantityHeld: totalQuantityHeld,
+          },
         });
 
         lastPurchaseDate = new Date(candleDate);
@@ -125,10 +139,7 @@ export class DipBuyerDcaStrategy extends BaseStrategy {
       startDate,
     );
 
-    // Calculate total invested
-    const totalInvested = transactions.reduce((sum, tx) => sum + tx.amount, 0);
-
-    // Calculate metrics
+    // Calculate metrics (totalInvested is already tracked in the loop)
     const metrics = MetricsCalculator.calculate(transactions, portfolioHistory, totalInvested);
 
     return {

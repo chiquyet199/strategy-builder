@@ -39,6 +39,10 @@ export class LumpSumStrategy extends BaseStrategy {
     const firstCandle = candles[0];
     const price = firstCandle.close;
     const quantityPurchased = investmentAmount / price;
+    const quantityHeld = quantityPurchased;
+    const coinValue = quantityHeld * price;
+    const usdcValue = 0; // All invested, no cash left
+    const totalValue = coinValue + usdcValue;
 
     const transaction: Transaction = {
       date: firstCandle.timestamp,
@@ -46,6 +50,12 @@ export class LumpSumStrategy extends BaseStrategy {
       amount: investmentAmount,
       quantityPurchased,
       reason: 'Initial lump sum purchase',
+      portfolioValue: {
+        coinValue,
+        usdcValue,
+        totalValue,
+        quantityHeld,
+      },
     };
 
     // Build portfolio history

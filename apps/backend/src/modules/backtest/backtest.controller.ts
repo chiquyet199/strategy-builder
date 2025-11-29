@@ -30,6 +30,12 @@ export class BacktestController {
                 amount: 10000,
                 quantityPurchased: 1.3889,
                 reason: 'Initial lump sum purchase',
+                portfolioValue: {
+                  coinValue: 10000,
+                  usdcValue: 0,
+                  totalValue: 10000,
+                  quantityHeld: 1.3889,
+                },
               },
             ],
             metrics: {

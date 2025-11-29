@@ -113,26 +113,44 @@
       "combinedSmartDca": "DCA Thông minh Kết hợp"
     },
     "results": {
-      "title": "Kết quả So sánh Chiến lược",
-      "backToSelection": "Quay lại Lựa chọn",
-      "downloadChart": "Tải xuống Biểu đồ",
-      "portfolioValue": "Giá trị Danh mục Theo thời gian",
-      "metrics": "Chỉ số Chiến lược",
-      "strategy": "Chiến lược",
-      "totalReturn": "Tổng lợi nhuận",
-      "finalValue": "Giá trị cuối",
-      "avgBuyPrice": "Giá mua trung bình",
-      "maxDrawdown": "Mức giảm tối đa",
-      "totalInvestment": "Tổng đầu tư",
-      "totalQuantity": "Tổng Số lượng",
-      "sharpeRatio": "Tỷ lệ Sharpe",
-      "investmentAmount": "Số tiền đầu tư",
-      "dateRange": "Khoảng thời gian",
-      "timeframe": "Khung thời gian",
-      "calculatedAt": "Tính toán lúc",
-      "noResults": "Không có kết quả. Vui lòng chạy so sánh trước.",
-      "goToSelection": "Đi đến Lựa chọn Chiến lược",
-      "calculating": "Đang tính toán chiến lược..."
+      "metadata": {
+        "title": "Kết quả So sánh Chiến lược",
+        "backToSelection": "Quay lại Lựa chọn",
+        "downloadChart": "Tải xuống Biểu đồ",
+        "portfolioValue": "Giá trị Danh mục Theo thời gian",
+        "metrics": "Chỉ số Chiến lược",
+        "investmentAmount": "Số tiền đầu tư",
+        "dateRange": "Khoảng thời gian",
+        "timeframe": "Khung thời gian",
+        "calculatedAt": "Tính toán lúc",
+        "noResults": "Không có kết quả. Vui lòng chạy so sánh trước.",
+        "goToSelection": "Đi đến Lựa chọn Chiến lược",
+        "calculating": "Đang tính toán chiến lược..."
+      },
+      "metrics": {
+        "strategy": "Chiến lược",
+        "totalReturn": "Tổng lợi nhuận",
+        "finalValue": "Giá trị cuối",
+        "avgBuyPrice": "Giá mua trung bình",
+        "maxDrawdown": "Mức giảm tối đa",
+        "totalInvestment": "Tổng đầu tư",
+        "totalQuantity": "Tổng Số lượng",
+        "sharpeRatio": "Tỷ lệ Sharpe",
+        "actions": "Hành động",
+        "viewTransactions": "Xem Giao dịch ({count})"
+      },
+      "transactions": {
+        "title": "Giao dịch",
+        "modalTitle": "Giao dịch - {strategy}",
+        "date": "Ngày",
+        "price": "Giá",
+        "amount": "Số tiền (USD)",
+        "quantityPurchased": "Số lượng đã mua",
+        "remainingCoin": "Coin còn lại ({coinSymbol})",
+        "remainingUsdc": "USDC còn lại",
+        "totalPortfolioValue": "Tổng giá trị danh mục",
+        "reason": "Lý do"
+      }
     }
   }
 }

@@ -3,11 +3,11 @@
     <a-card>
       <template #title>
         <div class="results-header">
-          <h1>Strategy Comparison Results</h1>
+          <h1>{{ t('backtest.results.metadata.title') }}</h1>
           <a-space>
-            <a-button @click="goBack">Back to Selection</a-button>
+            <a-button @click="goBack">{{ t('backtest.results.metadata.backToSelection') }}</a-button>
             <a-button @click="downloadChart" :disabled="!backtestStore.hasResults">
-              Download Chart
+              {{ t('backtest.results.metadata.downloadChart') }}
             </a-button>
           </a-space>
         </div>
@@ -16,7 +16,7 @@
       <!-- Transactions Modal -->
       <a-modal
         v-model:open="transactionsModalVisible"
-        :title="selectedStrategyName ? `Transactions - ${selectedStrategyName}` : 'Transactions'"
+        :title="selectedStrategyName ? t('backtest.results.transactions.modalTitle', { strategy: selectedStrategyName }) : t('backtest.results.transactions.title')"
         :footer="null"
         width="900px"
       >
@@ -40,6 +40,15 @@
             <template v-else-if="column.key === 'quantityPurchased'">
               {{ formatQuantity(record.quantityPurchased) }}
             </template>
+            <template v-else-if="column.key === 'coinValue'">
+              ${{ formatNumber(record.portfolioValue?.coinValue) }}
+            </template>
+            <template v-else-if="column.key === 'usdcValue'">
+              ${{ formatNumber(record.portfolioValue?.usdcValue) }}
+            </template>
+            <template v-else-if="column.key === 'totalValue'">
+              <strong>${{ formatNumber(record.portfolioValue?.totalValue) }}</strong>
+            </template>
             <template v-else-if="column.key === 'reason'">
               <a-tag v-if="record.reason" color="blue">{{ record.reason }}</a-tag>
               <span v-else class="text-gray-400">-</span>
@@ -49,7 +58,7 @@
       </a-modal>
 
       <div v-if="backtestStore.isLoading" class="loading-container">
-        <a-spin size="large" tip="Calculating strategies...">
+        <a-spin size="large" :tip="t('backtest.results.metadata.calculating')">
           <div style="height: 400px"></div>
         </a-spin>
       </div>
@@ -68,28 +77,28 @@
       <div v-else-if="backtestStore.hasResults" class="results-content">
         <!-- Metadata -->
         <a-descriptions v-if="metadata" :column="2" bordered style="margin-bottom: 24px">
-          <a-descriptions-item label="Investment Amount">
+          <a-descriptions-item :label="t('backtest.results.metadata.investmentAmount')">
             ${{ metadata.investmentAmount?.toLocaleString() || 'N/A' }}
           </a-descriptions-item>
-          <a-descriptions-item label="Date Range">
+          <a-descriptions-item :label="t('backtest.results.metadata.dateRange')">
             {{ formatDate(metadata.startDate) }} -
             {{ formatDate(metadata.endDate) }}
           </a-descriptions-item>
-          <a-descriptions-item label="Timeframe">
+          <a-descriptions-item :label="t('backtest.results.metadata.timeframe')">
             {{ metadata.timeframe?.toUpperCase() || 'N/A' }}
           </a-descriptions-item>
-          <a-descriptions-item label="Calculated At">
+          <a-descriptions-item :label="t('backtest.results.metadata.calculatedAt')">
             {{ formatDateTime(metadata.calculatedAt) }}
           </a-descriptions-item>
         </a-descriptions>
 
         <!-- Chart -->
-        <a-card title="Portfolio Value Over Time" style="margin-bottom: 24px">
+        <a-card :title="t('backtest.results.metadata.portfolioValue')" style="margin-bottom: 24px">
           <PortfolioChart :results="backtestStore.strategyResults" />
         </a-card>
 
         <!-- Metrics Table -->
-        <a-card title="Strategy Metrics">
+        <a-card :title="t('backtest.results.metadata.metrics')">
           <a-table
             :columns="columns"
             :data-source="tableData"
@@ -130,7 +139,7 @@
                   @click="showTransactions(record)"
                   :disabled="!record.transactions || record.transactions.length === 0"
                 >
-                  View Transactions ({{ record.transactions?.length || 0 }})
+                  {{ t('backtest.results.metrics.viewTransactions', { count: record.transactions?.length || 0 }) }}
                 </a-button>
               </template>
             </template>
@@ -139,8 +148,8 @@
       </div>
 
       <div v-else class="no-results">
-        <a-empty description="No results available. Please run a comparison first.">
-          <a-button type="primary" @click="goBack">Go to Strategy Selection</a-button>
+        <a-empty :description="t('backtest.results.metadata.noResults')">
+          <a-button type="primary" @click="goBack">{{ t('backtest.results.metadata.goToSelection') }}</a-button>
         </a-empty>
       </div>
     </a-card>
@@ -150,6 +159,7 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import { useRouter } from 'vue-router'
+import { useI18n } from 'vue-i18n'
 import { useBacktestStore } from '../stores/backtestStore'
 import PortfolioChart from '../components/PortfolioChart.vue'
 import dayjs from 'dayjs'
@@ -157,24 +167,33 @@ import type { StrategyResult, Transaction } from '@/shared/types/backtest'
 
 const router = useRouter()
 const backtestStore = useBacktestStore()
+const { t } = useI18n()
 
 // Computed properties for safe metadata access
 const metadata = computed(() => backtestStore.results?.metadata || null)
+
+// Get coin symbol from metadata (default to BTC for MVP)
+// TODO: Extract from symbol in metadata when multiple coins are supported
+const coinSymbol = computed(() => {
+  // For MVP, we only support BTC/USD, but this is extensible
+  // In the future, extract from metadata.symbol (e.g., 'BTC/USD' -> 'BTC')
+  return 'BTC'
+})
 
 // Transactions modal state
 const transactionsModalVisible = ref(false)
 const selectedTransactions = ref<Transaction[] | null>(null)
 const selectedStrategyName = ref<string>('')
 
-const columns = [
+const columns = computed(() => [
   {
-    title: 'Strategy',
+    title: t('backtest.results.metrics.strategy'),
     dataIndex: 'strategyName',
     key: 'strategyName',
     fixed: 'left' as const,
   },
   {
-    title: 'Total Return',
+    title: t('backtest.results.metrics.totalReturn'),
     key: 'totalReturn',
     sorter: (a: StrategyResult, b: StrategyResult) => {
       const aVal = a.metrics?.totalReturn ?? 0
@@ -183,7 +202,7 @@ const columns = [
     },
   },
   {
-    title: 'Final Value',
+    title: t('backtest.results.metrics.finalValue'),
     key: 'finalValue',
     sorter: (a: StrategyResult, b: StrategyResult) => {
       const aVal = a.metrics?.finalValue ?? 0
@@ -192,7 +211,7 @@ const columns = [
     },
   },
   {
-    title: 'Avg Buy Price',
+    title: t('backtest.results.metrics.avgBuyPrice'),
     key: 'avgBuyPrice',
     sorter: (a: StrategyResult, b: StrategyResult) => {
       const aVal = a.metrics?.avgBuyPrice ?? 0
@@ -201,7 +220,7 @@ const columns = [
     },
   },
   {
-    title: 'Max Drawdown',
+    title: t('backtest.results.metrics.maxDrawdown'),
     key: 'maxDrawdown',
     sorter: (a: StrategyResult, b: StrategyResult) => {
       const aVal = a.metrics?.maxDrawdown ?? 0
@@ -210,15 +229,15 @@ const columns = [
     },
   },
   {
-    title: 'Total Investment',
+    title: t('backtest.results.metrics.totalInvestment'),
     key: 'totalInvestment',
   },
   {
-    title: 'Total Quantity',
+    title: t('backtest.results.metrics.totalQuantity'),
     key: 'totalQuantity',
   },
   {
-    title: 'Sharpe Ratio',
+    title: t('backtest.results.metrics.sharpeRatio'),
     key: 'sharpeRatio',
     sorter: (a: StrategyResult, b: StrategyResult) => {
       const aVal = a.metrics?.sharpeRatio ?? 0
@@ -227,40 +246,55 @@ const columns = [
     },
   },
   {
-    title: 'Actions',
+    title: t('backtest.results.metrics.actions'),
     key: 'actions',
     fixed: 'right' as const,
     width: 120,
   },
-]
+])
 
-const transactionColumns = [
+const transactionColumns = computed(() => [
   {
-    title: 'Date',
+    title: t('backtest.results.transactions.date'),
     dataIndex: 'date',
     key: 'date',
     sorter: (a: any, b: any) => new Date(a.date).getTime() - new Date(b.date).getTime(),
   },
   {
-    title: 'Price',
+    title: t('backtest.results.transactions.price'),
     key: 'price',
     sorter: (a: any, b: any) => a.price - b.price,
   },
   {
-    title: 'Amount (USD)',
+    title: t('backtest.results.transactions.amount'),
     key: 'amount',
     sorter: (a: any, b: any) => a.amount - b.amount,
   },
   {
-    title: 'Quantity Purchased',
+    title: t('backtest.results.transactions.quantityPurchased'),
     key: 'quantityPurchased',
     sorter: (a: any, b: any) => a.quantityPurchased - b.quantityPurchased,
   },
   {
-    title: 'Reason',
+    title: t('backtest.results.transactions.remainingCoin', { coinSymbol: coinSymbol.value }),
+    key: 'coinValue',
+    sorter: (a: any, b: any) => (a.portfolioValue?.coinValue || 0) - (b.portfolioValue?.coinValue || 0),
+  },
+  {
+    title: t('backtest.results.transactions.remainingUsdc'),
+    key: 'usdcValue',
+    sorter: (a: any, b: any) => (a.portfolioValue?.usdcValue || 0) - (b.portfolioValue?.usdcValue || 0),
+  },
+  {
+    title: t('backtest.results.transactions.totalPortfolioValue'),
+    key: 'totalValue',
+    sorter: (a: any, b: any) => (a.portfolioValue?.totalValue || 0) - (b.portfolioValue?.totalValue || 0),
+  },
+  {
+    title: t('backtest.results.transactions.reason'),
     key: 'reason',
   },
-]
+])
 
 const tableData = computed(() => backtestStore.strategyResults)
 

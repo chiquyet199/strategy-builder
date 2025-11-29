@@ -94,6 +94,46 @@
     "email": "Please enter a valid email address",
     "minLength": "Minimum {min} characters required",
     "maxLength": "Maximum {max} characters allowed"
+  },
+  "backtest": {
+    "title": "Compare Investment Strategies",
+    "investmentAmount": "Investment Amount (USD)",
+    "startDate": "Start Date",
+    "endDate": "End Date",
+    "quickSelect": "Quick Select",
+    "selectStrategies": "Select Strategies",
+    "compareStrategies": "Compare Strategies",
+    "strategies": {
+      "lumpSum": "Lump Sum",
+      "weeklyDca": "Weekly DCA",
+      "monthlyDca": "Monthly DCA",
+      "rsiDca": "RSI DCA",
+      "dipBuyerDca": "Dip Buyer DCA",
+      "movingAverageDca": "Moving Average DCA",
+      "combinedSmartDca": "Combined Smart DCA"
+    },
+    "results": {
+      "title": "Strategy Comparison Results",
+      "backToSelection": "Back to Selection",
+      "downloadChart": "Download Chart",
+      "portfolioValue": "Portfolio Value Over Time",
+      "metrics": "Strategy Metrics",
+      "strategy": "Strategy",
+      "totalReturn": "Total Return",
+      "finalValue": "Final Value",
+      "avgBuyPrice": "Avg Buy Price",
+      "maxDrawdown": "Max Drawdown",
+      "totalInvestment": "Total Investment",
+      "totalBTC": "Total BTC",
+      "sharpeRatio": "Sharpe Ratio",
+      "investmentAmount": "Investment Amount",
+      "dateRange": "Date Range",
+      "timeframe": "Timeframe",
+      "calculatedAt": "Calculated At",
+      "noResults": "No results available. Please run a comparison first.",
+      "goToSelection": "Go to Strategy Selection",
+      "calculating": "Calculating strategies..."
+    }
   }
 }
 

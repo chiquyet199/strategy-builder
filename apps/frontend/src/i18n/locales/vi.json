@@ -94,6 +94,46 @@
     "email": "Vui lòng nhập địa chỉ email hợp lệ",
     "minLength": "Tối thiểu {min} ký tự",
     "maxLength": "Tối đa {max} ký tự"
+  },
+  "backtest": {
+    "title": "So sánh Chiến lược Đầu tư",
+    "investmentAmount": "Số tiền đầu tư (USD)",
+    "startDate": "Ngày bắt đầu",
+    "endDate": "Ngày kết thúc",
+    "quickSelect": "Chọn nhanh",
+    "selectStrategies": "Chọn chiến lược",
+    "compareStrategies": "So sánh Chiến lược",
+    "strategies": {
+      "lumpSum": "Đầu tư một lần",
+      "weeklyDca": "DCA Hàng tuần",
+      "monthlyDca": "DCA Hàng tháng",
+      "rsiDca": "DCA RSI",
+      "dipBuyerDca": "DCA Mua Giảm",
+      "movingAverageDca": "DCA Trung bình động",
+      "combinedSmartDca": "DCA Thông minh Kết hợp"
+    },
+    "results": {
+      "title": "Kết quả So sánh Chiến lược",
+      "backToSelection": "Quay lại Lựa chọn",
+      "downloadChart": "Tải xuống Biểu đồ",
+      "portfolioValue": "Giá trị Danh mục Theo thời gian",
+      "metrics": "Chỉ số Chiến lược",
+      "strategy": "Chiến lược",
+      "totalReturn": "Tổng lợi nhuận",
+      "finalValue": "Giá trị cuối",
+      "avgBuyPrice": "Giá mua trung bình",
+      "maxDrawdown": "Mức giảm tối đa",
+      "totalInvestment": "Tổng đầu tư",
+      "totalBTC": "Tổng BTC",
+      "sharpeRatio": "Tỷ lệ Sharpe",
+      "investmentAmount": "Số tiền đầu tư",
+      "dateRange": "Khoảng thời gian",
+      "timeframe": "Khung thời gian",
+      "calculatedAt": "Tính toán lúc",
+      "noResults": "Không có kết quả. Vui lòng chạy so sánh trước.",
+      "goToSelection": "Đi đến Lựa chọn Chiến lược",
+      "calculating": "Đang tính toán chiến lược..."
+    }
   }
 }
 

@@ -6,10 +6,7 @@ const router = createRouter({
   routes: [
     {
       path: '/',
-      redirect: () => {
-        const authStore = useAuthStore()
-        return authStore.isAuthenticated ? '/profile' : '/login'
-      },
+      redirect: '/backtest',
     },
     {
       path: '/login',
@@ -36,6 +33,16 @@ const router = createRouter({
       name: 'profile',
       component: () => import('@/modules/auth/views/ProfileView.vue'),
       meta: { requiresAuth: true },
+    },
+    {
+      path: '/backtest',
+      name: 'backtest-home',
+      component: () => import('@/modules/backtest/views/HomeView.vue'),
+    },
+    {
+      path: '/backtest/results',
+      name: 'backtest-results',
+      component: () => import('@/modules/backtest/views/ResultsView.vue'),
     },
   ],
 })

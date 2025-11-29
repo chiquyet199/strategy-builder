@@ -14,6 +14,9 @@ import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { AuthModule } from './modules/auth/auth.module';
 import { EmailModule } from './modules/email/email.module';
+import { MarketDataModule } from './modules/market-data/market-data.module';
+import { StrategyModule } from './modules/strategy/strategy.module';
+import { BacktestModule } from './modules/backtest/backtest.module';
 import { LoggerModule } from './common/logger/logger.module';
 import { JwtAuthGuard } from './modules/auth/guards/jwt-auth.guard';
 import { CustomThrottlerGuard } from './common/guards/custom-throttler.guard';
@@ -66,6 +69,9 @@ const dbConfig = getDatabaseConfig();
     }),
     EmailModule,
     AuthModule,
+    MarketDataModule,
+    StrategyModule,
+    BacktestModule,
   ],
   controllers: [AppController],
   providers: [

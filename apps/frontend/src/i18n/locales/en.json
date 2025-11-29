@@ -81,6 +81,10 @@
       "id": "ID",
       "name": "Name",
       "email": "Email",
+      "role": "Role",
+      "roleUser": "User",
+      "roleAdmin": "Admin",
+      "roleMaster": "Master",
       "createdAt": "Created At",
       "loadFailed": "Failed to load profile"
     }

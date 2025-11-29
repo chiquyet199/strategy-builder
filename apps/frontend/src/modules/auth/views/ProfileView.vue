@@ -29,6 +29,24 @@ const handleLogout = () => {
   authService.logout()
   router.push('/login')
 }
+
+const getRoleLabel = (role: string) => {
+  const roleMap: Record<string, string> = {
+    user: t('auth.profile.roleUser'),
+    admin: t('auth.profile.roleAdmin'),
+    master: t('auth.profile.roleMaster'),
+  }
+  return roleMap[role] || role
+}
+
+const getRoleColor = (role: string) => {
+  const colorMap: Record<string, string> = {
+    user: 'blue',
+    admin: 'orange',
+    master: 'red',
+  }
+  return colorMap[role] || 'default'
+}
 </script>
 
 <template>
@@ -54,6 +72,11 @@ const handleLogout = () => {
             </a-descriptions-item>
             <a-descriptions-item :label="t('auth.profile.email')">
               {{ authStore.user.email }}
+            </a-descriptions-item>
+            <a-descriptions-item :label="t('auth.profile.role')">
+              <a-tag :color="getRoleColor(authStore.user.role)">
+                {{ getRoleLabel(authStore.user.role) }}
+              </a-tag>
             </a-descriptions-item>
             <a-descriptions-item :label="t('auth.profile.createdAt')">
               {{ new Date(authStore.user.createdAt).toLocaleString() }}

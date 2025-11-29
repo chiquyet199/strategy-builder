@@ -81,6 +81,10 @@
       "id": "ID",
       "name": "Tên",
       "email": "Email",
+      "role": "Vai trò",
+      "roleUser": "Người dùng",
+      "roleAdmin": "Quản trị viên",
+      "roleMaster": "Quản trị viên cấp cao",
       "createdAt": "Ngày tạo",
       "loadFailed": "Tải hồ sơ thất bại"
     }

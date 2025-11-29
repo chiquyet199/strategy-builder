@@ -71,7 +71,32 @@ async getProfile(@Request() req) {
 
 ## Creating a Master Account
 
-### Option 1: Direct Database Update
+### Option 1: Using Environment Variables (Recommended)
+
+The application automatically creates/updates a master account on startup if the following environment variables are set in your `.env` file:
+
+```env
+# Master Account Configuration (Optional)
+MASTER_EMAIL=master@strategy.app
+MASTER_PASSWORD=ChangeThisPassword123!
+MASTER_NAME=Master Admin
+```
+
+**How it works:**
+- On application startup, if `MASTER_EMAIL` is set, the system will:
+  - Create a new master account if the email doesn't exist
+  - Update an existing user to master role if the email exists
+  - Update the password if `MASTER_PASSWORD` is provided
+- If `MASTER_EMAIL` is not set, the master account setup is skipped
+- This is the recommended approach for production deployments
+
+**Usage:**
+1. Add the variables to your `.env` file (or `.env.production` for production)
+2. Restart the application
+3. The master account will be created/updated automatically
+4. Log in with the master account credentials
+
+### Option 2: Direct Database Update
 
 ```sql
 UPDATE users 
@@ -79,7 +104,7 @@ SET role = 'master'
 WHERE email = 'your-email@example.com';
 ```
 
-### Option 2: Using TypeORM in a Script
+### Option 3: Using TypeORM in a Script
 
 Create a script to set a user as master:
 

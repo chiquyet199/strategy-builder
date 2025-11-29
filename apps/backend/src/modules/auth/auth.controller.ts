@@ -183,6 +183,7 @@ export class AuthController {
           id: '1',
           email: 'user@example.com',
           name: 'John Doe',
+          role: 'user',
           createdAt: '2024-01-01T00:00:00.000Z',
           updatedAt: '2024-01-01T00:00:00.000Z',
         },

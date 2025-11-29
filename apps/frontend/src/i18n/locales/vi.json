@@ -5,6 +5,7 @@
     "name": "Tên",
     "submit": "Gửi",
     "cancel": "Hủy",
+    "save": "Lưu",
     "loading": "Đang tải...",
     "error": "Lỗi",
     "success": "Thành công",
@@ -98,19 +99,81 @@
   "backtest": {
     "title": "So sánh Chiến lược Đầu tư",
     "investmentAmount": "Số tiền đầu tư (USD)",
-    "startDate": "Ngày bắt đầu",
-    "endDate": "Ngày kết thúc",
-    "quickSelect": "Chọn nhanh",
+    "dateRange": "Khoảng thời gian",
+    "dateRangeStart": "Bắt đầu",
+    "dateRangeEnd": "Kết thúc",
     "selectStrategies": "Chọn chiến lược",
     "compareStrategies": "So sánh Chiến lược",
+    "customizeParameters": "Tùy chỉnh Tham số",
     "strategies": {
-      "lumpSum": "Đầu tư một lần",
-      "weeklyDca": "DCA Hàng tuần",
-      "monthlyDca": "DCA Hàng tháng",
-      "rsiDca": "DCA RSI",
-      "dipBuyerDca": "DCA Mua Giảm",
-      "movingAverageDca": "DCA Trung bình động",
-      "combinedSmartDca": "DCA Thông minh Kết hợp"
+      "lump-sum": "Đầu tư một lần",
+      "dca": "DCA (Trung bình hóa chi phí)",
+      "rsi-dca": "DCA RSI",
+      "dip-buyer-dca": "DCA Mua Giảm",
+      "moving-average-dca": "DCA Trung bình động",
+      "combined-smart-dca": "DCA Thông minh Kết hợp"
+    },
+    "strategyDescriptions": {
+      "lump-sum": "Đầu tư toàn bộ số tiền vào ngày bắt đầu và giữ. Chiến lược mua và giữ đơn giản.",
+      "dca": "Đầu tư một số tiền cố định theo khoảng thời gian đều đặn (hàng ngày, hàng tuần hoặc hàng tháng), bất kể giá. Giảm tác động của biến động.",
+      "rsi-dca": "DCA hàng tuần với mua tăng khi RSI cho thấy điều kiện quá bán. Bỏ qua mua khi quá mua.",
+      "dip-buyer-dca": "DCA hàng tuần với mua tăng khi giá giảm đáng kể so với mức cao gần đây. Chiến lược mua khi giá giảm.",
+      "moving-average-dca": "DCA hàng tuần với mua tăng khi giá dưới đường trung bình động. Chiến lược theo xu hướng.",
+      "combined-smart-dca": "Kết hợp tín hiệu RSI, Trung bình động và Mua giảm để điều chỉnh mua DCA hàng tuần. Chiến lược tinh vi nhất."
+    },
+    "parameterModal": {
+      "title": "Tùy chỉnh Tham số - {strategy}",
+      "noParameters": "Không có tham số có thể tùy chỉnh cho chiến lược này",
+      "resetToDefaults": "Đặt lại về Mặc định"
+    },
+    "parameters": {
+      "dca": {
+        "frequency": "Tần suất",
+        "frequencyHelp": "Tần suất đầu tư (mặc định: hàng tuần)",
+        "frequencyOptions": {
+          "daily": "Hàng ngày",
+          "weekly": "Hàng tuần",
+          "monthly": "Hàng tháng"
+        }
+      },
+      "rsi": {
+        "rsiPeriod": "Chu kỳ RSI",
+        "rsiPeriodHelp": "Chu kỳ tính toán RSI (mặc định: 14)",
+        "oversoldThreshold": "Ngưỡng Quá bán",
+        "oversoldThresholdHelp": "Giá trị RSI dưới đó sẽ mua thêm (mặc định: 30)",
+        "overboughtThreshold": "Ngưỡng Quá mua",
+        "overboughtThresholdHelp": "Giá trị RSI trên đó sẽ bỏ qua mua (mặc định: 70)",
+        "buyMultiplier": "Hệ số Mua",
+        "buyMultiplierHelp": "Hệ số cho số tiền mua khi quá bán (mặc định: 2.0x)"
+      },
+      "dip": {
+        "lookbackDays": "Số ngày Nhìn lại",
+        "lookbackDaysHelp": "Số ngày nhìn lại để tìm mức cao gần đây (mặc định: 30)",
+        "dropThreshold": "Ngưỡng Giảm",
+        "dropThresholdHelp": "Phần trăm giảm từ mức cao gần đây để kích hoạt mua (mặc định: 10%)",
+        "buyMultiplier": "Hệ số Mua",
+        "buyMultiplierHelp": "Hệ số cho số tiền mua khi phát hiện giảm (mặc định: 2.0x)"
+      },
+      "ma": {
+        "maPeriod": "Chu kỳ MA",
+        "maPeriodHelp": "Chu kỳ trung bình động tính bằng ngày (mặc định: 50)",
+        "buyMultiplier": "Hệ số Mua",
+        "buyMultiplierHelp": "Hệ số cho số tiền mua khi giá dưới MA (mặc định: 2.0x)"
+      },
+      "combined": {
+        "rsiPeriod": "Chu kỳ RSI",
+        "rsiPeriodHelp": "Chu kỳ tính toán RSI (mặc định: 14)",
+        "oversoldThreshold": "Ngưỡng Quá bán",
+        "oversoldThresholdHelp": "Giá trị RSI dưới đó sẽ mua thêm (mặc định: 30)",
+        "maPeriod": "Chu kỳ MA",
+        "maPeriodHelp": "Chu kỳ trung bình động tính bằng ngày (mặc định: 50)",
+        "lookbackDays": "Số ngày Nhìn lại",
+        "lookbackDaysHelp": "Số ngày nhìn lại để tìm mức cao gần đây (mặc định: 30)",
+        "dropThreshold": "Ngưỡng Giảm",
+        "dropThresholdHelp": "Phần trăm giảm từ mức cao gần đây để kích hoạt mua (mặc định: 10%)",
+        "maxMultiplier": "Hệ số Tối đa",
+        "maxMultiplierHelp": "Hệ số tối đa khi nhiều tín hiệu đồng bộ (mặc định: 3.0x)"
+      }
     },
     "results": {
       "metadata": {

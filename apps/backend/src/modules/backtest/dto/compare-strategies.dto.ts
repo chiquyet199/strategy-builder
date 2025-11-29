@@ -23,8 +23,7 @@ export class StrategyConfigDto {
     example: 'lump-sum',
     enum: [
       'lump-sum',
-      'weekly-dca',
-      'monthly-dca',
+      'dca',
       'rsi-dca',
       'dip-buyer-dca',
       'moving-average-dca',
@@ -78,7 +77,7 @@ export class CompareStrategiesDto {
     type: [StrategyConfigDto],
     example: [
       { strategyId: 'lump-sum' },
-      { strategyId: 'weekly-dca' },
+      { strategyId: 'dca', parameters: { frequency: 'weekly' } },
       { strategyId: 'rsi-dca', parameters: { rsiPeriod: 14 } },
     ],
   })

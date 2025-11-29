@@ -5,6 +5,7 @@
     "name": "Name",
     "submit": "Submit",
     "cancel": "Cancel",
+    "save": "Save",
     "loading": "Loading...",
     "error": "Error",
     "success": "Success",
@@ -98,19 +99,81 @@
   "backtest": {
     "title": "Compare Investment Strategies",
     "investmentAmount": "Investment Amount (USD)",
-    "startDate": "Start Date",
-    "endDate": "End Date",
-    "quickSelect": "Quick Select",
+    "dateRange": "Date Range",
+    "dateRangeStart": "Start",
+    "dateRangeEnd": "End",
     "selectStrategies": "Select Strategies",
     "compareStrategies": "Compare Strategies",
+    "customizeParameters": "Customize Parameters",
     "strategies": {
-      "lumpSum": "Lump Sum",
-      "weeklyDca": "Weekly DCA",
-      "monthlyDca": "Monthly DCA",
-      "rsiDca": "RSI DCA",
-      "dipBuyerDca": "Dip Buyer DCA",
-      "movingAverageDca": "Moving Average DCA",
-      "combinedSmartDca": "Combined Smart DCA"
+      "lump-sum": "Lump Sum",
+      "dca": "DCA (Dollar-Cost Averaging)",
+      "rsi-dca": "RSI DCA",
+      "dip-buyer-dca": "Dip Buyer DCA",
+      "moving-average-dca": "Moving Average DCA",
+      "combined-smart-dca": "Combined Smart DCA"
+    },
+    "strategyDescriptions": {
+      "lump-sum": "Invest the entire amount at the start date and hold. Simple buy-and-hold strategy.",
+      "dca": "Invest a fixed amount at regular intervals (daily, weekly, or monthly), regardless of price. Reduces the impact of volatility.",
+      "rsi-dca": "Weekly DCA with increased purchases when RSI indicates oversold conditions. Skips buying when overbought.",
+      "dip-buyer-dca": "Weekly DCA with increased purchases when price drops significantly from recent highs. Buy the dip strategy.",
+      "moving-average-dca": "Weekly DCA with increased purchases when price is below the moving average. Trend-following strategy.",
+      "combined-smart-dca": "Combines RSI, Moving Average, and Dip Buyer signals to adjust weekly DCA purchases. Most sophisticated strategy."
+    },
+    "parameterModal": {
+      "title": "Customize Parameters - {strategy}",
+      "noParameters": "No customizable parameters for this strategy",
+      "resetToDefaults": "Reset to Defaults"
+    },
+    "parameters": {
+      "dca": {
+        "frequency": "Frequency",
+        "frequencyHelp": "How often to invest (default: weekly)",
+        "frequencyOptions": {
+          "daily": "Daily",
+          "weekly": "Weekly",
+          "monthly": "Monthly"
+        }
+      },
+      "rsi": {
+        "rsiPeriod": "RSI Period",
+        "rsiPeriodHelp": "Period for RSI calculation (default: 14)",
+        "oversoldThreshold": "Oversold Threshold",
+        "oversoldThresholdHelp": "RSI value below which to buy more (default: 30)",
+        "overboughtThreshold": "Overbought Threshold",
+        "overboughtThresholdHelp": "RSI value above which to skip buying (default: 70)",
+        "buyMultiplier": "Buy Multiplier",
+        "buyMultiplierHelp": "Multiplier for purchase amount when oversold (default: 2.0x)"
+      },
+      "dip": {
+        "lookbackDays": "Lookback Days",
+        "lookbackDaysHelp": "Number of days to look back for recent high (default: 30)",
+        "dropThreshold": "Drop Threshold",
+        "dropThresholdHelp": "Percentage drop from recent high to trigger buy (default: 10%)",
+        "buyMultiplier": "Buy Multiplier",
+        "buyMultiplierHelp": "Multiplier for purchase amount when dip detected (default: 2.0x)"
+      },
+      "ma": {
+        "maPeriod": "MA Period",
+        "maPeriodHelp": "Moving average period in days (default: 50)",
+        "buyMultiplier": "Buy Multiplier",
+        "buyMultiplierHelp": "Multiplier for purchase amount when price below MA (default: 2.0x)"
+      },
+      "combined": {
+        "rsiPeriod": "RSI Period",
+        "rsiPeriodHelp": "Period for RSI calculation (default: 14)",
+        "oversoldThreshold": "Oversold Threshold",
+        "oversoldThresholdHelp": "RSI value below which to buy more (default: 30)",
+        "maPeriod": "MA Period",
+        "maPeriodHelp": "Moving average period in days (default: 50)",
+        "lookbackDays": "Lookback Days",
+        "lookbackDaysHelp": "Number of days to look back for recent high (default: 30)",
+        "dropThreshold": "Drop Threshold",
+        "dropThresholdHelp": "Percentage drop from recent high to trigger buy (default: 10%)",
+        "maxMultiplier": "Max Multiplier",
+        "maxMultiplierHelp": "Maximum multiplier when multiple signals align (default: 3.0x)"
+      }
     },
     "results": {
       "metadata": {

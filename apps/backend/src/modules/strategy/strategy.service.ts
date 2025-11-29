@@ -3,8 +3,7 @@ import { IStrategy } from './interfaces/strategy.interface';
 import { StrategyResult } from './interfaces/strategy-result.interface';
 import { Candlestick } from '../market-data/interfaces/candlestick.interface';
 import { LumpSumStrategy } from './strategies/lump-sum.strategy';
-import { WeeklyDcaStrategy } from './strategies/weekly-dca.strategy';
-import { MonthlyDcaStrategy } from './strategies/monthly-dca.strategy';
+import { DcaStrategy } from './strategies/dca.strategy';
 import { RsiDcaStrategy } from './strategies/rsi-dca.strategy';
 import { DipBuyerDcaStrategy } from './strategies/dip-buyer-dca.strategy';
 import { MovingAverageDcaStrategy } from './strategies/moving-average-dca.strategy';
@@ -22,8 +21,7 @@ export class StrategyService {
   constructor() {
     // Register all available strategies
     this.registerStrategy(new LumpSumStrategy());
-    this.registerStrategy(new WeeklyDcaStrategy());
-    this.registerStrategy(new MonthlyDcaStrategy());
+    this.registerStrategy(new DcaStrategy());
     this.registerStrategy(new RsiDcaStrategy());
     this.registerStrategy(new DipBuyerDcaStrategy());
     this.registerStrategy(new MovingAverageDcaStrategy());

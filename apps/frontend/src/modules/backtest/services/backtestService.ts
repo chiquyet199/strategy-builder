@@ -9,12 +9,6 @@ const API_BASE_URL = import.meta.env.VITE_API_URL
   ? `${import.meta.env.VITE_API_URL}/api/v1/backtest`
   : '/api/v1/backtest'
 
-interface ApiResponse<T> {
-  data: T
-  message?: string
-  meta?: Record<string, unknown>
-}
-
 export const backtestService = {
   /**
    * Compare multiple strategies

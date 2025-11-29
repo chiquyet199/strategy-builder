@@ -73,7 +73,7 @@
           closable
           @close="backtestStore.error = null"
         />
-        <a-button type="primary" @click="goBack" style="margin-top: 16px">Go Back</a-button>
+        <a-button type="primary" @click="goBack" style="margin-top: 16px">{{ t('backtest.results.metadata.backToSelection') }}</a-button>
       </div>
 
       <div v-else-if="backtestStore.hasResults" class="results-content">
@@ -345,7 +345,6 @@ function goBack() {
 function downloadChart() {
   // TODO: Implement chart download functionality
   // This would require getting the chart canvas and converting to image
-  console.log('Download chart functionality to be implemented')
 }
 
 function showTransactions(strategy: StrategyResult) {

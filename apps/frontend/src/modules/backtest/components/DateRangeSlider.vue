@@ -11,14 +11,17 @@
       @change="handleDateRangeChange"
     />
     <div class="date-range-display">
-      <span><strong>Start:</strong> {{ formatDateDisplay(dateRange.startDate, false) }}</span>
-      <span><strong>End:</strong> {{ formatDateDisplay(dateRange.endDate, true) }}</span>
+      <span><strong>{{ t('backtest.dateRangeStart') }}:</strong> {{ formatDateDisplay(dateRange.startDate, false) }}</span>
+      <span><strong>{{ t('backtest.dateRangeEnd') }}:</strong> {{ formatDateDisplay(dateRange.endDate, true) }}</span>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
+import { useI18n } from 'vue-i18n'
 import { useDateRange } from '../composables/useDateRange'
+
+const { t } = useI18n()
 
 interface Props {
   initialStartDate?: string

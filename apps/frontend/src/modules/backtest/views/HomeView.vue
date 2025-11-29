@@ -2,12 +2,12 @@
   <div class="home-view">
     <a-card class="strategy-selection-card">
       <template #title>
-        <h1>Compare Investment Strategies</h1>
+        <h1>{{ t('backtest.title') }}</h1>
       </template>
 
       <a-form :model="formState" layout="vertical" @submit.prevent="handleCompare">
         <!-- Investment Amount -->
-        <a-form-item label="Investment Amount (USD)" required>
+        <a-form-item :label="t('backtest.investmentAmount')" required>
           <a-input-number
             v-model:value="formState.investmentAmount"
             :min="1"
@@ -21,7 +21,7 @@
         </a-form-item>
 
         <!-- Date Range Slider -->
-        <a-form-item label="Date Range" required>
+        <a-form-item :label="t('backtest.dateRange')" required>
           <DateRangeSlider
             :initial-start-date="formState.startDate"
             :initial-end-date="formState.endDate"
@@ -30,7 +30,7 @@
         </a-form-item>
 
         <!-- Strategy Selection -->
-        <a-form-item label="Select Strategies" required>
+        <a-form-item :label="t('backtest.selectStrategies')" required>
           <StrategySelection v-model="formState.selectedStrategyIds" />
         </a-form-item>
 
@@ -55,7 +55,7 @@
             :disabled="formState.selectedStrategyIds.length === 0"
             block
           >
-            Compare Strategies
+            {{ t('backtest.compareStrategies') }}
           </a-button>
         </a-form-item>
       </a-form>
@@ -64,11 +64,13 @@
 </template>
 
 <script setup lang="ts">
+import { useI18n } from 'vue-i18n'
 import { useBacktestStore } from '../stores/backtestStore'
 import { useBacktestForm } from '../composables/useBacktestForm'
 import DateRangeSlider from '../components/DateRangeSlider.vue'
 import StrategySelection from '../components/StrategySelection.vue'
 
+const { t } = useI18n()
 const backtestStore = useBacktestStore()
 const { formState, handleDateRangeChange, handleCompare } = useBacktestForm()
 </script>

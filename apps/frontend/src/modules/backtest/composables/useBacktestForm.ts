@@ -1,7 +1,7 @@
 import { reactive, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useBacktestStore } from '../stores/backtestStore'
-import { backtestService } from '../services/backtestService'
+import type { StrategyConfig } from '@/shared/types/backtest'
 
 export function useBacktestForm() {
   const router = useRouter()
@@ -11,7 +11,7 @@ export function useBacktestForm() {
     investmentAmount: backtestStore.investmentAmount,
     startDate: backtestStore.startDate,
     endDate: backtestStore.endDate,
-    selectedStrategyIds: [] as string[],
+    selectedStrategyIds: [] as StrategyConfig[],
   })
 
   function handleDateRangeChange(dates: { startDate: string; endDate: string }) {
@@ -28,11 +28,9 @@ export function useBacktestForm() {
     backtestStore.setInvestmentAmount(formState.investmentAmount)
     backtestStore.setDateRange(formState.startDate, formState.endDate)
 
-    // Build strategy configs
-    const strategies = formState.selectedStrategyIds.map((id) =>
-      backtestService.buildStrategyConfig(id),
-    )
-    backtestStore.setSelectedStrategies(strategies)
+    // Build strategy configs with parameters
+    // formState.selectedStrategyIds is already in StrategyConfig format
+    backtestStore.setSelectedStrategies(formState.selectedStrategyIds)
 
     // Run comparison
     await backtestStore.compareStrategies()

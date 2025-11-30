@@ -20,9 +20,9 @@ export function useBacktestForm() {
     investmentAmount: backtestStore.investmentAmount,
     startDate: backtestStore.startDate,
     endDate: backtestStore.endDate,
-    mode: 'compare-strategies',
-    selectedStrategyIds: [],
-    selectedVariants: [],
+    mode: backtestStore.formMode,
+    selectedStrategyIds: [...backtestStore.formSelectedStrategyIds],
+    selectedVariants: [...backtestStore.formSelectedVariants],
   })
 
   function handleDateRangeChange(dates: { startDate: string; endDate: string }) {
@@ -55,6 +55,11 @@ export function useBacktestForm() {
     backtestStore.setInvestmentAmount(formState.investmentAmount)
     backtestStore.setDateRange(formState.startDate, formState.endDate)
 
+    // Save form state for restoration when navigating back
+    backtestStore.setFormMode(formState.mode)
+    backtestStore.setFormSelectedStrategyIds([...formState.selectedStrategyIds])
+    backtestStore.setFormSelectedVariants([...formState.selectedVariants])
+
     // Set strategies for comparison
     backtestStore.setSelectedStrategies(strategiesToCompare)
 
@@ -68,10 +73,13 @@ export function useBacktestForm() {
   }
 
   onMounted(() => {
-    // Initialize form with store values
+    // Initialize form with store values (preserves state when navigating back)
     formState.investmentAmount = backtestStore.investmentAmount
     formState.startDate = backtestStore.startDate
     formState.endDate = backtestStore.endDate
+    formState.mode = backtestStore.formMode
+    formState.selectedStrategyIds = [...backtestStore.formSelectedStrategyIds]
+    formState.selectedVariants = [...backtestStore.formSelectedVariants]
   })
 
   return {

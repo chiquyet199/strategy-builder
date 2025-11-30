@@ -5,6 +5,8 @@ import type {
   BacktestResponse,
   StrategyResult,
   Timeframe,
+  ComparisonMode,
+  Variant,
 } from '@/shared/types/backtest'
 import { backtestService } from '../services/backtestService'
 
@@ -18,6 +20,11 @@ export const useBacktestStore = defineStore('backtest', () => {
   const results = ref<BacktestResponse | null>(null)
   const isLoading = ref<boolean>(false)
   const error = ref<string | null>(null)
+  
+  // Form state for preserving selections when navigating back
+  const formMode = ref<ComparisonMode>('compare-strategies')
+  const formSelectedStrategyIds = ref<StrategyConfig[]>([])
+  const formSelectedVariants = ref<Variant[]>([])
 
   // Getters
   const hasResults = computed(() => results.value !== null)
@@ -39,6 +46,18 @@ export const useBacktestStore = defineStore('backtest', () => {
 
   function setTimeframe(tf: Timeframe) {
     timeframe.value = tf
+  }
+
+  function setFormMode(mode: ComparisonMode) {
+    formMode.value = mode
+  }
+
+  function setFormSelectedStrategyIds(strategyIds: StrategyConfig[]) {
+    formSelectedStrategyIds.value = strategyIds
+  }
+
+  function setFormSelectedVariants(variants: Variant[]) {
+    formSelectedVariants.value = variants
   }
 
   async function compareStrategies() {
@@ -82,6 +101,9 @@ export const useBacktestStore = defineStore('backtest', () => {
     results.value = null
     isLoading.value = false
     error.value = null
+    formMode.value = 'compare-strategies'
+    formSelectedStrategyIds.value = []
+    formSelectedVariants.value = []
   }
 
   return {
@@ -94,6 +116,9 @@ export const useBacktestStore = defineStore('backtest', () => {
     results,
     isLoading,
     error,
+    formMode,
+    formSelectedStrategyIds,
+    formSelectedVariants,
     // Getters
     hasResults,
     strategyResults,
@@ -102,6 +127,9 @@ export const useBacktestStore = defineStore('backtest', () => {
     setInvestmentAmount,
     setDateRange,
     setTimeframe,
+    setFormMode,
+    setFormSelectedStrategyIds,
+    setFormSelectedVariants,
     compareStrategies,
     clearResults,
     reset,

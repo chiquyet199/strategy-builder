@@ -33,7 +33,7 @@ export class MockDataGenerator {
       // Add some realistic volatility
       const volatility = 0.02; // 2% daily volatility
       const trend = this.getTrendForDate(currentDate);
-      
+
       // Random walk with trend
       const change = (Math.random() - 0.5) * volatility * 2 + trend;
       basePrice = basePrice * (1 + change);
@@ -46,7 +46,7 @@ export class MockDataGenerator {
       const high = open * (1 + Math.random() * 0.05); // Up to 5% higher
       const low = open * (1 - Math.random() * 0.05); // Up to 5% lower
       const close = low + (high - low) * Math.random();
-      
+
       // Update base price to close for next iteration
       basePrice = close;
 
@@ -78,8 +78,10 @@ export class MockDataGenerator {
     if (year === 2020) {
       return 7000 + (month / 12) * 22000; // $7k to $29k
     } else if (year === 2021) {
-      if (month < 4) return 29000 + (month / 4) * 40000; // $29k to $69k
-      else if (month < 8) return 69000 - ((month - 4) / 4) * 20000; // $69k to $49k
+      if (month < 4)
+        return 29000 + (month / 4) * 40000; // $29k to $69k
+      else if (month < 8)
+        return 69000 - ((month - 4) / 4) * 20000; // $69k to $49k
       else return 49000 + ((month - 8) / 4) * 20000; // $49k to $69k
     } else if (year === 2022) {
       return 69000 - (month / 12) * 54000; // $69k to $15k (crash)
@@ -195,4 +197,3 @@ export class MockDataGenerator {
     };
   }
 }
-

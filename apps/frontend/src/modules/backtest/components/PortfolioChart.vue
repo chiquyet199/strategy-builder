@@ -69,7 +69,7 @@ function createChart() {
     }))
 
     return {
-      label: result.strategyName,
+      label: result.variantName || result.strategyName,
       data,
       borderColor: colors[index % colors.length],
       backgroundColor: colors[index % colors.length] + '20',

@@ -109,7 +109,10 @@
             row-key="strategyId"
           >
             <template #bodyCell="{ column, record }">
-              <template v-if="column.key === 'totalReturn'">
+              <template v-if="column.key === 'strategy'">
+                {{ record.variantName || record.strategyName }}
+              </template>
+              <template v-else-if="column.key === 'totalReturn'">
                 <span :class="getReturnClass(record.metrics?.totalReturn)">
                   {{ formatPercentage(record.metrics?.totalReturn) }}
                 </span>
@@ -190,8 +193,7 @@ const selectedStrategyName = ref<string>('')
 const columns = computed(() => [
   {
     title: t('backtest.results.metrics.strategy'),
-    dataIndex: 'strategyName',
-    key: 'strategyName',
+    key: 'strategy',
     fixed: 'left' as const,
   },
   {
@@ -349,7 +351,7 @@ function downloadChart() {
 
 function showTransactions(strategy: StrategyResult) {
   selectedTransactions.value = strategy.transactions || []
-  selectedStrategyName.value = strategy.strategyName
+  selectedStrategyName.value = strategy.variantName || strategy.strategyName
   transactionsModalVisible.value = true
 }
 </script>

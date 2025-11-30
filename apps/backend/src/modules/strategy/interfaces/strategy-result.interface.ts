@@ -44,6 +44,7 @@ export interface StrategyMetrics {
 export interface StrategyResult {
   strategyId: string;
   strategyName: string;
+  variantName?: string; // Custom name for parameter variant comparisons
   parameters: Record<string, any>; // Parameters used for this calculation
   transactions: Transaction[];
   metrics: StrategyMetrics;

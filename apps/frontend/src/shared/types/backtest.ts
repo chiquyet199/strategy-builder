@@ -45,9 +45,12 @@ export interface StrategyMetrics {
   totalQuantity: number; // Total asset quantity accumulated
 }
 
+export type ComparisonMode = 'compare-strategies' | 'compare-variants'
+
 export interface StrategyResult {
   strategyId: string;
   strategyName: string;
+  variantName?: string; // Custom name for parameter variant comparisons
   parameters: Record<string, any>; // Parameters used for this calculation
   transactions: Transaction[];
   metrics: StrategyMetrics;
@@ -56,7 +59,12 @@ export interface StrategyResult {
 
 export interface StrategyConfig {
   strategyId: string;
+  variantName?: string; // Custom name for parameter variant comparisons
   parameters?: Record<string, any>; // Optional strategy-specific parameters
+}
+
+export interface Variant extends StrategyConfig {
+  variantName: string; // Required variant name for parameter variant comparisons
 }
 
 export interface CompareStrategiesRequest {

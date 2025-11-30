@@ -13,4 +13,3 @@ export interface Candlestick {
 }
 
 export type Timeframe = '1h' | '4h' | '1d' | '1w' | '1m';
-

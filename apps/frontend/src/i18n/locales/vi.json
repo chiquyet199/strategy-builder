@@ -6,6 +6,8 @@
     "submit": "Gửi",
     "cancel": "Hủy",
     "save": "Lưu",
+    "edit": "Chỉnh sửa",
+    "delete": "Xóa",
     "loading": "Đang tải...",
     "error": "Lỗi",
     "success": "Thành công",
@@ -105,6 +107,25 @@
     "selectStrategies": "Chọn chiến lược",
     "compareStrategies": "So sánh Chiến lược",
     "customizeParameters": "Tùy chỉnh Tham số",
+    "mode": {
+      "label": "Chế độ So sánh",
+      "compareStrategies": "So sánh Chiến lược",
+      "compareVariants": "So sánh Biến thể Tham số"
+    },
+    "variantMode": {
+      "label": "Biến thể Tham số",
+      "selectStrategy": "Chọn Chiến lược",
+      "selectStrategyPlaceholder": "Chọn một chiến lược để tạo biến thể",
+      "variants": "Biến thể",
+      "addVariant": "Thêm Biến thể",
+      "editVariant": "Chỉnh sửa Biến thể",
+      "noVariants": "Chưa có biến thể nào. Nhấp 'Thêm Biến thể' để tạo.",
+      "variantName": "Tên Biến thể",
+      "variantNameHelp": "Nhập tên tùy chỉnh cho cấu hình tham số này (ví dụ: 'RSI Tích cực', 'DCA Bảo thủ')",
+      "variantNamePlaceholder": "ví dụ: RSI Tích cực",
+      "parameters": "Tham số",
+      "defaultParameters": "Tham số mặc định"
+    },
     "strategies": {
       "lump-sum": "Đầu tư một lần",
       "dca": "DCA (Trung bình hóa chi phí)",

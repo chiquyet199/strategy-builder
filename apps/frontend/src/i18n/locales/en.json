@@ -6,6 +6,8 @@
     "submit": "Submit",
     "cancel": "Cancel",
     "save": "Save",
+    "edit": "Edit",
+    "delete": "Delete",
     "loading": "Loading...",
     "error": "Error",
     "success": "Success",
@@ -105,6 +107,25 @@
     "selectStrategies": "Select Strategies",
     "compareStrategies": "Compare Strategies",
     "customizeParameters": "Customize Parameters",
+    "mode": {
+      "label": "Comparison Mode",
+      "compareStrategies": "Compare Strategies",
+      "compareVariants": "Compare Parameter Variants"
+    },
+    "variantMode": {
+      "label": "Parameter Variants",
+      "selectStrategy": "Select Strategy",
+      "selectStrategyPlaceholder": "Choose a strategy to create variants",
+      "variants": "Variants",
+      "addVariant": "Add Variant",
+      "editVariant": "Edit Variant",
+      "noVariants": "No variants added yet. Click 'Add Variant' to create one.",
+      "variantName": "Variant Name",
+      "variantNameHelp": "Enter a custom name for this parameter configuration (e.g., 'Aggressive RSI', 'Conservative DCA')",
+      "variantNamePlaceholder": "e.g., Aggressive RSI",
+      "parameters": "Parameters",
+      "defaultParameters": "Default parameters"
+    },
     "strategies": {
       "lump-sum": "Lump Sum",
       "dca": "DCA (Dollar-Cost Averaging)",

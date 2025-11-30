@@ -41,6 +41,14 @@ export class StrategyConfigDto {
   @IsObject()
   @IsOptional()
   parameters?: Record<string, any>;
+
+  @ApiPropertyOptional({
+    description: 'Custom name for parameter variant comparisons',
+    example: 'Aggressive RSI',
+  })
+  @IsString()
+  @IsOptional()
+  variantName?: string;
 }
 
 /**
@@ -78,7 +86,7 @@ export class CompareStrategiesDto {
     example: [
       { strategyId: 'lump-sum' },
       { strategyId: 'dca', parameters: { frequency: 'weekly' } },
-      { strategyId: 'rsi-dca', parameters: { rsiPeriod: 14 } },
+      { strategyId: 'rsi-dca', parameters: { rsiPeriod: 14 }, variantName: 'Aggressive RSI' },
     ],
   })
   @IsArray()

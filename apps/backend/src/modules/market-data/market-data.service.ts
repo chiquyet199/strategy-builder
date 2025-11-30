@@ -23,7 +23,9 @@ export class MarketDataService {
     // For MVP, only BTC/USD is supported
     // TODO: Extend to support multiple symbols (ETH/USD, etc.)
     if (symbol !== 'BTC/USD') {
-      throw new Error(`Symbol ${symbol} is not supported. Only BTC/USD is available in MVP.`);
+      throw new Error(
+        `Symbol ${symbol} is not supported. Only BTC/USD is available in MVP.`,
+      );
     }
 
     const start = new Date(startDate);
@@ -41,11 +43,7 @@ export class MarketDataService {
     }
 
     // Generate daily candles first (most granular for our mock data)
-    const dailyCandles = MockDataGenerator.generateCandles(
-      start,
-      end,
-      '1d',
-    );
+    const dailyCandles = MockDataGenerator.generateCandles(start, end, '1d');
 
     // If timeframe is daily, return as is
     if (timeframe === '1d') {
@@ -56,4 +54,3 @@ export class MarketDataService {
     return MockDataGenerator.aggregateCandles(dailyCandles, timeframe);
   }
 }
-

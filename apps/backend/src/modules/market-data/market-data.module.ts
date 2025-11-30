@@ -8,4 +8,3 @@ import { MarketDataService } from './market-data.service';
   exports: [MarketDataService],
 })
 export class MarketDataModule {}
-

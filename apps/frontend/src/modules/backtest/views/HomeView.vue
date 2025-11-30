@@ -29,9 +29,31 @@
           />
         </a-form-item>
 
-        <!-- Strategy Selection -->
-        <a-form-item :label="t('backtest.selectStrategies')" required>
+        <!-- Mode Selection -->
+        <a-form-item :label="t('backtest.mode.label')" required>
+          <ModeSelection v-model="formState.mode" />
+        </a-form-item>
+
+        <!-- Strategy Selection (Compare Strategies Mode) -->
+        <a-form-item
+          v-if="formState.mode === 'compare-strategies'"
+          :label="t('backtest.selectStrategies')"
+          required
+        >
           <StrategySelection v-model="formState.selectedStrategyIds" />
+        </a-form-item>
+
+        <!-- Parameter Variant Selection (Compare Variants Mode) -->
+        <a-form-item
+          v-if="formState.mode === 'compare-variants'"
+          :label="t('backtest.variantMode.label')"
+          required
+          :key="'variant-mode'"
+        >
+          <ParameterVariantSelection
+            :model-value="formState.selectedVariants"
+            @update:model-value="(value: Variant[]) => (formState.selectedVariants = value)"
+          />
         </a-form-item>
 
         <!-- Error Message -->
@@ -52,7 +74,10 @@
             html-type="submit"
             size="large"
             :loading="backtestStore.isLoading"
-            :disabled="formState.selectedStrategyIds.length === 0"
+            :disabled="
+              (formState.mode === 'compare-strategies' && formState.selectedStrategyIds.length === 0) ||
+              (formState.mode === 'compare-variants' && formState.selectedVariants.length === 0)
+            "
             block
           >
             {{ t('backtest.compareStrategies') }}
@@ -69,6 +94,9 @@ import { useBacktestStore } from '../stores/backtestStore'
 import { useBacktestForm } from '../composables/useBacktestForm'
 import DateRangeSlider from '../components/DateRangeSlider.vue'
 import StrategySelection from '../components/StrategySelection.vue'
+import ModeSelection from '../components/ModeSelection.vue'
+import ParameterVariantSelection from '../components/ParameterVariantSelection.vue'
+import type { Variant } from '@/shared/types/backtest'
 
 const { t } = useI18n()
 const backtestStore = useBacktestStore()

@@ -39,7 +39,7 @@ export class BacktestService {
     const results = await Promise.all(
       dto.strategies.map(async (strategyConfig) => {
         try {
-          return this.strategyService.calculateStrategy(
+          const result = await this.strategyService.calculateStrategy(
             strategyConfig.strategyId,
             candles,
             dto.investmentAmount,
@@ -47,6 +47,11 @@ export class BacktestService {
             dto.endDate,
             strategyConfig.parameters,
           );
+          // Preserve variant name if provided
+          if (strategyConfig.variantName) {
+            result.variantName = strategyConfig.variantName;
+          }
+          return result;
         } catch (error) {
           this.logger.error(
             `Error calculating strategy ${strategyConfig.strategyId}: ${error.message}`,

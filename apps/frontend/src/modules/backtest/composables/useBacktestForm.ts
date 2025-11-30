@@ -1,17 +1,28 @@
 import { reactive, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useBacktestStore } from '../stores/backtestStore'
-import type { StrategyConfig } from '@/shared/types/backtest'
+import type { StrategyConfig, ComparisonMode, Variant } from '@/shared/types/backtest'
+
+interface FormState {
+  investmentAmount: number
+  startDate: string
+  endDate: string
+  mode: ComparisonMode
+  selectedStrategyIds: StrategyConfig[]
+  selectedVariants: Variant[]
+}
 
 export function useBacktestForm() {
   const router = useRouter()
   const backtestStore = useBacktestStore()
 
-  const formState = reactive({
+  const formState = reactive<FormState>({
     investmentAmount: backtestStore.investmentAmount,
     startDate: backtestStore.startDate,
     endDate: backtestStore.endDate,
-    selectedStrategyIds: [] as StrategyConfig[],
+    mode: 'compare-strategies',
+    selectedStrategyIds: [],
+    selectedVariants: [],
   })
 
   function handleDateRangeChange(dates: { startDate: string; endDate: string }) {
@@ -20,17 +31,32 @@ export function useBacktestForm() {
   }
 
   async function handleCompare() {
-    if (formState.selectedStrategyIds.length === 0) {
-      return
+    let strategiesToCompare: StrategyConfig[] = []
+
+    if (formState.mode === 'compare-strategies') {
+      if (formState.selectedStrategyIds.length === 0) {
+        return
+      }
+      strategiesToCompare = formState.selectedStrategyIds
+    } else {
+      // compare-variants mode
+      if (formState.selectedVariants.length === 0) {
+        return
+      }
+      // Convert variants to StrategyConfig format with variantName
+      strategiesToCompare = formState.selectedVariants.map((variant) => ({
+        strategyId: variant.strategyId,
+        variantName: variant.variantName,
+        parameters: variant.parameters,
+      }))
     }
 
     // Update store with form values
     backtestStore.setInvestmentAmount(formState.investmentAmount)
     backtestStore.setDateRange(formState.startDate, formState.endDate)
 
-    // Build strategy configs with parameters
-    // formState.selectedStrategyIds is already in StrategyConfig format
-    backtestStore.setSelectedStrategies(formState.selectedStrategyIds)
+    // Set strategies for comparison
+    backtestStore.setSelectedStrategies(strategiesToCompare)
 
     // Run comparison
     await backtestStore.compareStrategies()

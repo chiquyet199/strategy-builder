@@ -33,7 +33,7 @@
         <a-form-item :label="t('backtest.mode.label')" required>
           <ModeSelection v-model="formState.mode" />
         </a-form-item>
-
+        <span>formState :{{ formState.mode }}</span>
         <!-- Strategy Selection (Compare Strategies Mode) -->
         <a-form-item
           v-if="formState.mode === 'compare-strategies'"
@@ -75,7 +75,8 @@
             size="large"
             :loading="backtestStore.isLoading"
             :disabled="
-              (formState.mode === 'compare-strategies' && formState.selectedStrategyIds.length === 0) ||
+              (formState.mode === 'compare-strategies' &&
+                formState.selectedStrategyIds.length === 0) ||
               (formState.mode === 'compare-variants' && formState.selectedVariants.length === 0)
             "
             block
@@ -120,4 +121,3 @@ const { formState, handleDateRangeChange, handleCompare } = useBacktestForm()
   font-weight: 600;
 }
 </style>
-

@@ -1,5 +1,5 @@
 <template>
-  <a-radio-group v-model:value="selectedMode" @change="handleModeChange" button-style="solid">
+  <a-radio-group v-model:value="selectedMode" button-style="solid">
     <a-radio-button value="compare-strategies">
       {{ t('backtest.mode.compareStrategies') }}
     </a-radio-button>
@@ -10,7 +10,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
+import { ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import type { ComparisonMode } from '@/shared/types/backtest'
 
@@ -26,14 +26,24 @@ const { t } = useI18n()
 const props = defineProps<Props>()
 const emit = defineEmits<Emits>()
 
-const selectedMode = computed({
-  get: () => props.modelValue,
-  set: (value) => emit('update:modelValue', value),
-})
+const selectedMode = ref<ComparisonMode>(props.modelValue)
 
-function handleModeChange() {
-  emit('update:modelValue', selectedMode.value)
-}
+// Sync with prop changes (from parent)
+watch(
+  () => props.modelValue,
+  (newValue) => {
+    if (selectedMode.value !== newValue) {
+      selectedMode.value = newValue
+    }
+  },
+)
+
+// Emit changes to parent (from user interaction)
+watch(selectedMode, (newValue) => {
+  if (props.modelValue !== newValue) {
+    emit('update:modelValue', newValue)
+  }
+})
 </script>
 
 <style scoped>

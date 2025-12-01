@@ -45,12 +45,15 @@
               ${{ formatNumber(record.amount) }}
             </template>
             <template v-else-if="column.key === 'quantityPurchased'">
-              <span :class="(record.type || 'buy') === 'sell' ? 'negative-value' : ''">
-                {{ (record.type || 'buy') === 'sell' ? '-' : '' }}{{ formatQuantity(Math.abs(record.quantityPurchased)) }}
+              <span :class="(record.type || 'buy') === 'sell' ? 'negative-value' : 'positive-value'">
+                {{ (record.type || 'buy') === 'buy' ? '+' : '' }}{{ formatQuantity(record.quantityPurchased) }}
               </span>
             </template>
             <template v-else-if="column.key === 'coinValue'">
-              ${{ formatNumber(record.portfolioValue?.coinValue) }}
+              <div>
+                <div>{{ formatQuantity(record.portfolioValue?.quantityHeld || 0) }} {{ coinSymbol }}</div>
+                <div style="color: #8c8c8c; font-size: 12px;">${{ formatNumber(record.portfolioValue?.coinValue) }}</div>
+              </div>
             </template>
             <template v-else-if="column.key === 'usdcValue'">
               ${{ formatNumber(record.portfolioValue?.usdcValue) }}

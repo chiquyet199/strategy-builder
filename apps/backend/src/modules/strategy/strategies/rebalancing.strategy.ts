@@ -115,7 +115,7 @@ export class RebalancingStrategy extends BaseStrategy {
       const candleDate = new Date(candle.timestamp);
 
       // Handle periodic funding before checking rebalancing
-      if (fundingSchedule?.enabled && fundingSchedule.amount > 0 && i > 0) {
+      if (fundingSchedule && fundingSchedule.amount > 0 && i > 0) {
         const periodDays =
           fundingSchedule.frequency === 'daily'
             ? 1
@@ -140,7 +140,7 @@ export class RebalancingStrategy extends BaseStrategy {
 
           transactions.push({
             date: candle.timestamp,
-            type: 'buy',
+            type: 'funding',
             price,
             amount: fundingSchedule.amount,
             quantityPurchased: 0,

@@ -97,28 +97,22 @@ export class InitialPortfolioDto {
  * Funding Schedule DTO
  */
 export class FundingScheduleDto {
-  @ApiProperty({ description: 'Whether periodic funding is enabled', example: false })
-  @IsBoolean()
-  enabled: boolean;
-
-  @ApiPropertyOptional({
+  @ApiProperty({
     description: 'Funding frequency',
     enum: ['daily', 'weekly', 'monthly'],
     example: 'weekly',
   })
-  @IsOptional()
   @IsIn(['daily', 'weekly', 'monthly'])
-  frequency?: 'daily' | 'weekly' | 'monthly';
+  frequency: 'daily' | 'weekly' | 'monthly';
 
-  @ApiPropertyOptional({
-    description: 'USD amount per funding period',
+  @ApiProperty({
+    description: 'USD amount per funding period (0 means no funding)',
     example: 500,
     minimum: 0,
   })
-  @IsOptional()
   @IsNumber()
   @Min(0)
-  amount?: number;
+  amount: number;
 }
 
 /**

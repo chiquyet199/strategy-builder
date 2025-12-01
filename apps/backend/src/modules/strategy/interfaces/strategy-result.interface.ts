@@ -20,9 +20,8 @@ export interface InitialPortfolio {
  * Periodic funding schedule
  */
 export interface FundingSchedule {
-  enabled: boolean;
   frequency: 'daily' | 'weekly' | 'monthly';
-  amount: number; // USD amount per period
+  amount: number; // USD amount per period (0 means no funding)
 }
 
 /**
@@ -30,10 +29,10 @@ export interface FundingSchedule {
  */
 export interface Transaction {
   date: string; // ISO 8601
-  type?: 'buy' | 'sell'; // Transaction type (optional for backward compatibility, defaults to 'buy')
-  price: number; // Price at which the asset was bought or sold
+  type?: 'buy' | 'sell' | 'funding'; // Transaction type (optional for backward compatibility, defaults to 'buy')
+  price: number; // Price at which the asset was bought or sold (for funding, this is the current price for portfolio value calculation)
   amount: number; // USD value of the transaction (always positive)
-  quantityPurchased: number; // Amount of asset: positive for buys, negative for sells
+  quantityPurchased: number; // Amount of asset: positive for buys, negative for sells, 0 for funding
   reason?: string; // Optional reason for the transaction (e.g., "RSI < 30", "Rebalancing: BTC allocation 90% > 90% threshold")
   portfolioValue: {
     coinValue: number; // Value of coin holdings (quantityHeld * price)

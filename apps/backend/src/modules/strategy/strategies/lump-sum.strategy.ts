@@ -97,7 +97,7 @@ export class LumpSumStrategy extends BaseStrategy {
     let totalFunding = 0;
 
     // Handle periodic funding
-    if (fundingSchedule?.enabled && fundingSchedule.amount > 0) {
+    if (fundingSchedule && fundingSchedule.amount > 0) {
       const start = new Date(startDate);
       let lastFundingDate = new Date(start);
       lastFundingDate.setDate(lastFundingDate.getDate() - 1); // Initialize to before start
@@ -129,7 +129,7 @@ export class LumpSumStrategy extends BaseStrategy {
 
           transactions.push({
             date: candle.timestamp,
-            type: 'buy', // Using 'buy' type for funding
+            type: 'funding',
             price: candle.close,
             amount: fundingSchedule.amount, // Track funding amount
             quantityPurchased: 0, // No asset purchased, just cash added

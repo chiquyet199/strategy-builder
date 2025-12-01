@@ -33,14 +33,14 @@ export class BacktestService {
       throw new BadRequestException('Either investmentAmount or initialPortfolio must be provided');
     }
 
-    // Normalize funding schedule
-    const fundingSchedule: FundingSchedule | undefined = dto.fundingSchedule
-      ? {
-          enabled: dto.fundingSchedule.enabled || false,
-          frequency: dto.fundingSchedule.frequency || 'weekly',
-          amount: dto.fundingSchedule.amount || 0,
-        }
-      : undefined;
+    // Normalize funding schedule (only include if amount > 0)
+    const fundingSchedule: FundingSchedule | undefined =
+      dto.fundingSchedule && dto.fundingSchedule.amount > 0
+        ? {
+            frequency: dto.fundingSchedule.frequency || 'weekly',
+            amount: dto.fundingSchedule.amount,
+          }
+        : undefined;
 
     // Calculate total initial investment for metadata (assets value + USDC)
     const timeframe = dto.timeframe || '1d';

@@ -186,9 +186,8 @@
         },
         "fundingSchedule": {
           "label": "Tài trợ Định kỳ",
-          "helper": "Thêm tiền vào danh mục của bạn theo lịch trình đều đặn (hàng ngày, hàng tuần hoặc hàng tháng).",
+          "helper": "Thêm tiền vào danh mục của bạn theo lịch trình đều đặn (hàng ngày, hàng tuần hoặc hàng tháng). Đặt số tiền thành 0 để tắt.",
           "tooltip": "Tài trợ định kỳ cho phép bạn mô phỏng việc thêm tiền vào danh mục theo thời gian, tương tự như trung bình hóa chi phí đô la với vốn bổ sung.",
-          "enable": "Bật tài trợ định kỳ",
           "frequency": {
             "label": "Tần suất",
             "daily": "Hàng ngày",
@@ -396,6 +395,7 @@
         "typeTooltip": "Đây là giao dịch mua (mua BTC) hay giao dịch bán (bán BTC).",
         "buy": "Mua",
         "sell": "Bán",
+        "funding": "Tài trợ",
         "price": "Giá",
         "priceTooltip": "Giá của tiền điện tử (ví dụ: BTC) tại thời điểm giao dịch, tính bằng USD.",
         "amount": "Số tiền (USD)",

@@ -186,9 +186,8 @@
         },
         "fundingSchedule": {
           "label": "Periodic Funding",
-          "helper": "Add funds to your portfolio on a regular schedule (daily, weekly, or monthly).",
+          "helper": "Add funds to your portfolio on a regular schedule (daily, weekly, or monthly). Set amount to 0 to disable.",
           "tooltip": "Periodic funding allows you to simulate adding money to your portfolio over time, similar to dollar-cost averaging with additional capital.",
-          "enable": "Enable periodic funding",
           "frequency": {
             "label": "Frequency",
             "daily": "Daily",
@@ -404,6 +403,7 @@
         "typeTooltip": "Whether this is a buy transaction (purchasing BTC) or a sell transaction (selling BTC).",
         "buy": "Buy",
         "sell": "Sell",
+        "funding": "Funding",
         "price": "Price",
         "priceTooltip": "The price of the cryptocurrency (e.g., BTC) at the time of transaction, in USD.",
         "amount": "Amount (USD)",

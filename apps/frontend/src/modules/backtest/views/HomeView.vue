@@ -116,33 +116,27 @@
                 <span class="helper-text">{{ t('backtest.form.fundingSchedule.helper') }}</span>
               </template>
 
-              <a-checkbox v-model:checked="formState.fundingSchedule.enabled">
-                {{ t('backtest.form.fundingSchedule.enable') }}
-              </a-checkbox>
+              <div style="display: flex; gap: 16px; flex-wrap: wrap;">
+                <a-form-item :label="t('backtest.form.fundingSchedule.frequency.label')" style="flex: 1; min-width: 150px;">
+                  <a-select v-model:value="formState.fundingSchedule.frequency" style="width: 100%">
+                    <a-select-option value="daily">{{ t('backtest.form.fundingSchedule.frequency.daily') }}</a-select-option>
+                    <a-select-option value="weekly">{{ t('backtest.form.fundingSchedule.frequency.weekly') }}</a-select-option>
+                    <a-select-option value="monthly">{{ t('backtest.form.fundingSchedule.frequency.monthly') }}</a-select-option>
+                  </a-select>
+                </a-form-item>
 
-              <template v-if="formState.fundingSchedule.enabled">
-                <div style="margin-top: 16px; display: flex; gap: 16px; flex-wrap: wrap;">
-                  <a-form-item :label="t('backtest.form.fundingSchedule.frequency.label')" style="flex: 1; min-width: 150px;">
-                    <a-select v-model:value="formState.fundingSchedule.frequency" style="width: 100%">
-                      <a-select-option value="daily">{{ t('backtest.form.fundingSchedule.frequency.daily') }}</a-select-option>
-                      <a-select-option value="weekly">{{ t('backtest.form.fundingSchedule.frequency.weekly') }}</a-select-option>
-                      <a-select-option value="monthly">{{ t('backtest.form.fundingSchedule.frequency.monthly') }}</a-select-option>
-                    </a-select>
-                  </a-form-item>
-
-                  <a-form-item :label="t('backtest.form.fundingSchedule.amount.label')" style="flex: 1; min-width: 150px;">
-                    <a-input-number
-                      v-model:value="formState.fundingSchedule.amount"
-                      :min="0"
-                      :max="1000000"
-                      :step="100"
-                      :formatter="(value) => `$ ${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')"
-                      :parser="(value) => value.replace(/\$\s?|(,*)/g, '')"
-                      style="width: 100%"
-                    />
-                  </a-form-item>
-                </div>
-              </template>
+                <a-form-item :label="t('backtest.form.fundingSchedule.amount.label')" style="flex: 1; min-width: 150px;">
+                  <a-input-number
+                    v-model:value="formState.fundingSchedule.amount"
+                    :min="0"
+                    :max="1000000"
+                    :step="100"
+                    :formatter="(value) => `$ ${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')"
+                    :parser="(value) => value.replace(/\$\s?|(,*)/g, '')"
+                    style="width: 100%"
+                  />
+                </a-form-item>
+              </div>
             </a-form-item>
 
             <!-- Date Range Section -->

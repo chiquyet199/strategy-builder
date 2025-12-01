@@ -164,14 +164,12 @@ export class MetricsCalculator {
         if (txType === 'sell') {
           totalSold += tx.amount; // Sells add USDC back
           availableCash += tx.amount;
+        } else if (txType === 'funding') {
+          // Funding transaction: adds to cash, doesn't count as invested (doesn't affect average buy price)
+          availableCash += tx.amount;
         } else {
-          // For buys: if quantityPurchased is 0, it's funding (adds to cash)
-          // Otherwise, it's a purchase (spends cash)
-          if (tx.quantityPurchased === 0 && tx.amount > 0) {
-            // Funding transaction: adds to cash, doesn't count as invested
-            availableCash += tx.amount;
-          } else if (tx.amount > 0) {
-            // Purchase transaction: spends cash, counts as invested
+          // Buy transaction: spends cash, counts as invested
+          if (tx.amount > 0) {
             totalInvested += tx.amount;
             availableCash -= tx.amount;
           }

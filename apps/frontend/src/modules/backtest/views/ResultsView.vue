@@ -34,8 +34,22 @@
               {{ formatDate(record.date) }}
             </template>
             <template v-else-if="column.key === 'type'">
-              <a-tag :color="(record.type || 'buy') === 'buy' ? 'green' : 'red'">
-                {{ (record.type || 'buy') === 'buy' ? t('backtest.results.transactions.buy') : t('backtest.results.transactions.sell') }}
+              <a-tag
+                :color="
+                  (record.type || 'buy') === 'buy'
+                    ? 'green'
+                    : (record.type || 'buy') === 'sell'
+                      ? 'red'
+                      : 'blue'
+                "
+              >
+                {{
+                  (record.type || 'buy') === 'buy'
+                    ? t('backtest.results.transactions.buy')
+                    : (record.type || 'buy') === 'sell'
+                      ? t('backtest.results.transactions.sell')
+                      : t('backtest.results.transactions.funding')
+                }}
               </a-tag>
             </template>
             <template v-else-if="column.key === 'price'">
@@ -45,7 +59,16 @@
               ${{ formatNumber(record.amount) }}
             </template>
             <template v-else-if="column.key === 'quantityPurchased'">
-              <span :class="(record.type || 'buy') === 'sell' ? 'negative-value' : 'positive-value'">
+              <span
+                v-if="(record.type || 'buy') === 'funding'"
+                style="color: #8c8c8c;"
+              >
+                -
+              </span>
+              <span
+                v-else
+                :class="(record.type || 'buy') === 'sell' ? 'negative-value' : 'positive-value'"
+              >
                 {{ (record.type || 'buy') === 'buy' ? '+' : '' }}{{ formatQuantity(record.quantityPurchased) }}
               </span>
             </template>

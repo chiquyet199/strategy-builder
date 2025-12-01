@@ -29,11 +29,10 @@ export function useBacktestForm() {
     mode: backtestStore.formMode,
     selectedStrategyIds: [...backtestStore.formSelectedStrategyIds],
     selectedVariants: [...backtestStore.formSelectedVariants],
-    initialPortfolio: undefined, // Advanced mode: not set by default
+    initialPortfolio: backtestStore.initialPortfolio ? { ...backtestStore.initialPortfolio } : undefined,
     fundingSchedule: {
-      enabled: false,
-      frequency: 'weekly',
-      amount: 0,
+      frequency: backtestStore.fundingSchedule.frequency,
+      amount: backtestStore.fundingSchedule.amount,
     },
   })
 
@@ -98,6 +97,17 @@ export function useBacktestForm() {
     formState.mode = backtestStore.formMode
     formState.selectedStrategyIds = [...backtestStore.formSelectedStrategyIds]
     formState.selectedVariants = [...backtestStore.formSelectedVariants]
+    // Restore initial portfolio and funding schedule
+    formState.initialPortfolio = backtestStore.initialPortfolio
+      ? {
+          assets: [...backtestStore.initialPortfolio.assets],
+          usdcAmount: backtestStore.initialPortfolio.usdcAmount,
+        }
+      : undefined
+    formState.fundingSchedule = {
+      frequency: backtestStore.fundingSchedule.frequency,
+      amount: backtestStore.fundingSchedule.amount,
+    }
   })
 
   return {

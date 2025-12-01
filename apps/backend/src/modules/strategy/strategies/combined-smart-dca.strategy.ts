@@ -145,7 +145,7 @@ export class CombinedSmartDcaStrategy extends BaseStrategy {
       );
 
       // Handle periodic funding (separate from DCA purchases)
-      if (fundingSchedule?.enabled && fundingSchedule.amount > 0) {
+      if (fundingSchedule && fundingSchedule.amount > 0) {
         const fundingPeriodDays =
           fundingSchedule.frequency === 'daily'
             ? 1
@@ -169,7 +169,7 @@ export class CombinedSmartDcaStrategy extends BaseStrategy {
 
           transactions.push({
             date: candle.timestamp,
-            type: 'buy',
+            type: 'funding',
             price: candle.close,
             amount: fundingSchedule.amount,
             quantityPurchased: 0,

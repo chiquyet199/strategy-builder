@@ -31,9 +31,8 @@ export const useBacktestStore = defineStore('backtest', () => {
   // Initial portfolio and funding schedule
   const initialPortfolio = ref<InitialPortfolio | undefined>(undefined)
   const fundingSchedule = ref<FundingSchedule>({
-    enabled: false,
     frequency: 'weekly',
-    amount: 0,
+    amount: 0, // 0 means no funding
   })
 
   // Getters
@@ -102,7 +101,7 @@ export const useBacktestStore = defineStore('backtest', () => {
         request.investmentAmount = investmentAmount.value
       }
 
-      if (fundingSchedule.value.enabled) {
+      if (fundingSchedule.value.amount > 0) {
         request.fundingSchedule = fundingSchedule.value
       }
 

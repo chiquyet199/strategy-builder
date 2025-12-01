@@ -2,7 +2,6 @@ import { Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Candlestick } from '../entities/candlestick.entity';
-import { MockDataGenerator } from './mock-data-generator';
 import { BinanceApiService } from './binance-api.service';
 import { Timeframe } from '../interfaces/candlestick.interface';
 
@@ -14,7 +13,6 @@ export class MarketDataSyncService {
     10,
   );
 
-  private readonly useBinanceApi = process.env.USE_BINANCE_API !== 'false'; // Default to true
   private readonly supportedSymbols: string[] =
     this.getSupportedSymbolsFromEnv();
 
@@ -47,9 +45,8 @@ export class MarketDataSyncService {
    * Pre-populate historical data for a single symbol
    */
   private async prePopulateSymbol(symbol: string): Promise<void> {
-    this.logger.log(`Starting pre-population of historical data for ${symbol}`);
     this.logger.log(
-      `Binance API enabled: ${this.useBinanceApi ? 'YES' : 'NO (using mock data)'}`,
+      `Starting pre-population of historical data for ${symbol} from Binance API`,
     );
 
     const startDate = new Date('2020-01-01');
@@ -150,59 +147,28 @@ export class MarketDataSyncService {
     endDate: Date,
   ): Promise<void> {
     this.logger.log(
-      `Syncing ${timeframe} data for ${symbol} from ${startDate.toISOString()} to ${endDate.toISOString()}`,
-    );
-    this.logger.log(
-      `Data source: ${this.useBinanceApi ? 'Binance API' : 'Mock Data Generator'}`,
+      `Syncing ${timeframe} data for ${symbol} from ${startDate.toISOString()} to ${endDate.toISOString()} from Binance API`,
     );
 
-    let candlesToStore: any[];
-    let dataSource = 'unknown';
-
-    // Try Binance API first if enabled
-    if (this.useBinanceApi) {
-      try {
-        // Check if Binance API is available
-        const isHealthy = await this.binanceApiService.checkApiHealth();
-        if (!isHealthy) {
-          throw new Error('Binance API is not available');
-        }
-
-        // Fetch from Binance
-        candlesToStore = await this.binanceApiService.getKlines(
-          symbol,
-          timeframe,
-          startDate,
-          endDate,
-        );
-
-        dataSource = 'Binance API';
-        this.logger.log(
-          `Fetched ${candlesToStore.length} candles from Binance API`,
-        );
-      } catch (error) {
-        this.logger.warn(
-          `Binance API failed, falling back to mock data: ${error.message}`,
-        );
-        // Fallback to mock data generation
-        candlesToStore = await this.generateMockCandles(
-          symbol,
-          timeframe,
-          startDate,
-          endDate,
-        );
-        dataSource = 'Mock Data (Binance API failed)';
-      }
-    } else {
-      // Use mock data generation
-      candlesToStore = await this.generateMockCandles(
-        symbol,
-        timeframe,
-        startDate,
-        endDate,
+    // Check if Binance API is available
+    const isHealthy = await this.binanceApiService.checkApiHealth();
+    if (!isHealthy) {
+      throw new Error(
+        'Binance API is not available. Please check your connection and API configuration.',
       );
-      dataSource = 'Mock Data Generator';
     }
+
+    // Fetch from Binance
+    const candlesToStore = await this.binanceApiService.getKlines(
+      symbol,
+      timeframe,
+      startDate,
+      endDate,
+    );
+
+    this.logger.log(
+      `Fetched ${candlesToStore.length} candles from Binance API`,
+    );
 
     // Convert to entity format and batch insert
     const entities: Candlestick[] = candlesToStore.map((candle) => {
@@ -223,13 +189,12 @@ export class MarketDataSyncService {
     await this.batchUpsert(entities);
 
     this.logger.log(
-      `Synced ${entities.length} ${timeframe} candles for ${symbol} from ${dataSource}`,
+      `Synced ${entities.length} ${timeframe} candles for ${symbol} from Binance API`,
     );
   }
 
   /**
    * Force re-sync data range (overwrites existing data)
-   * Useful for replacing mock data with Binance data
    */
   async forceResyncDateRange(
     symbol: string,
@@ -258,31 +223,6 @@ export class MarketDataSyncService {
 
     // Now sync fresh data
     await this.syncDateRange(symbol, timeframe, startDate, endDate);
-  }
-
-  /**
-   * Generate mock candles (fallback method)
-   */
-  private async generateMockCandles(
-    symbol: string,
-    timeframe: Timeframe,
-    startDate: Date,
-    endDate: Date,
-  ): Promise<any[]> {
-    // Generate daily candles first (most granular)
-    const dailyCandles = MockDataGenerator.generateCandles(
-      startDate,
-      endDate,
-      '1d',
-    );
-
-    // If timeframe is daily, use as is
-    if (timeframe === '1d') {
-      return dailyCandles;
-    }
-
-    // Otherwise, aggregate to requested timeframe
-    return MockDataGenerator.aggregateCandles(dailyCandles, timeframe);
   }
 
   /**

@@ -1,5 +1,6 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import { useAuthStore } from '@/modules/auth/stores/authStore'
+import { authService } from '@/modules/auth/services/authService'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -47,8 +48,20 @@ const router = createRouter({
   ],
 })
 
-router.beforeEach((to, from, next) => {
+router.beforeEach(async (to, from, next) => {
   const authStore = useAuthStore()
+  
+  // Initialize auth state if token exists but user hasn't been loaded yet
+  if (authStore.token && !authStore.user && !authStore.initialized) {
+    authStore.setInitialized(true)
+    try {
+      await authService.fetchProfile()
+    } catch (error) {
+      // Token is invalid, clear it
+      authStore.setToken(null)
+      authStore.setUser(null)
+    }
+  }
   
   if (to.meta.requiresAuth && !authStore.isAuthenticated) {
     next({ name: 'login' })

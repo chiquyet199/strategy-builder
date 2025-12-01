@@ -8,7 +8,8 @@
   ],
   "scripts": {
     "dev": "concurrently \"npm run dev:backend\" \"npm run dev:frontend\"",
-    "dev:backend": "npm run start:dev --workspace=apps/backend",
+    "dev:backend": "npm run kill:port:3000 && npm run start:dev --workspace=apps/backend",
+    "kill:port:3000": "lsof -ti:3000 | xargs kill -9 2>/dev/null || true",
     "dev:frontend": "npm run dev --workspace=apps/frontend",
     "db:up": "docker-compose up -d postgres",
     "db:down": "docker-compose stop postgres",

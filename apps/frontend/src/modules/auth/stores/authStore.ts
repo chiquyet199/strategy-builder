@@ -7,6 +7,7 @@ export const useAuthStore = defineStore('auth', () => {
   const token = ref<string | null>(localStorage.getItem('token'))
   const loading = ref(false)
   const error = ref<string | null>(null)
+  const initialized = ref(false)
 
   const isAuthenticated = computed(() => !!token.value && !!user.value)
 
@@ -32,12 +33,17 @@ export const useAuthStore = defineStore('auth', () => {
     error.value = errorMessage
   }
 
+  function setInitialized(value: boolean): void {
+    initialized.value = value
+  }
+
   return {
     // State
     user,
     token,
     loading,
     error,
+    initialized,
     // Computed
     isAuthenticated,
     // Actions (synchronous only)
@@ -45,6 +51,7 @@ export const useAuthStore = defineStore('auth', () => {
     setUser,
     setLoading,
     setError,
+    setInitialized,
   }
 })
 

@@ -8,7 +8,10 @@ import type {
 } from '@/shared/types/auth'
 
 class AuthService {
-  private store = useAuthStore()
+  // Lazy getter to access store only when needed (after Pinia is initialized)
+  private get store() {
+    return useAuthStore()
+  }
 
   async login(credentials: LoginRequest): Promise<void> {
     this.store.setLoading(true)
@@ -72,6 +75,7 @@ class AuthService {
     this.store.setToken(null)
     this.store.setUser(null)
     this.store.setError(null)
+    this.store.setInitialized(false)
   }
 
   async forgotPassword(data: ForgotPasswordRequest): Promise<void> {

@@ -6,7 +6,7 @@ import {
   Candlestick as CandlestickInterface,
   Timeframe,
 } from './interfaces/candlestick.interface';
-import { MockDataGenerator } from './services/mock-data-generator';
+import { CandleAggregator } from './utils/candle-aggregator';
 
 @Injectable()
 export class MarketDataService {
@@ -19,7 +19,7 @@ export class MarketDataService {
 
   /**
    * Get candlestick data for a symbol, timeframe, and date range
-   * Queries from database first, falls back to generation if data is missing
+   * Queries from database only - data must be synced via admin endpoints
    */
   async getCandles(
     symbol: string,
@@ -53,33 +53,25 @@ export class MarketDataService {
       throw new Error('End date cannot be beyond 2025-12-31');
     }
 
-    try {
-      // Try to get data from database
-      const candles = await this.getCandlesFromDatabase(
-        symbol,
-        timeframe,
-        start,
-        end,
-      );
+    // Get data from database
+    const candles = await this.getCandlesFromDatabase(
+      symbol,
+      timeframe,
+      start,
+      end,
+    );
 
-      if (candles.length > 0) {
-        this.logger.debug(`Retrieved ${candles.length} candles from database`);
-        return candles;
-      }
-
-      // Fallback to generation if no data found
+    if (candles.length === 0) {
       this.logger.warn(
-        `No data found in database for ${symbol} ${timeframe} from ${startDate} to ${endDate}. Generating on-demand.`,
+        `No data found in database for ${symbol} ${timeframe} from ${startDate} to ${endDate}. Please sync data using admin endpoints.`,
       );
-      return this.generateCandlesOnDemand(start, end, timeframe);
-    } catch (error) {
-      this.logger.error(
-        `Error fetching candles from database: ${error.message}. Falling back to generation.`,
-        error.stack,
+      throw new Error(
+        `No market data available for ${symbol} in the requested date range. Please sync data first using admin endpoints.`,
       );
-      // Fallback to generation on error
-      return this.generateCandlesOnDemand(start, end, timeframe);
     }
+
+    this.logger.debug(`Retrieved ${candles.length} candles from database`);
+    return candles;
   }
 
   /**
@@ -127,31 +119,7 @@ export class MarketDataService {
     const dailyCandles = this.convertEntitiesToInterface(dailyEntities);
 
     // Aggregate to requested timeframe
-    return MockDataGenerator.aggregateCandles(dailyCandles, timeframe);
-  }
-
-  /**
-   * Generate candles on-demand (fallback)
-   */
-  private generateCandlesOnDemand(
-    startDate: Date,
-    endDate: Date,
-    timeframe: Timeframe,
-  ): CandlestickInterface[] {
-    // Generate daily candles first (most granular for our mock data)
-    const dailyCandles = MockDataGenerator.generateCandles(
-      startDate,
-      endDate,
-      '1d',
-    );
-
-    // If timeframe is daily, return as is
-    if (timeframe === '1d') {
-      return dailyCandles;
-    }
-
-    // Otherwise, aggregate to requested timeframe
-    return MockDataGenerator.aggregateCandles(dailyCandles, timeframe);
+    return CandleAggregator.aggregateCandles(dailyCandles, timeframe);
   }
 
   /**

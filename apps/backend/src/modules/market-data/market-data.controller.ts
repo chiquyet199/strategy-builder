@@ -1,5 +1,18 @@
-import { Controller, Get, Query, Post, UseGuards, Body } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
+import {
+  Controller,
+  Get,
+  Query,
+  Post,
+  UseGuards,
+  Body,
+  Request,
+} from '@nestjs/common';
+import {
+  ApiTags,
+  ApiOperation,
+  ApiResponse,
+  ApiBearerAuth,
+} from '@nestjs/swagger';
 import { MarketDataService } from './market-data.service';
 import { MarketDataSyncService } from './services/market-data-sync.service';
 import { GetCandlesDto } from './dto/get-candles.dto';
@@ -48,8 +61,28 @@ export class MarketDataController {
     );
   }
 
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth('JWT-auth')
+  @Get('admin/debug-user')
+  @ApiOperation({ summary: 'Debug endpoint to check current user role' })
+  @ApiResponse({
+    status: 200,
+    description: 'User role information',
+  })
+  async debugUser(@Request() req) {
+    return {
+      user: req.user,
+      role: req.user?.role,
+      roleType: typeof req.user?.role,
+      masterRole: UserRole.MASTER,
+      isMaster: req.user?.role === UserRole.MASTER,
+      isAdmin: req.user?.role === UserRole.ADMIN,
+    };
+  }
+
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserRole.ADMIN, UserRole.MASTER)
+  @ApiBearerAuth('JWT-auth')
   @Get('admin/sync-status')
   @ApiOperation({ summary: 'Get market data sync status (Admin only)' })
   @ApiResponse({
@@ -68,6 +101,7 @@ export class MarketDataController {
 
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserRole.ADMIN, UserRole.MASTER)
+  @ApiBearerAuth('JWT-auth')
   @Post('admin/sync/daily')
   @ApiOperation({ summary: 'Manually trigger daily sync (Admin only)' })
   @ApiResponse({
@@ -85,6 +119,7 @@ export class MarketDataController {
 
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserRole.ADMIN, UserRole.MASTER)
+  @ApiBearerAuth('JWT-auth')
   @Post('admin/sync/prepopulate')
   @ApiOperation({
     summary: 'Manually trigger historical data pre-population (Admin only)',
@@ -104,6 +139,7 @@ export class MarketDataController {
 
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserRole.ADMIN, UserRole.MASTER)
+  @ApiBearerAuth('JWT-auth')
   @Post('admin/sync/date-range')
   @ApiOperation({
     summary: 'Sync data for a specific date range (Admin only)',
@@ -139,6 +175,7 @@ export class MarketDataController {
 
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserRole.ADMIN, UserRole.MASTER)
+  @ApiBearerAuth('JWT-auth')
   @Post('admin/sync/fill-gaps')
   @ApiOperation({
     summary: 'Check and fill gaps in market data (Admin only)',
@@ -175,9 +212,11 @@ export class MarketDataController {
 
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserRole.ADMIN, UserRole.MASTER)
+  @ApiBearerAuth('JWT-auth')
   @Post('admin/sync/force-resync')
   @ApiOperation({
-    summary: 'Force re-sync data from Binance API, overwriting existing data (Admin only)',
+    summary:
+      'Force re-sync data from Binance API, overwriting existing data (Admin only)',
   })
   @ApiResponse({
     status: 200,

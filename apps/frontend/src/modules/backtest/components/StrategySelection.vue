@@ -68,7 +68,15 @@
       <div v-if="selectedStrategyForParams" class="parameter-form">
         <a-form :model="parameterForm" layout="vertical">
           <template v-if="selectedStrategyForParams.id === 'dca'">
-            <a-form-item :label="t('backtest.parameters.dca.frequency')" :help="t('backtest.parameters.dca.frequencyHelp')">
+            <a-form-item :help="t('backtest.parameters.dca.frequencyHelp')">
+              <template #label>
+                <span>
+                  {{ t('backtest.parameters.dca.frequency') }}
+                  <a-tooltip :title="t('backtest.parameters.dca.frequencyTooltip')">
+                    <QuestionCircleOutlined style="margin-left: 4px; color: #8c8c8c; cursor: help;" />
+                  </a-tooltip>
+                </span>
+              </template>
               <a-select v-model:value="parameterForm.frequency" style="width: 100%">
                 <a-select-option value="daily">{{ t('backtest.parameters.dca.frequencyOptions.daily') }}</a-select-option>
                 <a-select-option value="weekly">{{ t('backtest.parameters.dca.frequencyOptions.weekly') }}</a-select-option>
@@ -78,7 +86,15 @@
           </template>
 
           <template v-else-if="selectedStrategyForParams.id === 'rsi-dca'">
-            <a-form-item :label="t('backtest.parameters.rsi.rsiPeriod')" :help="t('backtest.parameters.rsi.rsiPeriodHelp')">
+            <a-form-item :help="t('backtest.parameters.rsi.rsiPeriodHelp')">
+              <template #label>
+                <span>
+                  {{ t('backtest.parameters.rsi.rsiPeriod') }}
+                  <a-tooltip :title="t('backtest.parameters.rsi.rsiPeriodTooltip')">
+                    <QuestionCircleOutlined style="margin-left: 4px; color: #8c8c8c; cursor: help;" />
+                  </a-tooltip>
+                </span>
+              </template>
               <a-input-number
                 v-model:value="parameterForm.rsiPeriod"
                 :min="2"
@@ -87,7 +103,15 @@
                 style="width: 100%"
               />
             </a-form-item>
-            <a-form-item :label="t('backtest.parameters.rsi.oversoldThreshold')" :help="t('backtest.parameters.rsi.oversoldThresholdHelp')">
+            <a-form-item :help="t('backtest.parameters.rsi.oversoldThresholdHelp')">
+              <template #label>
+                <span>
+                  {{ t('backtest.parameters.rsi.oversoldThreshold') }}
+                  <a-tooltip :title="t('backtest.parameters.rsi.oversoldThresholdTooltip')">
+                    <QuestionCircleOutlined style="margin-left: 4px; color: #8c8c8c; cursor: help;" />
+                  </a-tooltip>
+                </span>
+              </template>
               <a-input-number
                 v-model:value="parameterForm.oversoldThreshold"
                 :min="0"
@@ -96,7 +120,15 @@
                 style="width: 100%"
               />
             </a-form-item>
-            <a-form-item :label="t('backtest.parameters.rsi.overboughtThreshold')" :help="t('backtest.parameters.rsi.overboughtThresholdHelp')">
+            <a-form-item :help="t('backtest.parameters.rsi.overboughtThresholdHelp')">
+              <template #label>
+                <span>
+                  {{ t('backtest.parameters.rsi.overboughtThreshold') }}
+                  <a-tooltip :title="t('backtest.parameters.rsi.overboughtThresholdTooltip')">
+                    <QuestionCircleOutlined style="margin-left: 4px; color: #8c8c8c; cursor: help;" />
+                  </a-tooltip>
+                </span>
+              </template>
               <a-input-number
                 v-model:value="parameterForm.overboughtThreshold"
                 :min="50"
@@ -105,7 +137,15 @@
                 style="width: 100%"
               />
             </a-form-item>
-            <a-form-item :label="t('backtest.parameters.rsi.buyMultiplier')" :help="t('backtest.parameters.rsi.buyMultiplierHelp')">
+            <a-form-item :help="t('backtest.parameters.rsi.buyMultiplierHelp')">
+              <template #label>
+                <span>
+                  {{ t('backtest.parameters.rsi.buyMultiplier') }}
+                  <a-tooltip :title="t('backtest.parameters.rsi.buyMultiplierTooltip')">
+                    <QuestionCircleOutlined style="margin-left: 4px; color: #8c8c8c; cursor: help;" />
+                  </a-tooltip>
+                </span>
+              </template>
               <a-input-number
                 v-model:value="parameterForm.buyMultiplier"
                 :min="0.1"
@@ -117,7 +157,15 @@
           </template>
 
           <template v-else-if="selectedStrategyForParams.id === 'dip-buyer-dca'">
-            <a-form-item :label="t('backtest.parameters.dip.lookbackDays')" :help="t('backtest.parameters.dip.lookbackDaysHelp')">
+            <a-form-item :help="t('backtest.parameters.dip.lookbackDaysHelp')">
+              <template #label>
+                <span>
+                  {{ t('backtest.parameters.dip.lookbackDays') }}
+                  <a-tooltip :title="t('backtest.parameters.dip.lookbackDaysTooltip')">
+                    <QuestionCircleOutlined style="margin-left: 4px; color: #8c8c8c; cursor: help;" />
+                  </a-tooltip>
+                </span>
+              </template>
               <a-input-number
                 v-model:value="parameterForm.lookbackDays"
                 :min="1"
@@ -126,7 +174,15 @@
                 style="width: 100%"
               />
             </a-form-item>
-            <a-form-item :label="t('backtest.parameters.dip.dropThreshold')" :help="t('backtest.parameters.dip.dropThresholdHelp')">
+            <a-form-item :help="t('backtest.parameters.dip.dropThresholdHelp')">
+              <template #label>
+                <span>
+                  {{ t('backtest.parameters.dip.dropThreshold') }}
+                  <a-tooltip :title="t('backtest.parameters.dip.dropThresholdTooltip')">
+                    <QuestionCircleOutlined style="margin-left: 4px; color: #8c8c8c; cursor: help;" />
+                  </a-tooltip>
+                </span>
+              </template>
               <a-input-number
                 v-model:value="parameterForm.dropThreshold"
                 :min="0"
@@ -137,7 +193,15 @@
                 style="width: 100%"
               />
             </a-form-item>
-            <a-form-item :label="t('backtest.parameters.dip.buyMultiplier')" :help="t('backtest.parameters.dip.buyMultiplierHelp')">
+            <a-form-item :help="t('backtest.parameters.dip.buyMultiplierHelp')">
+              <template #label>
+                <span>
+                  {{ t('backtest.parameters.dip.buyMultiplier') }}
+                  <a-tooltip :title="t('backtest.parameters.dip.buyMultiplierTooltip')">
+                    <QuestionCircleOutlined style="margin-left: 4px; color: #8c8c8c; cursor: help;" />
+                  </a-tooltip>
+                </span>
+              </template>
               <a-input-number
                 v-model:value="parameterForm.buyMultiplier"
                 :min="0.1"
@@ -149,7 +213,15 @@
           </template>
 
           <template v-else-if="selectedStrategyForParams.id === 'moving-average-dca'">
-            <a-form-item :label="t('backtest.parameters.ma.maPeriod')" :help="t('backtest.parameters.ma.maPeriodHelp')">
+            <a-form-item :help="t('backtest.parameters.ma.maPeriodHelp')">
+              <template #label>
+                <span>
+                  {{ t('backtest.parameters.ma.maPeriod') }}
+                  <a-tooltip :title="t('backtest.parameters.ma.maPeriodTooltip')">
+                    <QuestionCircleOutlined style="margin-left: 4px; color: #8c8c8c; cursor: help;" />
+                  </a-tooltip>
+                </span>
+              </template>
               <a-input-number
                 v-model:value="parameterForm.maPeriod"
                 :min="2"
@@ -158,7 +230,15 @@
                 style="width: 100%"
               />
             </a-form-item>
-            <a-form-item :label="t('backtest.parameters.ma.buyMultiplier')" :help="t('backtest.parameters.ma.buyMultiplierHelp')">
+            <a-form-item :help="t('backtest.parameters.ma.buyMultiplierHelp')">
+              <template #label>
+                <span>
+                  {{ t('backtest.parameters.ma.buyMultiplier') }}
+                  <a-tooltip :title="t('backtest.parameters.ma.buyMultiplierTooltip')">
+                    <QuestionCircleOutlined style="margin-left: 4px; color: #8c8c8c; cursor: help;" />
+                  </a-tooltip>
+                </span>
+              </template>
               <a-input-number
                 v-model:value="parameterForm.buyMultiplier"
                 :min="0.1"
@@ -170,7 +250,15 @@
           </template>
 
           <template v-else-if="selectedStrategyForParams.id === 'combined-smart-dca'">
-            <a-form-item :label="t('backtest.parameters.combined.rsiPeriod')" :help="t('backtest.parameters.combined.rsiPeriodHelp')">
+            <a-form-item :help="t('backtest.parameters.combined.rsiPeriodHelp')">
+              <template #label>
+                <span>
+                  {{ t('backtest.parameters.combined.rsiPeriod') }}
+                  <a-tooltip :title="t('backtest.parameters.combined.rsiPeriodTooltip')">
+                    <QuestionCircleOutlined style="margin-left: 4px; color: #8c8c8c; cursor: help;" />
+                  </a-tooltip>
+                </span>
+              </template>
               <a-input-number
                 v-model:value="parameterForm.rsiPeriod"
                 :min="2"
@@ -179,7 +267,15 @@
                 style="width: 100%"
               />
             </a-form-item>
-            <a-form-item :label="t('backtest.parameters.combined.oversoldThreshold')" :help="t('backtest.parameters.combined.oversoldThresholdHelp')">
+            <a-form-item :help="t('backtest.parameters.combined.oversoldThresholdHelp')">
+              <template #label>
+                <span>
+                  {{ t('backtest.parameters.combined.oversoldThreshold') }}
+                  <a-tooltip :title="t('backtest.parameters.combined.oversoldThresholdTooltip')">
+                    <QuestionCircleOutlined style="margin-left: 4px; color: #8c8c8c; cursor: help;" />
+                  </a-tooltip>
+                </span>
+              </template>
               <a-input-number
                 v-model:value="parameterForm.oversoldThreshold"
                 :min="0"
@@ -188,7 +284,15 @@
                 style="width: 100%"
               />
             </a-form-item>
-            <a-form-item :label="t('backtest.parameters.combined.maPeriod')" :help="t('backtest.parameters.combined.maPeriodHelp')">
+            <a-form-item :help="t('backtest.parameters.combined.maPeriodHelp')">
+              <template #label>
+                <span>
+                  {{ t('backtest.parameters.combined.maPeriod') }}
+                  <a-tooltip :title="t('backtest.parameters.combined.maPeriodTooltip')">
+                    <QuestionCircleOutlined style="margin-left: 4px; color: #8c8c8c; cursor: help;" />
+                  </a-tooltip>
+                </span>
+              </template>
               <a-input-number
                 v-model:value="parameterForm.maPeriod"
                 :min="2"
@@ -197,7 +301,15 @@
                 style="width: 100%"
               />
             </a-form-item>
-            <a-form-item :label="t('backtest.parameters.combined.lookbackDays')" :help="t('backtest.parameters.combined.lookbackDaysHelp')">
+            <a-form-item :help="t('backtest.parameters.combined.lookbackDaysHelp')">
+              <template #label>
+                <span>
+                  {{ t('backtest.parameters.combined.lookbackDays') }}
+                  <a-tooltip :title="t('backtest.parameters.combined.lookbackDaysTooltip')">
+                    <QuestionCircleOutlined style="margin-left: 4px; color: #8c8c8c; cursor: help;" />
+                  </a-tooltip>
+                </span>
+              </template>
               <a-input-number
                 v-model:value="parameterForm.lookbackDays"
                 :min="1"
@@ -206,7 +318,15 @@
                 style="width: 100%"
               />
             </a-form-item>
-            <a-form-item :label="t('backtest.parameters.combined.dropThreshold')" :help="t('backtest.parameters.combined.dropThresholdHelp')">
+            <a-form-item :help="t('backtest.parameters.combined.dropThresholdHelp')">
+              <template #label>
+                <span>
+                  {{ t('backtest.parameters.combined.dropThreshold') }}
+                  <a-tooltip :title="t('backtest.parameters.combined.dropThresholdTooltip')">
+                    <QuestionCircleOutlined style="margin-left: 4px; color: #8c8c8c; cursor: help;" />
+                  </a-tooltip>
+                </span>
+              </template>
               <a-input-number
                 v-model:value="parameterForm.dropThreshold"
                 :min="0"
@@ -217,7 +337,15 @@
                 style="width: 100%"
               />
             </a-form-item>
-            <a-form-item :label="t('backtest.parameters.combined.maxMultiplier')" :help="t('backtest.parameters.combined.maxMultiplierHelp')">
+            <a-form-item :help="t('backtest.parameters.combined.maxMultiplierHelp')">
+              <template #label>
+                <span>
+                  {{ t('backtest.parameters.combined.maxMultiplier') }}
+                  <a-tooltip :title="t('backtest.parameters.combined.maxMultiplierTooltip')">
+                    <QuestionCircleOutlined style="margin-left: 4px; color: #8c8c8c; cursor: help;" />
+                  </a-tooltip>
+                </span>
+              </template>
               <a-input-number
                 v-model:value="parameterForm.maxMultiplier"
                 :min="0.1"
@@ -248,7 +376,7 @@
 <script setup lang="ts">
 import { computed, ref, reactive } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { SettingOutlined, CheckSquareOutlined, CloseSquareOutlined } from '@ant-design/icons-vue'
+import { SettingOutlined, CheckSquareOutlined, CloseSquareOutlined, QuestionCircleOutlined } from '@ant-design/icons-vue'
 
 interface StrategyInfo {
   id: string

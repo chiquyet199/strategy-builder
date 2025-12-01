@@ -241,6 +241,7 @@
       "dca": {
         "frequency": "Tần suất",
         "frequencyHelp": "Tần suất đầu tư (mặc định: hàng tuần)",
+        "frequencyTooltip": "Tần suất chiến lược sẽ thực hiện mua. Hàng ngày có nghĩa là mỗi ngày, hàng tuần có nghĩa là một lần mỗi tuần, hàng tháng có nghĩa là một lần mỗi tháng. Mua thường xuyên hơn có thể giảm tác động của biến động giá.",
         "frequencyOptions": {
           "daily": "Hàng ngày",
           "weekly": "Hàng tuần",
@@ -250,40 +251,55 @@
       "rsi": {
         "rsiPeriod": "Chu kỳ RSI",
         "rsiPeriodHelp": "Chu kỳ tính toán RSI (mặc định: 14)",
+        "rsiPeriodTooltip": "Số chu kỳ (ngày) được sử dụng để tính toán chỉ báo RSI. Chu kỳ ngắn hơn (ví dụ: 7) phản ứng nhanh hơn với thay đổi giá, trong khi chu kỳ dài hơn (ví dụ: 21) mượt mà hơn và ít nhạy cảm hơn.",
         "oversoldThreshold": "Ngưỡng Quá bán",
         "oversoldThresholdHelp": "Giá trị RSI dưới đó sẽ mua thêm (mặc định: 30)",
+        "oversoldThresholdTooltip": "Khi RSI giảm xuống dưới giá trị này, chiến lược coi tài sản là quá bán (có thể bị định giá thấp) và tăng số tiền mua. Giá trị thấp hơn (ví dụ: 20) có nghĩa là mua bảo thủ hơn, giá trị cao hơn (ví dụ: 40) có nghĩa là mua tích cực hơn.",
         "overboughtThreshold": "Ngưỡng Quá mua",
         "overboughtThresholdHelp": "Giá trị RSI trên đó sẽ bỏ qua mua (mặc định: 70)",
+        "overboughtThresholdTooltip": "Khi RSI tăng lên trên giá trị này, chiến lược coi tài sản là quá mua (có thể bị định giá cao) và bỏ qua việc mua. Giá trị cao hơn (ví dụ: 80) có nghĩa là ít bỏ qua mua hơn, giá trị thấp hơn (ví dụ: 60) có nghĩa là bỏ qua mua nhiều hơn.",
         "buyMultiplier": "Hệ số Mua",
-        "buyMultiplierHelp": "Hệ số cho số tiền mua khi quá bán (mặc định: 2.0x)"
+        "buyMultiplierHelp": "Hệ số cho số tiền mua khi quá bán (mặc định: 2.0x)",
+        "buyMultiplierTooltip": "Khi RSI cho thấy điều kiện quá bán, chiến lược nhân số tiền mua bình thường với giá trị này. Ví dụ, 2.0x có nghĩa là mua gấp đôi số tiền bình thường. Hệ số cao hơn có nghĩa là mua tích cực hơn khi giá giảm."
       },
       "dip": {
         "lookbackDays": "Số ngày Nhìn lại",
         "lookbackDaysHelp": "Số ngày nhìn lại để tìm mức cao gần đây (mặc định: 30)",
+        "lookbackDaysTooltip": "Số ngày nhìn lại để tìm mức giá cao gần đây. Khoảng thời gian ngắn hơn (ví dụ: 14 ngày) phát hiện các đợt giảm nhỏ hơn, trong khi khoảng thời gian dài hơn (ví dụ: 60 ngày) chỉ phát hiện các đợt giảm lớn hơn từ mức cao dài hạn.",
         "dropThreshold": "Ngưỡng Giảm",
         "dropThresholdHelp": "Phần trăm giảm từ mức cao gần đây để kích hoạt mua (mặc định: 10%)",
+        "dropThresholdTooltip": "Phần trăm giảm từ mức giá cao gần đây kích hoạt mua tăng. Ví dụ, 10% có nghĩa là nếu giá giảm 10% từ mức cao gần đây, chiến lược sẽ mua nhiều hơn. Giá trị thấp hơn (ví dụ: 5%) kích hoạt thường xuyên hơn, giá trị cao hơn (ví dụ: 20%) kích hoạt ít hơn.",
         "buyMultiplier": "Hệ số Mua",
-        "buyMultiplierHelp": "Hệ số cho số tiền mua khi phát hiện giảm (mặc định: 2.0x)"
+        "buyMultiplierHelp": "Hệ số cho số tiền mua khi phát hiện giảm (mặc định: 2.0x)",
+        "buyMultiplierTooltip": "Khi phát hiện đợt giảm, chiến lược nhân số tiền mua bình thường với giá trị này. Ví dụ, 2.0x có nghĩa là mua gấp đôi số tiền bình thường trong các đợt giảm. Hệ số cao hơn có nghĩa là mua tích cực hơn khi giá giảm đáng kể."
       },
       "ma": {
         "maPeriod": "Chu kỳ MA",
         "maPeriodHelp": "Chu kỳ trung bình động tính bằng ngày (mặc định: 50)",
+        "maPeriodTooltip": "Số ngày được sử dụng để tính toán trung bình động. Chu kỳ ngắn hơn (ví dụ: 20 ngày) phản ứng nhanh hơn với thay đổi giá, trong khi chu kỳ dài hơn (ví dụ: 200 ngày) đại diện cho xu hướng dài hạn. Khi giá dưới trung bình động, nó có thể cho thấy cơ hội mua.",
         "buyMultiplier": "Hệ số Mua",
-        "buyMultiplierHelp": "Hệ số cho số tiền mua khi giá dưới MA (mặc định: 2.0x)"
+        "buyMultiplierHelp": "Hệ số cho số tiền mua khi giá dưới MA (mặc định: 2.0x)",
+        "buyMultiplierTooltip": "Khi giá hiện tại dưới trung bình động, chiến lược nhân số tiền mua bình thường với giá trị này. Ví dụ, 2.0x có nghĩa là mua gấp đôi số tiền bình thường. Điều này tuân theo nguyên tắc theo xu hướng là mua nhiều hơn khi giá dưới mức trung bình."
       },
       "combined": {
         "rsiPeriod": "Chu kỳ RSI",
         "rsiPeriodHelp": "Chu kỳ tính toán RSI (mặc định: 14)",
+        "rsiPeriodTooltip": "Số chu kỳ (ngày) được sử dụng để tính toán chỉ báo RSI. Chu kỳ ngắn hơn phản ứng nhanh hơn với thay đổi giá, trong khi chu kỳ dài hơn mượt mà hơn và ít nhạy cảm hơn.",
         "oversoldThreshold": "Ngưỡng Quá bán",
         "oversoldThresholdHelp": "Giá trị RSI dưới đó sẽ mua thêm (mặc định: 30)",
+        "oversoldThresholdTooltip": "Khi RSI giảm xuống dưới giá trị này, chiến lược coi tài sản là quá bán và tăng số tiền mua. Giá trị thấp hơn có nghĩa là mua bảo thủ hơn, giá trị cao hơn có nghĩa là mua tích cực hơn.",
         "maPeriod": "Chu kỳ MA",
         "maPeriodHelp": "Chu kỳ trung bình động tính bằng ngày (mặc định: 50)",
+        "maPeriodTooltip": "Số ngày được sử dụng để tính toán trung bình động. Khi giá dưới trung bình động, nó có thể cho thấy cơ hội mua.",
         "lookbackDays": "Số ngày Nhìn lại",
         "lookbackDaysHelp": "Số ngày nhìn lại để tìm mức cao gần đây (mặc định: 30)",
+        "lookbackDaysTooltip": "Số ngày nhìn lại để tìm mức giá cao gần đây. Khoảng thời gian ngắn hơn phát hiện các đợt giảm nhỏ hơn, trong khi khoảng thời gian dài hơn chỉ phát hiện các đợt giảm lớn hơn từ mức cao dài hạn.",
         "dropThreshold": "Ngưỡng Giảm",
         "dropThresholdHelp": "Phần trăm giảm từ mức cao gần đây để kích hoạt mua (mặc định: 10%)",
+        "dropThresholdTooltip": "Phần trăm giảm từ mức giá cao gần đây kích hoạt mua tăng. Giá trị thấp hơn kích hoạt thường xuyên hơn, giá trị cao hơn kích hoạt ít hơn.",
         "maxMultiplier": "Hệ số Tối đa",
-        "maxMultiplierHelp": "Hệ số tối đa khi nhiều tín hiệu đồng bộ (mặc định: 3.0x)"
+        "maxMultiplierHelp": "Hệ số tối đa khi nhiều tín hiệu đồng bộ (mặc định: 3.0x)",
+        "maxMultiplierTooltip": "Hệ số mua tối đa khi nhiều tín hiệu (RSI, Trung bình động và Đợt giảm) đều đồng bộ. Điều này giới hạn mức độ tích cực của chiến lược ngay cả khi tất cả các điều kiện đều được đáp ứng. Ví dụ, 3.0x có nghĩa là mua tối đa gấp 3 lần số tiền bình thường."
       }
     },
     "results": {

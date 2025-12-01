@@ -24,8 +24,10 @@ import { ThrottlerStorageModule } from './common/storage/throttler-storage.modul
 import { RedisThrottlerStorage } from './common/storage/redis-throttler.storage';
 import { CorrelationIdMiddleware } from './common/middleware/correlation-id.middleware';
 import { LoggingInterceptor } from './common/interceptors/logging.interceptor';
+import { ScheduleModule } from '@nestjs/schedule';
 import { getDatabaseConfig } from './config/database.config';
 import { User, UserRole } from './modules/auth/entities/user.entity';
+import { Candlestick } from './modules/market-data/entities/candlestick.entity';
 import * as bcrypt from 'bcrypt';
 
 // Database config is loaded lazily to ensure .env file is loaded first
@@ -35,9 +37,10 @@ const dbConfig = getDatabaseConfig();
 @Module({
   imports: [
     LoggerModule,
+    ScheduleModule.forRoot(),
     TypeOrmModule.forRoot({
       ...dbConfig,
-      entities: [User],
+      entities: [User, Candlestick],
       synchronize: process.env.NODE_ENV !== 'production', // Auto-sync schema in dev, use migrations in prod
       logging: process.env.NODE_ENV === 'development',
     }),
@@ -132,13 +135,9 @@ export class AppModule implements NestModule, OnModuleInit {
         if (user.role !== UserRole.MASTER) {
           user.role = UserRole.MASTER;
           await this.userRepository.save(user);
-          this.logger.log(
-            `✅ Updated user ${masterEmail} to MASTER role`,
-          );
+          this.logger.log(`✅ Updated user ${masterEmail} to MASTER role`);
         } else {
-          this.logger.log(
-            `ℹ️  User ${masterEmail} already has MASTER role`,
-          );
+          this.logger.log(`ℹ️  User ${masterEmail} already has MASTER role`);
         }
 
         // Update password if MASTER_PASSWORD is provided

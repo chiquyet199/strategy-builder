@@ -21,11 +21,17 @@ export class MetricsCalculator {
     const finalValue = portfolioHistory[portfolioHistory.length - 1].value;
     const totalQuantity = portfolioHistory[portfolioHistory.length - 1].quantityHeld;
 
+    // Calculate total amount actually spent on coins (for average buy price)
+    const totalInvested = transactions.reduce((sum, tx) => sum + tx.amount, 0);
+
     // Total return percentage
+    // Use totalInvestment (total capital allocated) for return calculation
+    // This includes remaining USDC in the final value
     const totalReturn = ((finalValue - totalInvestment) / totalInvestment) * 100;
 
     // Average buy price
-    const avgBuyPrice = totalQuantity > 0 ? totalInvestment / totalQuantity : 0;
+    // Use totalInvested (amount actually spent on coins) for average buy price
+    const avgBuyPrice = totalQuantity > 0 ? totalInvested / totalQuantity : 0;
 
     // Maximum drawdown
     const maxDrawdown = this.calculateMaxDrawdown(portfolioHistory);
@@ -102,11 +108,13 @@ export class MetricsCalculator {
 
   /**
    * Build portfolio value history from transactions and candles
+   * Includes remaining USDC in portfolio value calculation
    */
   static buildPortfolioHistory(
     transactions: Transaction[],
     candles: Candlestick[],
     startDate: string,
+    totalInvestment: number,
   ): PortfolioValuePoint[] {
     const history: PortfolioValuePoint[] = [];
     let totalQuantity = 0;
@@ -137,7 +145,10 @@ export class MetricsCalculator {
       }
 
       // Calculate portfolio value at this point
-      const portfolioValue = totalQuantity * candle.close;
+      // Include both coin value and remaining USDC
+      const coinValue = totalQuantity * candle.close;
+      const remainingUsdc = totalInvestment - totalInvested;
+      const portfolioValue = coinValue + remainingUsdc;
 
       history.push({
         date: candleDateFull,

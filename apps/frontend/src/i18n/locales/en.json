@@ -149,42 +149,47 @@
       "notAdvice": "Past performance does not guarantee future results. This is not financial advice.",
       "dataAccuracy": "Results are based on historical data and do not account for fees, taxes, slippage, or changing market conditions."
     },
-    "form": {
-      "investmentAmount": {
-        "label": "Investment Amount (USD)",
-        "helper": "How much would you invest?",
-        "quickSelect": "Quick Select"
-      },
-      "dateRange": {
-        "label": "Date Range",
-        "helper": "What time period do you want to test?",
-        "presets": {
-          "last1Year": "Last 1 Year",
-          "last3Years": "Last 3 Years",
-          "last5Years": "Last 5 Years",
-          "custom": "Custom Range"
+      "form": {
+        "investmentAmount": {
+          "label": "Investment Amount (USD)",
+          "helper": "How much would you invest?",
+          "tooltip": "The total amount of money you want to invest in this backtest. This is the starting capital that will be used across all selected strategies.",
+          "quickSelect": "Quick Select"
+        },
+        "dateRange": {
+          "label": "Date Range",
+          "helper": "What time period do you want to test?",
+          "tooltip": "The time period for testing your strategies. Select a date range to see how strategies would have performed during that specific period. Longer periods provide more reliable results.",
+          "presets": {
+            "last1Year": "Last 1 Year",
+            "last3Years": "Last 3 Years",
+            "last5Years": "Last 5 Years",
+            "custom": "Custom Range"
+          }
+        },
+        "timeframe": {
+          "label": "Candlestick Timeframe",
+          "helper": "Select the timeframe for market data (1h = hourly, 4h = 4-hour, 1d = daily, 1w = weekly, 1m = monthly)",
+          "tooltip": "The granularity of market data used for calculations. Hourly (1h) provides the most detail but requires more data. Daily (1d) is recommended for most strategies as it balances detail with performance.",
+          "options": {
+            "1h": "1 Hour",
+            "4h": "4 Hours",
+            "1d": "1 Day",
+            "1w": "1 Week",
+            "1m": "1 Month"
+          }
+        },
+        "strategySelection": {
+          "helper": "Select strategies to compare (choose 2 or more)",
+          "tooltip": "Choose which investment strategies you want to compare. Select at least 2 strategies to see how they perform side-by-side. Each strategy uses different rules for when and how much to invest.",
+          "selectAll": "Select All",
+          "clearAll": "Clear All"
+        },
+        "mode": {
+          "helper": "Choose how you want to compare strategies",
+          "tooltip": "Compare Strategies: Compare different strategy types (e.g., DCA vs Lump Sum). Compare Variants: Compare the same strategy with different parameter settings (e.g., DCA weekly vs DCA daily)."
         }
       },
-      "timeframe": {
-        "label": "Candlestick Timeframe",
-        "helper": "Select the timeframe for market data (1h = hourly, 4h = 4-hour, 1d = daily, 1w = weekly, 1m = monthly)",
-        "options": {
-          "1h": "1 Hour",
-          "4h": "4 Hours",
-          "1d": "1 Day",
-          "1w": "1 Week",
-          "1m": "1 Month"
-        }
-      },
-      "strategySelection": {
-        "helper": "Select strategies to compare (choose 2 or more)",
-        "selectAll": "Select All",
-        "clearAll": "Clear All"
-      },
-      "mode": {
-        "helper": "Choose how you want to compare strategies"
-      }
-    },
     "investmentAmount": "Investment Amount (USD)",
     "dateRange": "Date Range",
     "dateRangeStart": "Start",
@@ -289,36 +294,57 @@
         "portfolioValue": "Portfolio Value Over Time",
         "metrics": "Strategy Metrics",
         "investmentAmount": "Investment Amount",
+        "investmentAmountTooltip": "The total amount of money you allocated for this backtest.",
         "dateRange": "Date Range",
+        "dateRangeTooltip": "The time period that was tested in this backtest.",
         "timeframe": "Timeframe",
+        "timeframeTooltip": "The granularity of market data used (1h = hourly, 4h = 4-hour, 1d = daily, 1w = weekly, 1m = monthly).",
         "calculatedAt": "Calculated At",
+        "calculatedAtTooltip": "When this backtest was calculated.",
         "noResults": "No results available. Please run a comparison first.",
         "goToSelection": "Go to Strategy Selection",
         "calculating": "Calculating strategies..."
       },
       "metrics": {
         "strategy": "Strategy",
+        "strategyTooltip": "The name of the investment strategy being compared.",
         "totalReturn": "Total Return",
+        "totalReturnTooltip": "The total percentage gain or loss from your initial investment. For example, +100% means you doubled your money. This includes both coin value and any remaining cash.",
         "finalValue": "Final Value",
+        "finalValueTooltip": "The total value of your portfolio at the end of the test period. This includes the value of all coins you own plus any remaining cash (USDC) that wasn't invested.",
         "avgBuyPrice": "Avg Buy Price",
+        "avgBuyPriceTooltip": "The average price at which you purchased coins throughout the strategy. Lower is better - it means you bought at better prices on average.",
         "maxDrawdown": "Max Drawdown",
+        "maxDrawdownTooltip": "The largest percentage drop from a peak value during the test period. For example, if your portfolio reached $10,000 and then dropped to $7,500, that's a 25% drawdown. Lower is better - it shows less risk.",
         "totalInvestment": "Total Investment",
+        "totalInvestmentTooltip": "The total amount of money you allocated for this strategy. This is the starting capital you set in the form.",
         "totalQuantity": "Total Quantity",
+        "totalQuantityTooltip": "The total amount of cryptocurrency (e.g., BTC) you accumulated by the end of the test period.",
         "sharpeRatio": "Sharpe Ratio",
+        "sharpeRatioTooltip": "A measure of risk-adjusted returns. Higher is better - it means you got better returns relative to the risk taken. A Sharpe ratio above 1 is considered good, above 2 is very good.",
         "actions": "Actions",
+        "actionsTooltip": "View detailed transaction history for this strategy.",
         "viewTransactions": "View Transactions ({count})"
       },
       "transactions": {
         "title": "Transactions",
         "modalTitle": "Transactions - {strategy}",
         "date": "Date",
+        "dateTooltip": "The date when this purchase was made according to the strategy rules.",
         "price": "Price",
+        "priceTooltip": "The price of the cryptocurrency (e.g., BTC) at the time of purchase, in USD.",
         "amount": "Amount (USD)",
+        "amountTooltip": "How much money (in USD) was spent on this specific purchase.",
         "quantityPurchased": "Quantity Purchased",
+        "quantityPurchasedTooltip": "The amount of cryptocurrency (e.g., BTC) bought in this transaction. Calculated as: Amount ÷ Price.",
         "remainingCoin": "Remaining Coin ({coinSymbol})",
+        "remainingCoinTooltip": "The total value (in USD) of all cryptocurrency you own after this transaction. This is calculated as: Total Quantity × Current Price.",
         "remainingUsdc": "Remaining USDC",
+        "remainingUsdcTooltip": "The amount of cash (USDC) you still have available after this purchase. This is money that hasn't been invested yet.",
         "totalPortfolioValue": "Total Portfolio Value",
-        "reason": "Reason"
+        "totalPortfolioValueTooltip": "Your complete portfolio value after this transaction. This includes both the value of your coins and any remaining cash. Formula: Coin Value + Remaining USDC.",
+        "reason": "Reason",
+        "reasonTooltip": "Why this purchase was made. For example, 'Weekly DCA purchase' means it was a scheduled regular purchase, or 'RSI < 30' means the strategy detected oversold conditions."
       }
     }
   }

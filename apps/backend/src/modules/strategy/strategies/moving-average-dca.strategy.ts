@@ -78,6 +78,8 @@ export class MovingAverageDcaStrategy extends BaseStrategy {
     lastPurchaseDate.setDate(lastPurchaseDate.getDate() - 7);
     let totalQuantityHeld = 0;
     let totalInvested = 0;
+    let availableCash = investmentAmount; // Track available cash
+    const allowNegativeUsdc = parameters.allowNegativeUsdc ?? false;
 
     // Process each candle (skip first maPeriod-1 candles as MA is not available)
     for (let i = maPeriod - 1; i < candles.length; i++) {
@@ -91,29 +93,46 @@ export class MovingAverageDcaStrategy extends BaseStrategy {
 
       // Buy every 7 days (weekly base)
       if (daysSinceLastPurchase >= 7) {
-        let buyAmount = baseWeeklyAmount;
+        let desiredBuyAmount = baseWeeklyAmount;
         let reason = 'Weekly DCA purchase';
 
         // Check if price is below MA
         if (currentPrice < ma) {
-          buyAmount = baseWeeklyAmount * buyMultiplier;
+          desiredBuyAmount = baseWeeklyAmount * buyMultiplier;
           reason = `Price below ${maPeriod}-day MA (${currentPrice.toFixed(2)} < ${ma.toFixed(2)}) - ${buyMultiplier}x purchase`;
         } else {
           reason = `Price above ${maPeriod}-day MA - normal purchase`;
         }
 
-        const quantityPurchased = buyAmount / currentPrice;
+        // Calculate actual purchase amount (capped to available cash if negative USDC not allowed)
+        const actualBuyAmount = this.calculatePurchaseAmount(
+          desiredBuyAmount,
+          availableCash,
+          allowNegativeUsdc,
+        );
+
+        // Skip purchase if no cash available and negative USDC not allowed
+        if (actualBuyAmount <= 0 && !allowNegativeUsdc) {
+          continue;
+        }
+
+        const quantityPurchased = actualBuyAmount / currentPrice;
         totalQuantityHeld += quantityPurchased;
-        totalInvested += buyAmount;
+        totalInvested += actualBuyAmount;
+        availableCash -= actualBuyAmount;
 
         const coinValue = totalQuantityHeld * currentPrice;
-        const usdcValue = investmentAmount - totalInvested;
+        const usdcValue = availableCash;
         const totalValue = coinValue + usdcValue;
+
+        if (actualBuyAmount < desiredBuyAmount) {
+          reason += ' (capped to available cash)';
+        }
 
         transactions.push({
           date: candle.timestamp,
           price: currentPrice,
-          amount: buyAmount,
+          amount: actualBuyAmount,
           quantityPurchased,
           reason,
           portfolioValue: {
@@ -133,10 +152,13 @@ export class MovingAverageDcaStrategy extends BaseStrategy {
       transactions,
       candles,
       startDate,
+      investmentAmount,
     );
 
-    // Calculate metrics (totalInvested is already tracked in the loop)
-    const metrics = MetricsCalculator.calculate(transactions, portfolioHistory, totalInvested);
+    // Calculate metrics
+    // Use investmentAmount (total capital allocated) not totalInvested (amount spent)
+    // because return should be calculated against total capital, including remaining USDC
+    const metrics = MetricsCalculator.calculate(transactions, portfolioHistory, investmentAmount);
 
     return {
       strategyId: this.getStrategyId(),

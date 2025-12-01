@@ -19,7 +19,15 @@
 
           <a-form :model="formState" layout="vertical" @submit.prevent="handleCompare">
             <!-- Investment Amount Section -->
-            <a-form-item :label="t('backtest.form.investmentAmount.label')" required>
+            <a-form-item required>
+              <template #label>
+                <span>
+                  {{ t('backtest.form.investmentAmount.label') }}
+                  <a-tooltip :title="t('backtest.form.investmentAmount.tooltip')">
+                    <QuestionCircleOutlined style="margin-left: 4px; color: #8c8c8c; cursor: help;" />
+                  </a-tooltip>
+                </span>
+              </template>
               <template #extra>
                 <span class="helper-text">{{ t('backtest.form.investmentAmount.helper') }}</span>
               </template>
@@ -52,7 +60,15 @@
             </a-form-item>
 
             <!-- Date Range Section -->
-            <a-form-item :label="t('backtest.form.dateRange.label')" required>
+            <a-form-item required>
+              <template #label>
+                <span>
+                  {{ t('backtest.form.dateRange.label') }}
+                  <a-tooltip :title="t('backtest.form.dateRange.tooltip')">
+                    <QuestionCircleOutlined style="margin-left: 4px; color: #8c8c8c; cursor: help;" />
+                  </a-tooltip>
+                </span>
+              </template>
               <template #extra>
                 <span class="helper-text">{{ t('backtest.form.dateRange.helper') }}</span>
               </template>
@@ -79,7 +95,15 @@
             </a-form-item>
 
             <!-- Timeframe Selection -->
-            <a-form-item :label="t('backtest.form.timeframe.label')" required>
+            <a-form-item required>
+              <template #label>
+                <span>
+                  {{ t('backtest.form.timeframe.label') }}
+                  <a-tooltip :title="t('backtest.form.timeframe.tooltip')">
+                    <QuestionCircleOutlined style="margin-left: 4px; color: #8c8c8c; cursor: help;" />
+                  </a-tooltip>
+                </span>
+              </template>
               <template #extra>
                 <span class="helper-text">{{ t('backtest.form.timeframe.helper') }}</span>
               </template>
@@ -87,7 +111,15 @@
             </a-form-item>
 
             <!-- Mode Selection -->
-            <a-form-item :label="t('backtest.mode.label')" required>
+            <a-form-item required>
+              <template #label>
+                <span>
+                  {{ t('backtest.mode.label') }}
+                  <a-tooltip :title="t('backtest.form.mode.tooltip')">
+                    <QuestionCircleOutlined style="margin-left: 4px; color: #8c8c8c; cursor: help;" />
+                  </a-tooltip>
+                </span>
+              </template>
               <template #extra>
                 <span class="helper-text">{{ t('backtest.form.mode.helper') }}</span>
               </template>
@@ -97,9 +129,16 @@
             <!-- Strategy Selection (Compare Strategies Mode) -->
             <a-form-item
               v-if="formState.mode === 'compare-strategies'"
-              :label="t('backtest.selectStrategies')"
               required
             >
+              <template #label>
+                <span>
+                  {{ t('backtest.selectStrategies') }}
+                  <a-tooltip :title="t('backtest.form.strategySelection.tooltip')">
+                    <QuestionCircleOutlined style="margin-left: 4px; color: #8c8c8c; cursor: help;" />
+                  </a-tooltip>
+                </span>
+              </template>
               <template #extra>
                 <span class="helper-text">{{ t('backtest.form.strategySelection.helper') }}</span>
               </template>
@@ -165,7 +204,7 @@
 
 <script setup lang="ts">
 import { useI18n } from 'vue-i18n'
-import { BarChartOutlined } from '@ant-design/icons-vue'
+import { BarChartOutlined, QuestionCircleOutlined } from '@ant-design/icons-vue'
 import { useBacktestStore } from '../stores/backtestStore'
 import { useBacktestForm } from '../composables/useBacktestForm'
 import HeroSection from '../components/HeroSection.vue'

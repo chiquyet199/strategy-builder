@@ -113,6 +113,8 @@ export class CombinedSmartDcaStrategy extends BaseStrategy {
     lastPurchaseDate.setDate(lastPurchaseDate.getDate() - 7);
     let totalQuantityHeld = 0;
     let totalInvested = 0;
+    let availableCash = investmentAmount; // Track available cash
+    const allowNegativeUsdc = parameters.allowNegativeUsdc ?? false;
 
     // Process each candle (start from max required period)
     const startIndex = Math.max(rsiPeriod, maPeriod - 1, lookbackDays - 1);
@@ -156,25 +158,48 @@ export class CombinedSmartDcaStrategy extends BaseStrategy {
         // Cap multiplier
         multiplier = Math.min(multiplier, maxMultiplier);
 
-        const buyAmount = baseWeeklyAmount * multiplier;
-        const reason = reasons.length > 0 
+        const desiredBuyAmount = baseWeeklyAmount * multiplier;
+        
+        // Calculate actual purchase amount (capped to available cash if negative USDC not allowed)
+        const actualBuyAmount = this.calculatePurchaseAmount(
+          desiredBuyAmount,
+          availableCash,
+          allowNegativeUsdc,
+        );
+
+        // Skip purchase if no cash available and negative USDC not allowed
+        if (actualBuyAmount <= 0 && !allowNegativeUsdc) {
+          continue;
+        }
+
+        let reason = reasons.length > 0 
           ? `Combined signals: ${reasons.join(', ')} - ${multiplier.toFixed(2)}x purchase`
           : 'Weekly DCA purchase';
 
-        const quantityPurchased = buyAmount / currentPrice;
+        if (actualBuyAmount < desiredBuyAmount) {
+          reason += ' (capped to available cash)';
+        }
+
+        const quantityPurchased = actualBuyAmount / currentPrice;
         totalQuantityHeld += quantityPurchased;
-        totalInvested += buyAmount;
+        totalInvested += actualBuyAmount;
+        availableCash -= actualBuyAmount;
 
         const coinValue = totalQuantityHeld * currentPrice;
-        const usdcValue = investmentAmount - totalInvested;
+        const usdcValue = availableCash;
         const totalValue = coinValue + usdcValue;
+
+        let finalReason = reason;
+        if (actualBuyAmount < desiredBuyAmount) {
+          finalReason += ' (capped to available cash)';
+        }
 
         transactions.push({
           date: candle.timestamp,
           price: currentPrice,
-          amount: buyAmount,
+          amount: actualBuyAmount,
           quantityPurchased,
-          reason,
+          reason: finalReason,
           portfolioValue: {
             coinValue,
             usdcValue,
@@ -192,10 +217,13 @@ export class CombinedSmartDcaStrategy extends BaseStrategy {
       transactions,
       candles,
       startDate,
+      investmentAmount,
     );
 
-    // Calculate metrics (totalInvested is already tracked in the loop)
-    const metrics = MetricsCalculator.calculate(transactions, portfolioHistory, totalInvested);
+    // Calculate metrics
+    // Use investmentAmount (total capital allocated) not totalInvested (amount spent)
+    // because return should be calculated against total capital, including remaining USDC
+    const metrics = MetricsCalculator.calculate(transactions, portfolioHistory, investmentAmount);
 
     return {
       strategyId: this.getStrategyId(),

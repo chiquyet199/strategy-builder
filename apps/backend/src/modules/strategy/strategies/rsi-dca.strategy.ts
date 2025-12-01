@@ -100,6 +100,8 @@ export class RsiDcaStrategy extends BaseStrategy {
     lastPurchaseDate.setDate(lastPurchaseDate.getDate() - 7);
     let totalQuantityHeld = 0;
     let totalInvested = 0;
+    let availableCash = investmentAmount; // Track available cash
+    const allowNegativeUsdc = parameters.allowNegativeUsdc ?? false;
 
     // Process each candle (skip first rsiPeriod candles as RSI is not available)
     for (let i = rsiPeriod; i < candles.length; i++) {
@@ -117,30 +119,47 @@ export class RsiDcaStrategy extends BaseStrategy {
 
       // Buy every 7 days (weekly base)
       if (daysSinceLastPurchase >= 7) {
-        let buyAmount = baseWeeklyAmount;
+        let desiredBuyAmount = baseWeeklyAmount;
         let reason = 'Weekly DCA purchase';
 
         // Adjust buy amount based on RSI
         if (rsi < oversoldThreshold) {
-          buyAmount = baseWeeklyAmount * buyMultiplier;
+          desiredBuyAmount = baseWeeklyAmount * buyMultiplier;
           reason = `RSI < ${oversoldThreshold} (${rsi.toFixed(2)}) - ${buyMultiplier}x purchase`;
         } else {
           reason = `RSI ${rsi.toFixed(2)} - normal purchase`;
         }
 
+        // Calculate actual purchase amount (capped to available cash if negative USDC not allowed)
+        const actualBuyAmount = this.calculatePurchaseAmount(
+          desiredBuyAmount,
+          availableCash,
+          allowNegativeUsdc,
+        );
+
+        // Skip purchase if no cash available and negative USDC not allowed
+        if (actualBuyAmount <= 0 && !allowNegativeUsdc) {
+          continue;
+        }
+
         const price = candle.close;
-        const quantityPurchased = buyAmount / price;
+        const quantityPurchased = actualBuyAmount / price;
         totalQuantityHeld += quantityPurchased;
-        totalInvested += buyAmount;
+        totalInvested += actualBuyAmount;
+        availableCash -= actualBuyAmount;
 
         const coinValue = totalQuantityHeld * price;
-        const usdcValue = investmentAmount - totalInvested;
+        const usdcValue = availableCash;
         const totalValue = coinValue + usdcValue;
+
+        if (actualBuyAmount < desiredBuyAmount) {
+          reason += ' (capped to available cash)';
+        }
 
         transactions.push({
           date: candle.timestamp,
           price,
-          amount: buyAmount,
+          amount: actualBuyAmount,
           quantityPurchased,
           reason,
           portfolioValue: {
@@ -160,10 +179,13 @@ export class RsiDcaStrategy extends BaseStrategy {
       transactions,
       candles,
       startDate,
+      investmentAmount,
     );
 
-    // Calculate metrics (totalInvested is already tracked in the loop)
-    const metrics = MetricsCalculator.calculate(transactions, portfolioHistory, totalInvested);
+    // Calculate metrics
+    // Use investmentAmount (total capital allocated) not totalInvested (amount spent)
+    // because return should be calculated against total capital, including remaining USDC
+    const metrics = MetricsCalculator.calculate(transactions, portfolioHistory, investmentAmount);
 
     return {
       strategyId: this.getStrategyId(),

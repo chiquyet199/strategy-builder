@@ -63,6 +63,7 @@ export class LumpSumStrategy extends BaseStrategy {
       [transaction],
       candles,
       startDate,
+      investmentAmount,
     );
 
     // Calculate metrics

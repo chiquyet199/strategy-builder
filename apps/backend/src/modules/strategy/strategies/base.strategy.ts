@@ -66,10 +66,35 @@ export abstract class BaseStrategy implements IStrategy {
    */
   protected mergeParameters(userParams?: Record<string, any>): Record<string, any> {
     const defaults = this.getDefaultParameters();
+    // Add global configuration defaults
+    const globalDefaults = {
+      allowNegativeUsdc: false, // By default, don't allow negative USDC
+    };
+    const allDefaults = { ...globalDefaults, ...defaults };
     if (!userParams) {
-      return defaults;
+      return allDefaults;
     }
-    return { ...defaults, ...userParams };
+    return { ...allDefaults, ...userParams };
+  }
+
+  /**
+   * Calculate the maximum purchase amount based on available cash
+   * If allowNegativeUsdc is false, caps the amount to available cash
+   * @param desiredAmount - The desired purchase amount
+   * @param availableCash - The available cash (USDC)
+   * @param allowNegativeUsdc - Whether negative USDC is allowed
+   * @returns The actual purchase amount (capped if needed)
+   */
+  protected calculatePurchaseAmount(
+    desiredAmount: number,
+    availableCash: number,
+    allowNegativeUsdc: boolean = false,
+  ): number {
+    if (allowNegativeUsdc) {
+      return desiredAmount;
+    }
+    // Cap purchase amount to available cash
+    return Math.max(0, Math.min(desiredAmount, availableCash));
   }
 }
 

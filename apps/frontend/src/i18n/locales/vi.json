@@ -149,42 +149,47 @@
       "notAdvice": "Hiệu suất trong quá khứ không đảm bảo kết quả trong tương lai. Đây không phải là lời khuyên tài chính.",
       "dataAccuracy": "Kết quả dựa trên dữ liệu lịch sử và không tính đến phí, thuế, trượt giá hoặc điều kiện thị trường thay đổi."
     },
-    "form": {
-      "investmentAmount": {
-        "label": "Số tiền đầu tư (USD)",
-        "helper": "Bạn muốn đầu tư bao nhiêu?",
-        "quickSelect": "Chọn nhanh"
-      },
-      "dateRange": {
-        "label": "Khoảng thời gian",
-        "helper": "Bạn muốn kiểm tra khoảng thời gian nào?",
-        "presets": {
-          "last1Year": "1 Năm qua",
-          "last3Years": "3 Năm qua",
-          "last5Years": "5 Năm qua",
-          "custom": "Tùy chỉnh"
+      "form": {
+        "investmentAmount": {
+          "label": "Số tiền đầu tư (USD)",
+          "helper": "Bạn muốn đầu tư bao nhiêu?",
+          "tooltip": "Tổng số tiền bạn muốn đầu tư trong bài kiểm tra này. Đây là vốn ban đầu sẽ được sử dụng cho tất cả các chiến lược đã chọn.",
+          "quickSelect": "Chọn nhanh"
+        },
+        "dateRange": {
+          "label": "Khoảng thời gian",
+          "helper": "Bạn muốn kiểm tra khoảng thời gian nào?",
+          "tooltip": "Khoảng thời gian để kiểm tra các chiến lược của bạn. Chọn một khoảng thời gian để xem các chiến lược sẽ hoạt động như thế nào trong khoảng thời gian cụ thể đó. Khoảng thời gian dài hơn cung cấp kết quả đáng tin cậy hơn.",
+          "presets": {
+            "last1Year": "1 Năm qua",
+            "last3Years": "3 Năm qua",
+            "last5Years": "5 Năm qua",
+            "custom": "Tùy chỉnh"
+          }
+        },
+        "timeframe": {
+          "label": "Khung thời gian Nến",
+          "helper": "Chọn khung thời gian cho dữ liệu thị trường (1h = theo giờ, 4h = 4 giờ, 1d = theo ngày, 1w = theo tuần, 1m = theo tháng)",
+          "tooltip": "Độ chi tiết của dữ liệu thị trường được sử dụng cho tính toán. Theo giờ (1h) cung cấp chi tiết nhất nhưng cần nhiều dữ liệu hơn. Theo ngày (1d) được khuyến nghị cho hầu hết các chiến lược vì nó cân bằng giữa chi tiết và hiệu suất.",
+          "options": {
+            "1h": "1 Giờ",
+            "4h": "4 Giờ",
+            "1d": "1 Ngày",
+            "1w": "1 Tuần",
+            "1m": "1 Tháng"
+          }
+        },
+        "strategySelection": {
+          "helper": "Chọn chiến lược để so sánh (chọn 2 trở lên)",
+          "tooltip": "Chọn các chiến lược đầu tư bạn muốn so sánh. Chọn ít nhất 2 chiến lược để xem cách chúng hoạt động cạnh nhau. Mỗi chiến lược sử dụng các quy tắc khác nhau về thời điểm và số tiền đầu tư.",
+          "selectAll": "Chọn tất cả",
+          "clearAll": "Xóa tất cả"
+        },
+        "mode": {
+          "helper": "Chọn cách bạn muốn so sánh chiến lược",
+          "tooltip": "So sánh Chiến lược: So sánh các loại chiến lược khác nhau (ví dụ: DCA vs Đầu tư một lần). So sánh Biến thể: So sánh cùng một chiến lược với các cài đặt tham số khác nhau (ví dụ: DCA hàng tuần vs DCA hàng ngày)."
         }
       },
-      "timeframe": {
-        "label": "Khung thời gian Nến",
-        "helper": "Chọn khung thời gian cho dữ liệu thị trường (1h = theo giờ, 4h = 4 giờ, 1d = theo ngày, 1w = theo tuần, 1m = theo tháng)",
-        "options": {
-          "1h": "1 Giờ",
-          "4h": "4 Giờ",
-          "1d": "1 Ngày",
-          "1w": "1 Tuần",
-          "1m": "1 Tháng"
-        }
-      },
-      "strategySelection": {
-        "helper": "Chọn chiến lược để so sánh (chọn 2 trở lên)",
-        "selectAll": "Chọn tất cả",
-        "clearAll": "Xóa tất cả"
-      },
-      "mode": {
-        "helper": "Chọn cách bạn muốn so sánh chiến lược"
-      }
-    },
     "investmentAmount": "Số tiền đầu tư (USD)",
     "dateRange": "Khoảng thời gian",
     "dateRangeStart": "Bắt đầu",
@@ -289,36 +294,57 @@
         "portfolioValue": "Giá trị Danh mục Theo thời gian",
         "metrics": "Chỉ số Chiến lược",
         "investmentAmount": "Số tiền đầu tư",
+        "investmentAmountTooltip": "Tổng số tiền bạn đã phân bổ cho bài kiểm tra này.",
         "dateRange": "Khoảng thời gian",
+        "dateRangeTooltip": "Khoảng thời gian đã được kiểm tra trong bài kiểm tra này.",
         "timeframe": "Khung thời gian",
+        "timeframeTooltip": "Độ chi tiết của dữ liệu thị trường được sử dụng (1h = theo giờ, 4h = 4 giờ, 1d = theo ngày, 1w = theo tuần, 1m = theo tháng).",
         "calculatedAt": "Tính toán lúc",
+        "calculatedAtTooltip": "Khi nào bài kiểm tra này được tính toán.",
         "noResults": "Không có kết quả. Vui lòng chạy so sánh trước.",
         "goToSelection": "Đi đến Lựa chọn Chiến lược",
         "calculating": "Đang tính toán chiến lược..."
       },
       "metrics": {
         "strategy": "Chiến lược",
+        "strategyTooltip": "Tên của chiến lược đầu tư đang được so sánh.",
         "totalReturn": "Tổng lợi nhuận",
+        "totalReturnTooltip": "Tổng phần trăm lãi hoặc lỗ từ khoản đầu tư ban đầu của bạn. Ví dụ, +100% có nghĩa là bạn đã tăng gấp đôi số tiền. Điều này bao gồm cả giá trị coin và bất kỳ tiền mặt còn lại nào.",
         "finalValue": "Giá trị cuối",
+        "finalValueTooltip": "Tổng giá trị danh mục đầu tư của bạn vào cuối kỳ kiểm tra. Điều này bao gồm giá trị của tất cả các coin bạn sở hữu cộng với bất kỳ tiền mặt còn lại (USDC) chưa được đầu tư.",
         "avgBuyPrice": "Giá mua trung bình",
+        "avgBuyPriceTooltip": "Giá trung bình mà bạn đã mua coin trong suốt chiến lược. Thấp hơn là tốt hơn - có nghĩa là bạn đã mua ở mức giá tốt hơn trung bình.",
         "maxDrawdown": "Mức giảm tối đa",
+        "maxDrawdownTooltip": "Mức giảm phần trăm lớn nhất từ giá trị đỉnh trong kỳ kiểm tra. Ví dụ, nếu danh mục đầu tư của bạn đạt $10,000 và sau đó giảm xuống $7,500, đó là mức giảm 25%. Thấp hơn là tốt hơn - cho thấy ít rủi ro hơn.",
         "totalInvestment": "Tổng đầu tư",
+        "totalInvestmentTooltip": "Tổng số tiền bạn đã phân bổ cho chiến lược này. Đây là vốn ban đầu bạn đã đặt trong biểu mẫu.",
         "totalQuantity": "Tổng Số lượng",
+        "totalQuantityTooltip": "Tổng số lượng tiền điện tử (ví dụ: BTC) bạn đã tích lũy vào cuối kỳ kiểm tra.",
         "sharpeRatio": "Tỷ lệ Sharpe",
+        "sharpeRatioTooltip": "Một thước đo lợi nhuận điều chỉnh rủi ro. Cao hơn là tốt hơn - có nghĩa là bạn đã nhận được lợi nhuận tốt hơn so với rủi ro đã chấp nhận. Tỷ lệ Sharpe trên 1 được coi là tốt, trên 2 là rất tốt.",
         "actions": "Hành động",
+        "actionsTooltip": "Xem lịch sử giao dịch chi tiết cho chiến lược này.",
         "viewTransactions": "Xem Giao dịch ({count})"
       },
       "transactions": {
         "title": "Giao dịch",
         "modalTitle": "Giao dịch - {strategy}",
         "date": "Ngày",
+        "dateTooltip": "Ngày thực hiện giao dịch mua này theo quy tắc chiến lược.",
         "price": "Giá",
+        "priceTooltip": "Giá của tiền điện tử (ví dụ: BTC) tại thời điểm mua, tính bằng USD.",
         "amount": "Số tiền (USD)",
+        "amountTooltip": "Số tiền (tính bằng USD) đã chi cho giao dịch mua cụ thể này.",
         "quantityPurchased": "Số lượng đã mua",
+        "quantityPurchasedTooltip": "Số lượng tiền điện tử (ví dụ: BTC) đã mua trong giao dịch này. Được tính: Số tiền ÷ Giá.",
         "remainingCoin": "Coin còn lại ({coinSymbol})",
+        "remainingCoinTooltip": "Tổng giá trị (tính bằng USD) của tất cả tiền điện tử bạn sở hữu sau giao dịch này. Được tính: Tổng Số lượng × Giá hiện tại.",
         "remainingUsdc": "USDC còn lại",
+        "remainingUsdcTooltip": "Số tiền mặt (USDC) bạn vẫn còn sau giao dịch mua này. Đây là tiền chưa được đầu tư.",
         "totalPortfolioValue": "Tổng giá trị danh mục",
-        "reason": "Lý do"
+        "totalPortfolioValueTooltip": "Giá trị danh mục đầu tư hoàn chỉnh của bạn sau giao dịch này. Điều này bao gồm cả giá trị coin và bất kỳ tiền mặt còn lại nào. Công thức: Giá trị Coin + USDC còn lại.",
+        "reason": "Lý do",
+        "reasonTooltip": "Lý do thực hiện giao dịch mua này. Ví dụ, 'Giao dịch DCA hàng tuần' có nghĩa là đây là giao dịch mua định kỳ theo lịch, hoặc 'RSI < 30' có nghĩa là chiến lược phát hiện điều kiện quá bán."
       }
     }
   }

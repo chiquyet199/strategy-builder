@@ -112,11 +112,25 @@ export class DcaStrategy extends BaseStrategy {
 
       if (shouldPurchase) {
         const price = candle.close;
-        const quantityPurchased = periodAmount / price;
+        const allowNegativeUsdc = parameters.allowNegativeUsdc ?? false;
+        
+        // Calculate actual purchase amount (capped to available cash if negative USDC not allowed)
+        const actualPurchaseAmount = this.calculatePurchaseAmount(
+          periodAmount,
+          currentUsdcBalance,
+          allowNegativeUsdc,
+        );
+
+        // Skip purchase if no cash available and negative USDC not allowed
+        if (actualPurchaseAmount <= 0 && !allowNegativeUsdc) {
+          continue;
+        }
+
+        const quantityPurchased = actualPurchaseAmount / price;
 
         currentQuantityHeld += quantityPurchased;
-        currentUsdcBalance -= periodAmount;
-        totalInvested += periodAmount;
+        currentUsdcBalance -= actualPurchaseAmount;
+        totalInvested += actualPurchaseAmount;
 
         const coinValue = currentQuantityHeld * price;
         const totalValue = coinValue + currentUsdcBalance;
@@ -124,9 +138,9 @@ export class DcaStrategy extends BaseStrategy {
         transactions.push({
           date: candle.timestamp,
           price,
-          amount: periodAmount,
+          amount: actualPurchaseAmount,
           quantityPurchased,
-          reason: `${frequency.charAt(0).toUpperCase() + frequency.slice(1)} DCA purchase`,
+          reason: `${frequency.charAt(0).toUpperCase() + frequency.slice(1)} DCA purchase${actualPurchaseAmount < periodAmount ? ' (capped to available cash)' : ''}`,
           portfolioValue: {
             coinValue,
             usdcValue: currentUsdcBalance,
@@ -144,10 +158,13 @@ export class DcaStrategy extends BaseStrategy {
       transactions,
       candles,
       startDate,
+      investmentAmount,
     )
 
     // Calculate metrics
-    const metrics = MetricsCalculator.calculate(transactions, portfolioHistory, totalInvested)
+    // Use investmentAmount (total capital allocated) not totalInvested (amount spent)
+    // because return should be calculated against total capital, including remaining USDC
+    const metrics = MetricsCalculator.calculate(transactions, portfolioHistory, investmentAmount)
 
     return {
       strategyId: this.getStrategyId(),

@@ -79,17 +79,49 @@
       <div v-else-if="backtestStore.hasResults" class="results-content">
         <!-- Metadata -->
         <a-descriptions v-if="metadata" :column="2" bordered style="margin-bottom: 24px">
-          <a-descriptions-item :label="t('backtest.results.metadata.investmentAmount')">
+          <a-descriptions-item>
+            <template #label>
+              <span>
+                {{ t('backtest.results.metadata.investmentAmount') }}
+                <a-tooltip :title="t('backtest.results.metadata.investmentAmountTooltip')">
+                  <QuestionCircleOutlined style="margin-left: 4px; color: #8c8c8c; cursor: help;" />
+                </a-tooltip>
+              </span>
+            </template>
             ${{ metadata.investmentAmount?.toLocaleString() || 'N/A' }}
           </a-descriptions-item>
-          <a-descriptions-item :label="t('backtest.results.metadata.dateRange')">
+          <a-descriptions-item>
+            <template #label>
+              <span>
+                {{ t('backtest.results.metadata.dateRange') }}
+                <a-tooltip :title="t('backtest.results.metadata.dateRangeTooltip')">
+                  <QuestionCircleOutlined style="margin-left: 4px; color: #8c8c8c; cursor: help;" />
+                </a-tooltip>
+              </span>
+            </template>
             {{ formatDate(metadata.startDate) }} -
             {{ formatDate(metadata.endDate) }}
           </a-descriptions-item>
-          <a-descriptions-item :label="t('backtest.results.metadata.timeframe')">
+          <a-descriptions-item>
+            <template #label>
+              <span>
+                {{ t('backtest.results.metadata.timeframe') }}
+                <a-tooltip :title="t('backtest.results.metadata.timeframeTooltip')">
+                  <QuestionCircleOutlined style="margin-left: 4px; color: #8c8c8c; cursor: help;" />
+                </a-tooltip>
+              </span>
+            </template>
             {{ metadata.timeframe?.toUpperCase() || 'N/A' }}
           </a-descriptions-item>
-          <a-descriptions-item :label="t('backtest.results.metadata.calculatedAt')">
+          <a-descriptions-item>
+            <template #label>
+              <span>
+                {{ t('backtest.results.metadata.calculatedAt') }}
+                <a-tooltip :title="t('backtest.results.metadata.calculatedAtTooltip')">
+                  <QuestionCircleOutlined style="margin-left: 4px; color: #8c8c8c; cursor: help;" />
+                </a-tooltip>
+              </span>
+            </template>
             {{ formatDateTime(metadata.calculatedAt) }}
           </a-descriptions-item>
         </a-descriptions>
@@ -125,7 +157,7 @@
               </template>
               <template v-else-if="column.key === 'maxDrawdown'">
                 <span class="negative-value">
-                  {{ formatPercentage(record.metrics?.maxDrawdown) }}
+                  {{ formatPercentage(record.metrics?.maxDrawdown, true) }}
                 </span>
               </template>
               <template v-else-if="column.key === 'totalInvestment'">
@@ -162,9 +194,10 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed, ref, h, resolveComponent } from 'vue'
 import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
+import { QuestionCircleOutlined } from '@ant-design/icons-vue'
 import { useBacktestStore } from '../stores/backtestStore'
 import PortfolioChart from '../components/PortfolioChart.vue'
 import dayjs from 'dayjs'
@@ -190,14 +223,28 @@ const transactionsModalVisible = ref(false)
 const selectedTransactions = ref<Transaction[] | null>(null)
 const selectedStrategyName = ref<string>('')
 
-const columns = computed(() => [
+const columns = computed(() => {
+  const ATooltip = resolveComponent('a-tooltip')
+  return [
   {
-    title: t('backtest.results.metrics.strategy'),
+    title: () => h('span', [
+      t('backtest.results.metrics.strategy'),
+      ' ',
+      h(ATooltip, { title: t('backtest.results.metrics.strategyTooltip') }, {
+        default: () => h(QuestionCircleOutlined, { style: 'margin-left: 4px; color: #8c8c8c; cursor: help;' })
+      })
+    ]),
     key: 'strategy',
     fixed: 'left' as const,
   },
   {
-    title: t('backtest.results.metrics.totalReturn'),
+    title: () => h('span', [
+      t('backtest.results.metrics.totalReturn'),
+      ' ',
+      h(ATooltip, { title: t('backtest.results.metrics.totalReturnTooltip') }, {
+        default: () => h(QuestionCircleOutlined, { style: 'margin-left: 4px; color: #8c8c8c; cursor: help;' })
+      })
+    ]),
     key: 'totalReturn',
     sorter: (a: StrategyResult, b: StrategyResult) => {
       const aVal = a.metrics?.totalReturn ?? 0
@@ -206,7 +253,13 @@ const columns = computed(() => [
     },
   },
   {
-    title: t('backtest.results.metrics.finalValue'),
+    title: () => h('span', [
+      t('backtest.results.metrics.finalValue'),
+      ' ',
+      h(ATooltip, { title: t('backtest.results.metrics.finalValueTooltip') }, {
+        default: () => h(QuestionCircleOutlined, { style: 'margin-left: 4px; color: #8c8c8c; cursor: help;' })
+      })
+    ]),
     key: 'finalValue',
     sorter: (a: StrategyResult, b: StrategyResult) => {
       const aVal = a.metrics?.finalValue ?? 0
@@ -215,7 +268,13 @@ const columns = computed(() => [
     },
   },
   {
-    title: t('backtest.results.metrics.avgBuyPrice'),
+    title: () => h('span', [
+      t('backtest.results.metrics.avgBuyPrice'),
+      ' ',
+      h(ATooltip, { title: t('backtest.results.metrics.avgBuyPriceTooltip') }, {
+        default: () => h(QuestionCircleOutlined, { style: 'margin-left: 4px; color: #8c8c8c; cursor: help;' })
+      })
+    ]),
     key: 'avgBuyPrice',
     sorter: (a: StrategyResult, b: StrategyResult) => {
       const aVal = a.metrics?.avgBuyPrice ?? 0
@@ -224,7 +283,13 @@ const columns = computed(() => [
     },
   },
   {
-    title: t('backtest.results.metrics.maxDrawdown'),
+    title: () => h('span', [
+      t('backtest.results.metrics.maxDrawdown'),
+      ' ',
+      h(ATooltip, { title: t('backtest.results.metrics.maxDrawdownTooltip') }, {
+        default: () => h(QuestionCircleOutlined, { style: 'margin-left: 4px; color: #8c8c8c; cursor: help;' })
+      })
+    ]),
     key: 'maxDrawdown',
     sorter: (a: StrategyResult, b: StrategyResult) => {
       const aVal = a.metrics?.maxDrawdown ?? 0
@@ -233,15 +298,33 @@ const columns = computed(() => [
     },
   },
   {
-    title: t('backtest.results.metrics.totalInvestment'),
+    title: () => h('span', [
+      t('backtest.results.metrics.totalInvestment'),
+      ' ',
+      h(ATooltip, { title: t('backtest.results.metrics.totalInvestmentTooltip') }, {
+        default: () => h(QuestionCircleOutlined, { style: 'margin-left: 4px; color: #8c8c8c; cursor: help;' })
+      })
+    ]),
     key: 'totalInvestment',
   },
   {
-    title: t('backtest.results.metrics.totalQuantity'),
+    title: () => h('span', [
+      t('backtest.results.metrics.totalQuantity'),
+      ' ',
+      h(ATooltip, { title: t('backtest.results.metrics.totalQuantityTooltip') }, {
+        default: () => h(QuestionCircleOutlined, { style: 'margin-left: 4px; color: #8c8c8c; cursor: help;' })
+      })
+    ]),
     key: 'totalQuantity',
   },
   {
-    title: t('backtest.results.metrics.sharpeRatio'),
+    title: () => h('span', [
+      t('backtest.results.metrics.sharpeRatio'),
+      ' ',
+      h(ATooltip, { title: t('backtest.results.metrics.sharpeRatioTooltip') }, {
+        default: () => h(QuestionCircleOutlined, { style: 'margin-left: 4px; color: #8c8c8c; cursor: help;' })
+      })
+    ]),
     key: 'sharpeRatio',
     sorter: (a: StrategyResult, b: StrategyResult) => {
       const aVal = a.metrics?.sharpeRatio ?? 0
@@ -250,55 +333,111 @@ const columns = computed(() => [
     },
   },
   {
-    title: t('backtest.results.metrics.actions'),
+    title: () => h('span', [
+      t('backtest.results.metrics.actions'),
+      ' ',
+      h(ATooltip, { title: t('backtest.results.metrics.actionsTooltip') }, {
+        default: () => h(QuestionCircleOutlined, { style: 'margin-left: 4px; color: #8c8c8c; cursor: help;' })
+      })
+    ]),
     key: 'actions',
     fixed: 'right' as const,
     width: 120,
   },
-])
+]})
 
-const transactionColumns = computed(() => [
+const transactionColumns = computed(() => {
+  const ATooltip = resolveComponent('a-tooltip')
+  return [
   {
-    title: t('backtest.results.transactions.date'),
+    title: () => h('span', [
+      t('backtest.results.transactions.date'),
+      ' ',
+      h(ATooltip, { title: t('backtest.results.transactions.dateTooltip') }, {
+        default: () => h(QuestionCircleOutlined, { style: 'margin-left: 4px; color: #8c8c8c; cursor: help;' })
+      })
+    ]),
     dataIndex: 'date',
     key: 'date',
-    sorter: (a: any, b: any) => new Date(a.date).getTime() - new Date(b.date).getTime(),
+    sorter: (a: Transaction, b: Transaction) => new Date(a.date).getTime() - new Date(b.date).getTime(),
   },
   {
-    title: t('backtest.results.transactions.price'),
+    title: () => h('span', [
+      t('backtest.results.transactions.price'),
+      ' ',
+      h(ATooltip, { title: t('backtest.results.transactions.priceTooltip') }, {
+        default: () => h(QuestionCircleOutlined, { style: 'margin-left: 4px; color: #8c8c8c; cursor: help;' })
+      })
+    ]),
     key: 'price',
-    sorter: (a: any, b: any) => a.price - b.price,
+    sorter: (a: Transaction, b: Transaction) => a.price - b.price,
   },
   {
-    title: t('backtest.results.transactions.amount'),
+    title: () => h('span', [
+      t('backtest.results.transactions.amount'),
+      ' ',
+      h(ATooltip, { title: t('backtest.results.transactions.amountTooltip') }, {
+        default: () => h(QuestionCircleOutlined, { style: 'margin-left: 4px; color: #8c8c8c; cursor: help;' })
+      })
+    ]),
     key: 'amount',
-    sorter: (a: any, b: any) => a.amount - b.amount,
+    sorter: (a: Transaction, b: Transaction) => a.amount - b.amount,
   },
   {
-    title: t('backtest.results.transactions.quantityPurchased'),
+    title: () => h('span', [
+      t('backtest.results.transactions.quantityPurchased'),
+      ' ',
+      h(ATooltip, { title: t('backtest.results.transactions.quantityPurchasedTooltip') }, {
+        default: () => h(QuestionCircleOutlined, { style: 'margin-left: 4px; color: #8c8c8c; cursor: help;' })
+      })
+    ]),
     key: 'quantityPurchased',
-    sorter: (a: any, b: any) => a.quantityPurchased - b.quantityPurchased,
+    sorter: (a: Transaction, b: Transaction) => a.quantityPurchased - b.quantityPurchased,
   },
   {
-    title: t('backtest.results.transactions.remainingCoin', { coinSymbol: coinSymbol.value }),
+    title: () => h('span', [
+      t('backtest.results.transactions.remainingCoin', { coinSymbol: coinSymbol.value }),
+      ' ',
+      h(ATooltip, { title: t('backtest.results.transactions.remainingCoinTooltip') }, {
+        default: () => h(QuestionCircleOutlined, { style: 'margin-left: 4px; color: #8c8c8c; cursor: help;' })
+      })
+    ]),
     key: 'coinValue',
-    sorter: (a: any, b: any) => (a.portfolioValue?.coinValue || 0) - (b.portfolioValue?.coinValue || 0),
+    sorter: (a: Transaction, b: Transaction) => (a.portfolioValue?.coinValue || 0) - (b.portfolioValue?.coinValue || 0),
   },
   {
-    title: t('backtest.results.transactions.remainingUsdc'),
+    title: () => h('span', [
+      t('backtest.results.transactions.remainingUsdc'),
+      ' ',
+      h(ATooltip, { title: t('backtest.results.transactions.remainingUsdcTooltip') }, {
+        default: () => h(QuestionCircleOutlined, { style: 'margin-left: 4px; color: #8c8c8c; cursor: help;' })
+      })
+    ]),
     key: 'usdcValue',
-    sorter: (a: any, b: any) => (a.portfolioValue?.usdcValue || 0) - (b.portfolioValue?.usdcValue || 0),
+    sorter: (a: Transaction, b: Transaction) => (a.portfolioValue?.usdcValue || 0) - (b.portfolioValue?.usdcValue || 0),
   },
   {
-    title: t('backtest.results.transactions.totalPortfolioValue'),
+    title: () => h('span', [
+      t('backtest.results.transactions.totalPortfolioValue'),
+      ' ',
+      h(ATooltip, { title: t('backtest.results.transactions.totalPortfolioValueTooltip') }, {
+        default: () => h(QuestionCircleOutlined, { style: 'margin-left: 4px; color: #8c8c8c; cursor: help;' })
+      })
+    ]),
     key: 'totalValue',
-    sorter: (a: any, b: any) => (a.portfolioValue?.totalValue || 0) - (b.portfolioValue?.totalValue || 0),
+    sorter: (a: Transaction, b: Transaction) => (a.portfolioValue?.totalValue || 0) - (b.portfolioValue?.totalValue || 0),
   },
   {
-    title: t('backtest.results.transactions.reason'),
+    title: () => h('span', [
+      t('backtest.results.transactions.reason'),
+      ' ',
+      h(ATooltip, { title: t('backtest.results.transactions.reasonTooltip') }, {
+        default: () => h(QuestionCircleOutlined, { style: 'margin-left: 4px; color: #8c8c8c; cursor: help;' })
+      })
+    ]),
     key: 'reason',
   },
-])
+]})
 
 const tableData = computed(() => backtestStore.strategyResults)
 
@@ -312,8 +451,12 @@ function formatDateTime(dateString?: string): string {
   return dayjs(dateString).format('DD-MM-YYYY HH:mm:ss')
 }
 
-function formatPercentage(value: number | null | undefined): string {
+function formatPercentage(value: number | null | undefined, isDrawdown: boolean = false): string {
   if (value == null || isNaN(value)) return 'N/A'
+  // For drawdown, don't show plus sign (it's always a loss)
+  if (isDrawdown) {
+    return `${value.toFixed(2)}%`
+  }
   return `${value >= 0 ? '+' : ''}${value.toFixed(2)}%`
 }
 

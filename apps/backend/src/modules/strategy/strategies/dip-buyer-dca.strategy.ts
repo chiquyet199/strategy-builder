@@ -77,6 +77,8 @@ export class DipBuyerDcaStrategy extends BaseStrategy {
     lastPurchaseDate.setDate(lastPurchaseDate.getDate() - 7);
     let totalQuantityHeld = 0;
     let totalInvested = 0;
+    let availableCash = investmentAmount; // Track available cash
+    const allowNegativeUsdc = parameters.allowNegativeUsdc ?? false;
 
     // Process each candle
     for (let i = 0; i < candles.length; i++) {
@@ -97,27 +99,44 @@ export class DipBuyerDcaStrategy extends BaseStrategy {
 
       // Buy every 7 days (weekly base)
       if (daysSinceLastPurchase >= 7) {
-        let buyAmount = baseWeeklyAmount;
+        let desiredBuyAmount = baseWeeklyAmount;
         let reason = 'Weekly DCA purchase';
 
         // Check if we're in a dip
         if (dropPercent >= dropThreshold) {
-          buyAmount = baseWeeklyAmount * buyMultiplier;
+          desiredBuyAmount = baseWeeklyAmount * buyMultiplier;
           reason = `Dip detected: ${(dropPercent * 100).toFixed(2)}% drop from recent high - ${buyMultiplier}x purchase`;
         }
 
-        const quantityPurchased = buyAmount / currentPrice;
+        // Calculate actual purchase amount (capped to available cash if negative USDC not allowed)
+        const actualBuyAmount = this.calculatePurchaseAmount(
+          desiredBuyAmount,
+          availableCash,
+          allowNegativeUsdc,
+        );
+
+        // Skip purchase if no cash available and negative USDC not allowed
+        if (actualBuyAmount <= 0 && !allowNegativeUsdc) {
+          continue;
+        }
+
+        const quantityPurchased = actualBuyAmount / currentPrice;
         totalQuantityHeld += quantityPurchased;
-        totalInvested += buyAmount;
+        totalInvested += actualBuyAmount;
+        availableCash -= actualBuyAmount;
 
         const coinValue = totalQuantityHeld * currentPrice;
-        const usdcValue = investmentAmount - totalInvested;
+        const usdcValue = availableCash;
         const totalValue = coinValue + usdcValue;
+
+        if (actualBuyAmount < desiredBuyAmount) {
+          reason += ' (capped to available cash)';
+        }
 
         transactions.push({
           date: candle.timestamp,
           price: currentPrice,
-          amount: buyAmount,
+          amount: actualBuyAmount,
           quantityPurchased,
           reason,
           portfolioValue: {
@@ -137,10 +156,13 @@ export class DipBuyerDcaStrategy extends BaseStrategy {
       transactions,
       candles,
       startDate,
+      investmentAmount,
     );
 
-    // Calculate metrics (totalInvested is already tracked in the loop)
-    const metrics = MetricsCalculator.calculate(transactions, portfolioHistory, totalInvested);
+    // Calculate metrics
+    // Use investmentAmount (total capital allocated) not totalInvested (amount spent)
+    // because return should be calculated against total capital, including remaining USDC
+    const metrics = MetricsCalculator.calculate(transactions, portfolioHistory, investmentAmount);
 
     return {
       strategyId: this.getStrategyId(),

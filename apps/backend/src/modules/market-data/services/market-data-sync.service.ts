@@ -42,27 +42,30 @@ export class MarketDataSyncService {
   }
 
   /**
-   * Pre-populate historical data for a single symbol
+   * Pre-populate historical data for a single symbol (all timeframes)
    */
   private async prePopulateSymbol(symbol: string): Promise<void> {
     this.logger.log(
-      `Starting pre-population of historical data for ${symbol} from Binance API`,
+      `Starting pre-population of historical data for ${symbol} from Binance API (all timeframes)`,
     );
 
     const startDate = new Date('2020-01-01');
     const endDate = new Date('2025-12-31');
+    const timeframes: Timeframe[] = ['1h', '4h', '1d', '1w', '1m'];
 
-    // Check if any data already exists for this symbol
-    const existingCount = await this.candlestickRepository.count({
-      where: {
-        symbol,
-        timeframe: '1d',
-      },
-    });
+    // Check if any data already exists for this symbol (check all timeframes)
+    const existingCounts = await Promise.all(
+      timeframes.map((tf) =>
+        this.candlestickRepository.count({
+          where: { symbol, timeframe: tf },
+        }),
+      ),
+    );
+    const totalExisting = existingCounts.reduce((sum, count) => sum + count, 0);
 
-    if (existingCount > 0) {
+    if (totalExisting > 0) {
       this.logger.log(
-        `Historical data already exists for ${symbol} (${existingCount} records). Checking for gaps...`,
+        `Historical data already exists for ${symbol} (${totalExisting} total records across all timeframes). Checking for gaps...`,
       );
       this.logger.warn(
         `Note: Existing data will NOT be overwritten. To force re-sync with Binance, delete existing data first or use admin endpoint.`,
@@ -71,9 +74,19 @@ export class MarketDataSyncService {
       return;
     }
 
-    await this.syncDateRange(symbol, '1d', startDate, endDate);
+    // Sync all timeframes
+    for (const timeframe of timeframes) {
+      this.logger.log(`Syncing ${timeframe} data for ${symbol}...`);
+      await this.syncDateRange(symbol, timeframe, startDate, endDate);
+
+      // Add delay between timeframes to avoid rate limits
+      if (timeframes.indexOf(timeframe) < timeframes.length - 1) {
+        await this.delay(1000); // 1 second between timeframes
+      }
+    }
+
     this.logger.log(
-      `Completed pre-population of historical data for ${symbol}`,
+      `Completed pre-population of historical data for ${symbol} (all timeframes)`,
     );
   }
 
@@ -94,30 +107,58 @@ export class MarketDataSyncService {
   }
 
   /**
-   * Sync today's data for a single symbol
+   * Sync today's data for a single symbol (all timeframes)
    */
   private async syncDailyDataForSymbol(symbol: string): Promise<void> {
-    this.logger.log(`Syncing daily data for ${symbol}`);
+    this.logger.log(`Syncing daily data for ${symbol} (all timeframes)`);
 
     const today = new Date();
     today.setHours(0, 0, 0, 0);
+    const tomorrow = new Date(today);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    const now = new Date();
 
-    // Check if today's data already exists
-    const existing = await this.candlestickRepository.findOne({
-      where: {
-        symbol,
-        timeframe: '1d',
-        timestamp: today,
-      },
-    });
+    const timeframes: Timeframe[] = ['1h', '4h', '1d', '1w', '1m'];
 
-    if (existing) {
-      this.logger.log(`Today's data already exists for ${symbol}`);
-      return;
+    // Sync all timeframes for today
+    for (const timeframe of timeframes) {
+      // For hourly/4h, we need to sync up to now, not just today
+      // For daily/weekly/monthly, we sync today
+      const endDate = ['1h', '4h'].includes(timeframe)
+        ? now // Current time for intraday timeframes
+        : tomorrow; // End of today for daily+ timeframes
+
+      // For intraday timeframes, always sync (they update frequently)
+      // For daily/weekly/monthly, check if today's data exists
+      if (!['1h', '4h'].includes(timeframe)) {
+        const existing = await this.candlestickRepository.findOne({
+          where: {
+            symbol,
+            timeframe,
+            timestamp: today,
+          },
+        });
+
+        if (existing) {
+          this.logger.log(
+            `Today's ${timeframe} data already exists for ${symbol}`,
+          );
+          continue;
+        }
+      }
+
+      // Sync the timeframe
+      await this.syncDateRange(symbol, timeframe, today, endDate);
+
+      // Add delay between timeframes
+      if (timeframes.indexOf(timeframe) < timeframes.length - 1) {
+        await this.delay(500); // 500ms between timeframes
+      }
     }
 
-    await this.syncDateRange(symbol, '1d', today, today);
-    this.logger.log(`Completed syncing daily data for ${symbol}`);
+    this.logger.log(
+      `Completed syncing daily data for ${symbol} (all timeframes)`,
+    );
   }
 
   /**
@@ -226,7 +267,7 @@ export class MarketDataSyncService {
   }
 
   /**
-   * Check for gaps in data and fill them
+   * Check for gaps in data and fill them (all timeframes)
    */
   async checkAndFillGaps(
     symbol: string,
@@ -234,56 +275,63 @@ export class MarketDataSyncService {
     endDate: Date,
   ): Promise<void> {
     this.logger.log(
-      `Checking for gaps in ${symbol} data from ${startDate.toISOString()} to ${endDate.toISOString()}`,
+      `Checking for gaps in ${symbol} data from ${startDate.toISOString()} to ${endDate.toISOString()} (all timeframes)`,
     );
 
-    // Get all existing timestamps for daily timeframe
-    const existingCandles = await this.candlestickRepository.find({
-      where: {
-        symbol,
-        timeframe: '1d',
-      },
-      select: ['timestamp'],
-      order: {
-        timestamp: 'ASC',
-      },
-    });
+    const timeframes: Timeframe[] = ['1h', '4h', '1d', '1w', '1m'];
 
-    const existingTimestamps = new Set(
-      existingCandles.map((c) => c.timestamp.toISOString().split('T')[0]),
-    );
+    for (const timeframe of timeframes) {
+      this.logger.log(`Checking gaps for ${timeframe}...`);
 
-    // Find missing dates
-    const missingDates: Date[] = [];
-    const currentDate = new Date(startDate);
+      // Get all existing timestamps for this timeframe
+      const existingCandles = await this.candlestickRepository.find({
+        where: {
+          symbol,
+          timeframe,
+        },
+        select: ['timestamp'],
+        order: {
+          timestamp: 'ASC',
+        },
+      });
 
-    while (currentDate <= endDate) {
-      const dateKey = currentDate.toISOString().split('T')[0];
-      if (!existingTimestamps.has(dateKey)) {
-        missingDates.push(new Date(currentDate));
+      if (existingCandles.length === 0) {
+        // No data exists, sync the entire range
+        this.logger.log(
+          `No ${timeframe} data exists for ${symbol}, syncing full range...`,
+        );
+        await this.syncDateRange(symbol, timeframe, startDate, endDate);
+        continue;
       }
-      currentDate.setDate(currentDate.getDate() + 1);
+
+      // For intraday timeframes (1h, 4h), gap detection is more complex
+      // For simplicity, we'll check if the date range is covered
+      const earliest = existingCandles[0].timestamp;
+      const latest = existingCandles[existingCandles.length - 1].timestamp;
+
+      // Check if we need to sync before earliest
+      if (earliest > startDate) {
+        this.logger.log(
+          `Gap found: missing ${timeframe} data before ${earliest.toISOString()}`,
+        );
+        await this.syncDateRange(symbol, timeframe, startDate, earliest);
+      }
+
+      // Check if we need to sync after latest
+      if (latest < endDate) {
+        this.logger.log(
+          `Gap found: missing ${timeframe} data after ${latest.toISOString()}`,
+        );
+        await this.syncDateRange(symbol, timeframe, latest, endDate);
+      }
+
+      // Add delay between timeframes
+      if (timeframes.indexOf(timeframe) < timeframes.length - 1) {
+        await this.delay(500);
+      }
     }
 
-    if (missingDates.length === 0) {
-      this.logger.log(`No gaps found in ${symbol} data`);
-      return;
-    }
-
-    this.logger.log(
-      `Found ${missingDates.length} missing dates. Filling gaps...`,
-    );
-
-    // Fill gaps in batches
-    for (let i = 0; i < missingDates.length; i += this.BATCH_SIZE) {
-      const batch = missingDates.slice(i, i + this.BATCH_SIZE);
-      const batchStart = batch[0];
-      const batchEnd = batch[batch.length - 1];
-
-      await this.syncDateRange(symbol, '1d', batchStart, batchEnd);
-    }
-
-    this.logger.log(`Completed filling gaps for ${symbol}`);
+    this.logger.log(`Completed filling gaps for ${symbol} (all timeframes)`);
   }
 
   /**

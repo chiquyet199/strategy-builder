@@ -165,6 +165,17 @@
           "custom": "Custom Range"
         }
       },
+      "timeframe": {
+        "label": "Candlestick Timeframe",
+        "helper": "Select the timeframe for market data (1h = hourly, 4h = 4-hour, 1d = daily, 1w = weekly, 1m = monthly)",
+        "options": {
+          "1h": "1 Hour",
+          "4h": "4 Hours",
+          "1d": "1 Day",
+          "1w": "1 Week",
+          "1m": "1 Month"
+        }
+      },
       "strategySelection": {
         "helper": "Select strategies to compare (choose 2 or more)",
         "selectAll": "Select All",

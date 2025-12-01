@@ -19,101 +19,107 @@
 
           <a-form :model="formState" layout="vertical" @submit.prevent="handleCompare">
             <!-- Investment Amount Section -->
-            <div class="form-section-item">
-              <a-form-item :label="t('backtest.form.investmentAmount.label')" required>
-                <template #extra>
-                  <span class="helper-text">{{ t('backtest.form.investmentAmount.helper') }}</span>
-                </template>
-                
-                <!-- Quick Select Buttons -->
-                <div class="quick-select-buttons">
-                  <a-button
-                    v-for="amount in quickSelectAmounts"
-                    :key="amount"
-                    :type="formState.investmentAmount === amount ? 'primary' : 'default'"
-                    @click="formState.investmentAmount = amount"
-                  >
-                    ${{ amount.toLocaleString() }}
-                  </a-button>
-                </div>
+            <a-form-item :label="t('backtest.form.investmentAmount.label')" required>
+              <template #extra>
+                <span class="helper-text">{{ t('backtest.form.investmentAmount.helper') }}</span>
+              </template>
 
-                <!-- Custom Amount Input -->
-                <a-input-number
-                  v-model:value="formState.investmentAmount"
-                  :min="1"
-                  :max="10000000"
-                  :step="1000"
-                  :formatter="(value) => `$ ${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')"
-                  :parser="(value) => value.replace(/\$\s?|(,*)/g, '')"
-                  style="width: 100%"
-                  size="large"
-                  class="investment-input"
-                />
-              </a-form-item>
-            </div>
+              <!-- Quick Select Buttons -->
+              <div class="quick-select-buttons">
+                <a-button
+                  v-for="amount in quickSelectAmounts"
+                  :key="amount"
+                  :type="formState.investmentAmount === amount ? 'primary' : 'default'"
+                  size="small"
+                  @click="formState.investmentAmount = amount"
+                >
+                  ${{ amount.toLocaleString() }}
+                </a-button>
+              </div>
+
+              <!-- Custom Amount Input -->
+              <a-input-number
+                v-model:value="formState.investmentAmount"
+                :min="1"
+                :max="10000000"
+                :step="1000"
+                :formatter="(value) => `$ ${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')"
+                :parser="(value) => value.replace(/\$\s?|(,*)/g, '')"
+                style="width: 100%"
+                size="large"
+                class="investment-input"
+              />
+            </a-form-item>
 
             <!-- Date Range Section -->
-            <div class="form-section-item">
-              <a-form-item :label="t('backtest.form.dateRange.label')" required>
-                <template #extra>
-                  <span class="helper-text">{{ t('backtest.form.dateRange.helper') }}</span>
-                </template>
+            <a-form-item :label="t('backtest.form.dateRange.label')" required>
+              <template #extra>
+                <span class="helper-text">{{ t('backtest.form.dateRange.helper') }}</span>
+              </template>
 
-                <!-- Preset Options -->
-                <div class="preset-buttons">
-                  <a-button
-                    v-for="preset in datePresets.filter(p => p.key !== 'custom')"
-                    :key="preset.key"
-                    :type="isDatePresetActive(preset) ? 'primary' : 'default'"
-                    @click="applyDatePreset(preset)"
-                  >
-                    {{ t(`backtest.form.dateRange.presets.${preset.key}`) }}
-                  </a-button>
-                </div>
+              <!-- Preset Options -->
+              <div class="preset-buttons">
+                <a-button
+                  v-for="preset in datePresets.filter((p) => p.key !== 'custom')"
+                  :key="preset.key"
+                  :type="isDatePresetActive(preset) ? 'primary' : 'default'"
+                  size="small"
+                  @click="applyDatePreset(preset)"
+                >
+                  {{ t(`backtest.form.dateRange.presets.${preset.key}`) }}
+                </a-button>
+              </div>
 
-                <!-- Date Range Slider -->
-                <DateRangeSlider
-                  :initial-start-date="formState.startDate"
-                  :initial-end-date="formState.endDate"
-                  @change="handleDateRangeChange"
-                />
-              </a-form-item>
-            </div>
+              <!-- Date Range Slider -->
+              <DateRangeSlider
+                :initial-start-date="formState.startDate"
+                :initial-end-date="formState.endDate"
+                @change="handleDateRangeChange"
+              />
+            </a-form-item>
+
+            <!-- Timeframe Selection -->
+            <a-form-item :label="t('backtest.form.timeframe.label')" required>
+              <template #extra>
+                <span class="helper-text">{{ t('backtest.form.timeframe.helper') }}</span>
+              </template>
+              <TimeframeSelection v-model="formState.timeframe" />
+            </a-form-item>
 
             <!-- Mode Selection -->
-            <div class="form-section-item">
-              <a-form-item :label="t('backtest.mode.label')" required>
-                <template #extra>
-                  <span class="helper-text">{{ t('backtest.form.mode.helper') }}</span>
-                </template>
-                <ModeSelection v-model="formState.mode" />
-              </a-form-item>
-            </div>
+            <a-form-item :label="t('backtest.mode.label')" required>
+              <template #extra>
+                <span class="helper-text">{{ t('backtest.form.mode.helper') }}</span>
+              </template>
+              <ModeSelection v-model="formState.mode" />
+            </a-form-item>
 
             <!-- Strategy Selection (Compare Strategies Mode) -->
-            <div class="form-section-item" v-if="formState.mode === 'compare-strategies'">
-              <a-form-item :label="t('backtest.selectStrategies')" required>
-                <template #extra>
-                  <span class="helper-text">{{ t('backtest.form.strategySelection.helper') }}</span>
-                </template>
-                <StrategySelection
-                  v-model="formState.selectedStrategyIds"
-                />
-              </a-form-item>
-            </div>
+            <a-form-item
+              v-if="formState.mode === 'compare-strategies'"
+              :label="t('backtest.selectStrategies')"
+              required
+            >
+              <template #extra>
+                <span class="helper-text">{{ t('backtest.form.strategySelection.helper') }}</span>
+              </template>
+              <StrategySelection v-model="formState.selectedStrategyIds" />
+            </a-form-item>
 
             <!-- Parameter Variant Selection (Compare Variants Mode) -->
-            <div class="form-section-item" v-if="formState.mode === 'compare-variants'">
-              <a-form-item :label="t('backtest.variantMode.label')" required>
-                <template #extra>
-                  <span class="helper-text">{{ t('backtest.form.strategySelection.helper') }}</span>
-                </template>
-                <ParameterVariantSelection
-                  :model-value="formState.selectedVariants"
-                  @update:model-value="(value: Variant[]) => (formState.selectedVariants = value)"
-                />
-              </a-form-item>
-            </div>
+            <a-form-item
+              v-if="formState.mode === 'compare-variants'"
+              :label="t('backtest.variantMode.label')"
+              required
+            >
+              <template #extra>
+                <span class="helper-text">{{ t('backtest.form.strategySelection.helper') }}</span>
+              </template>
+              <ParameterVariantSelection
+                :model-value="formState.selectedVariants"
+                @update:model-value="(value: Variant[]) => (formState.selectedVariants = value)"
+              />
+            </a-form-item>
 
             <!-- Error Message -->
             <a-alert
@@ -158,7 +164,6 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { BarChartOutlined } from '@ant-design/icons-vue'
 import { useBacktestStore } from '../stores/backtestStore'
@@ -170,6 +175,7 @@ import DisclaimerSection from '../components/DisclaimerSection.vue'
 import DateRangeSlider from '../components/DateRangeSlider.vue'
 import StrategySelection from '../components/StrategySelection.vue'
 import ModeSelection from '../components/ModeSelection.vue'
+import TimeframeSelection from '../components/TimeframeSelection.vue'
 import ParameterVariantSelection from '../components/ParameterVariantSelection.vue'
 import type { Variant } from '@/shared/types/backtest'
 import dayjs from 'dayjs'
@@ -205,19 +211,19 @@ const datePresets = [
   },
 ]
 
-function isDatePresetActive(preset: typeof datePresets[0]): boolean {
+function isDatePresetActive(preset: (typeof datePresets)[0]): boolean {
   const startDate = preset.getStartDate()
   const endDate = preset.getEndDate()
   const formStart = dayjs(formState.startDate).startOf('month')
   const formEnd = dayjs(formState.endDate).startOf('month')
-  
+
   return formStart.isSame(startDate, 'month') && formEnd.isSame(endDate, 'month')
 }
 
-function applyDatePreset(preset: typeof datePresets[0]) {
+function applyDatePreset(preset: (typeof datePresets)[0]) {
   const startDate = preset.getStartDate()
   const endDate = preset.getEndDate()
-  
+
   handleDateRangeChange({
     startDate: startDate.toISOString(),
     endDate: endDate.toISOString(),
@@ -239,7 +245,7 @@ function applyDatePreset(preset: typeof datePresets[0]) {
 }
 
 .form-section {
-  padding: 80px 0;
+  padding: 40px 0;
   background-color: white;
 }
 
@@ -248,18 +254,27 @@ function applyDatePreset(preset: typeof datePresets[0]) {
   border-radius: 12px;
 }
 
+.form-card :deep(.ant-card-head) {
+  padding: 20px 24px;
+  border-bottom: 1px solid #f0f0f0;
+}
+
 .form-card :deep(.ant-card-head-title) {
-  font-size: 28px;
+  font-size: 24px;
   font-weight: 700;
   color: #1a1a1a;
 }
 
+.form-card :deep(.ant-card-body) {
+  padding: 24px;
+}
+
 .form-section-item {
-  margin-bottom: 32px;
+  margin-bottom: 20px;
 }
 
 .helper-text {
-  font-size: 14px;
+  font-size: 12px;
   color: #666;
   font-weight: normal;
 }
@@ -267,37 +282,58 @@ function applyDatePreset(preset: typeof datePresets[0]) {
 .quick-select-buttons {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
-  margin-bottom: 16px;
+  gap: 6px;
+  margin-bottom: 12px;
 }
 
 .quick-select-buttons .ant-btn {
-  border-radius: 6px;
+  border-radius: 4px;
   font-weight: 500;
+  font-size: 12px;
+  height: 28px;
+  padding: 0 12px;
 }
 
 .investment-input {
-  margin-top: 8px;
+  margin-top: 4px;
 }
 
 .preset-buttons {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
-  margin-bottom: 16px;
+  gap: 6px;
+  margin-bottom: 12px;
 }
 
 .preset-buttons .ant-btn {
-  border-radius: 6px;
+  border-radius: 4px;
   font-weight: 500;
+  font-size: 12px;
+  height: 28px;
+  padding: 0 12px;
 }
 
 .submit-button {
-  height: 56px;
-  font-size: 18px;
+  height: 48px;
+  font-size: 16px;
   font-weight: 600;
   border-radius: 8px;
-  margin-top: 8px;
+  margin-top: 16px;
+}
+
+/* Compact form items */
+.form-card :deep(.ant-form-item) {
+  margin-bottom: 16px;
+}
+
+.form-card :deep(.ant-form-item-label) {
+  padding-bottom: 4px;
+}
+
+.form-card :deep(.ant-form-item-label > label) {
+  font-size: 14px;
+  font-weight: 500;
+  height: auto;
 }
 
 @media (max-width: 768px) {
@@ -306,31 +342,40 @@ function applyDatePreset(preset: typeof datePresets[0]) {
   }
 
   .form-section {
-    padding: 40px 0;
+    padding: 24px 0;
+  }
+
+  .form-card :deep(.ant-card-head) {
+    padding: 16px;
   }
 
   .form-card :deep(.ant-card-head-title) {
-    font-size: 24px;
+    font-size: 20px;
   }
 
-  .form-section-item {
-    margin-bottom: 24px;
+  .form-card :deep(.ant-card-body) {
+    padding: 16px;
+  }
+
+  .form-card :deep(.ant-form-item) {
+    margin-bottom: 16px;
   }
 
   .quick-select-buttons,
   .preset-buttons {
-    gap: 6px;
+    gap: 4px;
   }
 
   .quick-select-buttons .ant-btn,
   .preset-buttons .ant-btn {
-    font-size: 12px;
-    padding: 4px 12px;
+    font-size: 11px;
+    height: 26px;
+    padding: 0 8px;
   }
 
   .submit-button {
-    height: 48px;
-    font-size: 16px;
+    height: 44px;
+    font-size: 15px;
   }
 }
 </style>

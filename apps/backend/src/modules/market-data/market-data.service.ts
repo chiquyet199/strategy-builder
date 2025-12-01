@@ -6,7 +6,6 @@ import {
   Candlestick as CandlestickInterface,
   Timeframe,
 } from './interfaces/candlestick.interface';
-import { CandleAggregator } from './utils/candle-aggregator';
 
 @Injectable()
 export class MarketDataService {
@@ -76,6 +75,7 @@ export class MarketDataService {
 
   /**
    * Get candles from database
+   * Now queries directly for all timeframes (no aggregation needed)
    */
   private async getCandlesFromDatabase(
     symbol: string,
@@ -83,27 +83,11 @@ export class MarketDataService {
     startDate: Date,
     endDate: Date,
   ): Promise<CandlestickInterface[]> {
-    // For daily timeframe, query directly
-    if (timeframe === '1d') {
-      const entities = await this.candlestickRepository.find({
-        where: {
-          symbol,
-          timeframe,
-          timestamp: Between(startDate, endDate),
-        },
-        order: {
-          timestamp: 'ASC',
-        },
-      });
-
-      return this.convertEntitiesToInterface(entities);
-    }
-
-    // For other timeframes, query daily data and aggregate
-    const dailyEntities = await this.candlestickRepository.find({
+    // Query directly for the requested timeframe
+    const entities = await this.candlestickRepository.find({
       where: {
         symbol,
-        timeframe: '1d',
+        timeframe,
         timestamp: Between(startDate, endDate),
       },
       order: {
@@ -111,16 +95,8 @@ export class MarketDataService {
       },
     });
 
-    if (dailyEntities.length === 0) {
-      return [];
+    return this.convertEntitiesToInterface(entities);
     }
-
-    // Convert to interface format
-    const dailyCandles = this.convertEntitiesToInterface(dailyEntities);
-
-    // Aggregate to requested timeframe
-    return CandleAggregator.aggregateCandles(dailyCandles, timeframe);
-  }
 
   /**
    * Convert database entities to interface format

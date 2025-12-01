@@ -1,12 +1,13 @@
 import { reactive, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useBacktestStore } from '../stores/backtestStore'
-import type { StrategyConfig, ComparisonMode, Variant } from '@/shared/types/backtest'
+import type { StrategyConfig, ComparisonMode, Variant, Timeframe } from '@/shared/types/backtest'
 
 interface FormState {
   investmentAmount: number
   startDate: string
   endDate: string
+  timeframe: Timeframe
   mode: ComparisonMode
   selectedStrategyIds: StrategyConfig[]
   selectedVariants: Variant[]
@@ -20,6 +21,7 @@ export function useBacktestForm() {
     investmentAmount: backtestStore.investmentAmount,
     startDate: backtestStore.startDate,
     endDate: backtestStore.endDate,
+    timeframe: backtestStore.timeframe,
     mode: backtestStore.formMode,
     selectedStrategyIds: [...backtestStore.formSelectedStrategyIds],
     selectedVariants: [...backtestStore.formSelectedVariants],
@@ -54,6 +56,7 @@ export function useBacktestForm() {
     // Update store with form values
     backtestStore.setInvestmentAmount(formState.investmentAmount)
     backtestStore.setDateRange(formState.startDate, formState.endDate)
+    backtestStore.setTimeframe(formState.timeframe)
 
     // Save form state for restoration when navigating back
     backtestStore.setFormMode(formState.mode)
@@ -77,6 +80,7 @@ export function useBacktestForm() {
     formState.investmentAmount = backtestStore.investmentAmount
     formState.startDate = backtestStore.startDate
     formState.endDate = backtestStore.endDate
+    formState.timeframe = backtestStore.timeframe
     formState.mode = backtestStore.formMode
     formState.selectedStrategyIds = [...backtestStore.formSelectedStrategyIds]
     formState.selectedVariants = [...backtestStore.formSelectedVariants]

@@ -21,8 +21,15 @@ export class MetricsCalculator {
     const finalValue = portfolioHistory[portfolioHistory.length - 1].value;
     const totalQuantity = portfolioHistory[portfolioHistory.length - 1].quantityHeld;
 
-    // Calculate total amount actually spent on coins (for average buy price)
-    const totalInvested = transactions.reduce((sum, tx) => sum + tx.amount, 0);
+    // Calculate total amount spent on buys only (for average buy price)
+    // Only count buy transactions (type === 'buy' or type is undefined for backward compatibility)
+    const buyTransactions = transactions.filter(
+      (tx) => !tx.type || tx.type === 'buy',
+    );
+    const totalAmountSpentOnCoins = buyTransactions.reduce(
+      (sum, tx) => sum + tx.amount,
+      0,
+    );
 
     // Total return percentage
     // Use totalInvestment (total capital allocated) for return calculation
@@ -30,8 +37,14 @@ export class MetricsCalculator {
     const totalReturn = ((finalValue - totalInvestment) / totalInvestment) * 100;
 
     // Average buy price
-    // Use totalInvested (amount actually spent on coins) for average buy price
-    const avgBuyPrice = totalQuantity > 0 ? totalInvested / totalQuantity : 0;
+    // Use totalAmountSpentOnCoins (amount actually spent on buys) for average buy price
+    // Only consider the quantity from buy transactions
+    const totalQuantityFromBuys = buyTransactions.reduce(
+      (sum, tx) => sum + Math.max(0, tx.quantityPurchased),
+      0,
+    );
+    const avgBuyPrice =
+      totalQuantityFromBuys > 0 ? totalAmountSpentOnCoins / totalQuantityFromBuys : 0;
 
     // Maximum drawdown
     const maxDrawdown = this.calculateMaxDrawdown(portfolioHistory);
@@ -118,7 +131,8 @@ export class MetricsCalculator {
   ): PortfolioValuePoint[] {
     const history: PortfolioValuePoint[] = [];
     let totalQuantity = 0;
-    let totalInvested = 0;
+    let totalInvested = 0; // Sum of buy amounts
+    let totalSold = 0; // Sum of sell amounts
 
     // Create a map of transactions by date for quick lookup
     const transactionsByDate = new Map<string, Transaction[]>();
@@ -140,14 +154,21 @@ export class MetricsCalculator {
 
       // Process transactions for this day
       for (const tx of dayTransactions) {
-        totalQuantity += tx.quantityPurchased;
-        totalInvested += tx.amount;
+        const txType = tx.type || 'buy'; // Default to 'buy' for backward compatibility
+        totalQuantity += tx.quantityPurchased; // Positive for buys, negative for sells
+
+        if (txType === 'sell') {
+          totalSold += tx.amount; // Sells add USDC back
+        } else {
+          totalInvested += tx.amount; // Buys spend USDC
+        }
       }
 
       // Calculate portfolio value at this point
       // Include both coin value and remaining USDC
       const coinValue = totalQuantity * candle.close;
-      const remainingUsdc = totalInvestment - totalInvested;
+      // Remaining USDC = initial investment - amount spent on buys + amount received from sells
+      const remainingUsdc = totalInvestment - totalInvested + totalSold;
       const portfolioValue = coinValue + remainingUsdc;
 
       history.push({

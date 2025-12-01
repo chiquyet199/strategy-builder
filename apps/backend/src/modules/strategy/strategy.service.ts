@@ -8,6 +8,7 @@ import { RsiDcaStrategy } from './strategies/rsi-dca.strategy';
 import { DipBuyerDcaStrategy } from './strategies/dip-buyer-dca.strategy';
 import { MovingAverageDcaStrategy } from './strategies/moving-average-dca.strategy';
 import { CombinedSmartDcaStrategy } from './strategies/combined-smart-dca.strategy';
+import { RebalancingStrategy } from './strategies/rebalancing.strategy';
 
 /**
  * Strategy Service
@@ -26,6 +27,7 @@ export class StrategyService {
     this.registerStrategy(new DipBuyerDcaStrategy());
     this.registerStrategy(new MovingAverageDcaStrategy());
     this.registerStrategy(new CombinedSmartDcaStrategy());
+    this.registerStrategy(new RebalancingStrategy());
   }
 
   /**

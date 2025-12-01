@@ -222,7 +222,8 @@
       "rsi-dca": "DCA RSI",
       "dip-buyer-dca": "DCA Mua Giảm",
       "moving-average-dca": "DCA Trung bình động",
-      "combined-smart-dca": "DCA Thông minh Kết hợp"
+      "combined-smart-dca": "DCA Thông minh Kết hợp",
+      "rebalancing": "Cân bằng Danh mục"
     },
     "strategyDescriptions": {
       "lump-sum": "Đầu tư toàn bộ số tiền vào ngày bắt đầu và giữ. Chiến lược mua và giữ đơn giản.",
@@ -230,7 +231,8 @@
       "rsi-dca": "DCA hàng tuần với mua tăng khi RSI cho thấy điều kiện quá bán. Bỏ qua mua khi quá mua.",
       "dip-buyer-dca": "DCA hàng tuần với mua tăng khi giá giảm đáng kể so với mức cao gần đây. Chiến lược mua khi giá giảm.",
       "moving-average-dca": "DCA hàng tuần với mua tăng khi giá dưới đường trung bình động. Chiến lược theo xu hướng.",
-      "combined-smart-dca": "Kết hợp tín hiệu RSI, Trung bình động và Mua giảm để điều chỉnh mua DCA hàng tuần. Chiến lược tinh vi nhất."
+      "combined-smart-dca": "Kết hợp tín hiệu RSI, Trung bình động và Mua giảm để điều chỉnh mua DCA hàng tuần. Chiến lược tinh vi nhất.",
+      "rebalancing": "Duy trì phân bổ tài sản mục tiêu (ví dụ: 80% BTC / 20% USDC) bằng cách tự động mua hoặc bán khi phân bổ lệch khỏi ngưỡng có thể cấu hình. Tự động cân bằng lại để giữ danh mục của bạn ở phân bổ mục tiêu."
     },
     "parameterModal": {
       "title": "Tùy chỉnh Tham số - {strategy}",
@@ -346,21 +348,25 @@
         "title": "Giao dịch",
         "modalTitle": "Giao dịch - {strategy}",
         "date": "Ngày",
-        "dateTooltip": "Ngày thực hiện giao dịch mua này theo quy tắc chiến lược.",
+        "dateTooltip": "Ngày thực hiện giao dịch này theo quy tắc chiến lược.",
+        "type": "Loại",
+        "typeTooltip": "Đây là giao dịch mua (mua BTC) hay giao dịch bán (bán BTC).",
+        "buy": "Mua",
+        "sell": "Bán",
         "price": "Giá",
-        "priceTooltip": "Giá của tiền điện tử (ví dụ: BTC) tại thời điểm mua, tính bằng USD.",
+        "priceTooltip": "Giá của tiền điện tử (ví dụ: BTC) tại thời điểm giao dịch, tính bằng USD.",
         "amount": "Số tiền (USD)",
-        "amountTooltip": "Số tiền (tính bằng USD) đã chi cho giao dịch mua cụ thể này.",
-        "quantityPurchased": "Số lượng đã mua",
-        "quantityPurchasedTooltip": "Số lượng tiền điện tử (ví dụ: BTC) đã mua trong giao dịch này. Được tính: Số tiền ÷ Giá.",
+        "amountTooltip": "Giá trị USD của giao dịch này. Đối với mua, đây là tiền đã chi. Đối với bán, đây là tiền đã nhận.",
+        "quantityPurchased": "Số lượng",
+        "quantityPurchasedTooltip": "Số lượng tiền điện tử (ví dụ: BTC) đã mua hoặc bán trong giao dịch này. Dương cho mua, âm cho bán. Được tính: Số tiền ÷ Giá.",
         "remainingCoin": "Coin còn lại ({coinSymbol})",
         "remainingCoinTooltip": "Tổng giá trị (tính bằng USD) của tất cả tiền điện tử bạn sở hữu sau giao dịch này. Được tính: Tổng Số lượng × Giá hiện tại.",
         "remainingUsdc": "USDC còn lại",
-        "remainingUsdcTooltip": "Số tiền mặt (USDC) bạn vẫn còn sau giao dịch mua này. Đây là tiền chưa được đầu tư.",
+        "remainingUsdcTooltip": "Số tiền mặt (USDC) bạn vẫn còn sau giao dịch này. Mua giảm số tiền này, bán tăng số tiền này.",
         "totalPortfolioValue": "Tổng giá trị danh mục",
         "totalPortfolioValueTooltip": "Giá trị danh mục đầu tư hoàn chỉnh của bạn sau giao dịch này. Điều này bao gồm cả giá trị coin và bất kỳ tiền mặt còn lại nào. Công thức: Giá trị Coin + USDC còn lại.",
         "reason": "Lý do",
-        "reasonTooltip": "Lý do thực hiện giao dịch mua này. Ví dụ, 'Giao dịch DCA hàng tuần' có nghĩa là đây là giao dịch mua định kỳ theo lịch, hoặc 'RSI < 30' có nghĩa là chiến lược phát hiện điều kiện quá bán."
+        "reasonTooltip": "Lý do thực hiện giao dịch này. Ví dụ, 'Giao dịch DCA hàng tuần' có nghĩa là đây là giao dịch mua định kỳ theo lịch, 'RSI < 30' có nghĩa là chiến lược phát hiện điều kiện quá bán, hoặc 'Cân bằng lại: Phân bổ BTC 90% > ngưỡng 90%' có nghĩa là danh mục đã được cân bằng lại."
       }
     }
   }

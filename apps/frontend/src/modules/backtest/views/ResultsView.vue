@@ -33,6 +33,11 @@
             <template v-if="column.key === 'date'">
               {{ formatDate(record.date) }}
             </template>
+            <template v-else-if="column.key === 'type'">
+              <a-tag :color="(record.type || 'buy') === 'buy' ? 'green' : 'red'">
+                {{ (record.type || 'buy') === 'buy' ? t('backtest.results.transactions.buy') : t('backtest.results.transactions.sell') }}
+              </a-tag>
+            </template>
             <template v-else-if="column.key === 'price'">
               ${{ formatNumber(record.price) }}
             </template>
@@ -40,7 +45,9 @@
               ${{ formatNumber(record.amount) }}
             </template>
             <template v-else-if="column.key === 'quantityPurchased'">
-              {{ formatQuantity(record.quantityPurchased) }}
+              <span :class="(record.type || 'buy') === 'sell' ? 'negative-value' : ''">
+                {{ (record.type || 'buy') === 'sell' ? '-' : '' }}{{ formatQuantity(Math.abs(record.quantityPurchased)) }}
+              </span>
             </template>
             <template v-else-if="column.key === 'coinValue'">
               ${{ formatNumber(record.portfolioValue?.coinValue) }}
@@ -360,6 +367,17 @@ const transactionColumns = computed(() => {
     dataIndex: 'date',
     key: 'date',
     sorter: (a: Transaction, b: Transaction) => new Date(a.date).getTime() - new Date(b.date).getTime(),
+  },
+  {
+    title: () => h('span', [
+      t('backtest.results.transactions.type'),
+      ' ',
+      h(ATooltip, { title: t('backtest.results.transactions.typeTooltip') }, {
+        default: () => h(QuestionCircleOutlined, { style: 'margin-left: 4px; color: #8c8c8c; cursor: help;' })
+      })
+    ]),
+    key: 'type',
+    width: 100,
   },
   {
     title: () => h('span', [

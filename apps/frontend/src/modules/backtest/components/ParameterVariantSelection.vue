@@ -384,6 +384,47 @@
           </a-form-item>
         </template>
 
+        <template v-else-if="selectedStrategyId === 'rebalancing'">
+          <a-form-item :help="t('backtest.parameters.rebalancing.targetAllocationHelp')">
+            <template #label>
+              <span>
+                {{ t('backtest.parameters.rebalancing.targetAllocation') }}
+                <a-tooltip :title="t('backtest.parameters.rebalancing.targetAllocationTooltip')">
+                  <QuestionCircleOutlined style="margin-left: 4px; color: #8c8c8c; cursor: help;" />
+                </a-tooltip>
+              </span>
+            </template>
+            <a-input-number
+              v-model:value="variantForm.parameters.targetAllocation"
+              :min="0"
+              :max="1"
+              :step="0.01"
+              :formatter="(value) => `${(value * 100).toFixed(0)}%`"
+              :parser="(value) => parseFloat(value.replace('%', '')) / 100"
+              style="width: 100%"
+            />
+          </a-form-item>
+          <a-form-item :help="t('backtest.parameters.rebalancing.rebalanceThresholdHelp')">
+            <template #label>
+              <span>
+                {{ t('backtest.parameters.rebalancing.rebalanceThreshold') }}
+                <a-tooltip :title="t('backtest.parameters.rebalancing.rebalanceThresholdTooltip')">
+                  <QuestionCircleOutlined style="margin-left: 4px; color: #8c8c8c; cursor: help;" />
+                </a-tooltip>
+              </span>
+            </template>
+            <a-input-number
+              v-model:value="variantForm.parameters.rebalanceThreshold"
+              :min="0"
+              :max="1"
+              :step="0.01"
+              :formatter="(value) => `${(value * 100).toFixed(0)}%`"
+              :parser="(value) => parseFloat(value.replace('%', '')) / 100"
+              style="width: 100%"
+            />
+          </a-form-item>
+        </template>
+
         <template v-else>
           <a-empty :description="t('backtest.parameterModal.noParameters')" />
         </template>
@@ -441,6 +482,14 @@ const availableStrategies = [
       lookbackDays: 30,
       dropThreshold: 0.1,
       maxMultiplier: 3.0,
+    },
+  },
+  {
+    id: 'rebalancing',
+    hasParameters: true,
+    defaultParameters: {
+      targetAllocation: 0.8, // 80%
+      rebalanceThreshold: 0.1, // 10%
     },
   },
 ]

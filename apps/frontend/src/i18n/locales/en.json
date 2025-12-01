@@ -222,7 +222,8 @@
       "rsi-dca": "RSI DCA",
       "dip-buyer-dca": "Dip Buyer DCA",
       "moving-average-dca": "Moving Average DCA",
-      "combined-smart-dca": "Combined Smart DCA"
+      "combined-smart-dca": "Combined Smart DCA",
+      "rebalancing": "Portfolio Rebalancing"
     },
     "strategyDescriptions": {
       "lump-sum": "Invest the entire amount at the start date and hold. Simple buy-and-hold strategy.",
@@ -230,7 +231,8 @@
       "rsi-dca": "Weekly DCA with increased purchases when RSI indicates oversold conditions. Skips buying when overbought.",
       "dip-buyer-dca": "Weekly DCA with increased purchases when price drops significantly from recent highs. Buy the dip strategy.",
       "moving-average-dca": "Weekly DCA with increased purchases when price is below the moving average. Trend-following strategy.",
-      "combined-smart-dca": "Combines RSI, Moving Average, and Dip Buyer signals to adjust weekly DCA purchases. Most sophisticated strategy."
+      "combined-smart-dca": "Combines RSI, Moving Average, and Dip Buyer signals to adjust weekly DCA purchases. Most sophisticated strategy.",
+      "rebalancing": "Maintains a target asset allocation (e.g., 80% BTC / 20% USDC) by automatically buying or selling when the allocation drifts beyond configurable thresholds. Automatically rebalances to keep your portfolio at the target allocation."
     },
     "parameterModal": {
       "title": "Customize Parameters - {strategy}",
@@ -300,6 +302,14 @@
         "maxMultiplier": "Max Multiplier",
         "maxMultiplierHelp": "Maximum multiplier when multiple signals align (default: 3.0x)",
         "maxMultiplierTooltip": "The maximum purchase multiplier when multiple signals (RSI, Moving Average, and Dip) all align. This caps how aggressive the strategy can be even when all conditions are met. For example, 3.0x means buying at most 3 times the normal amount."
+      },
+      "rebalancing": {
+        "targetAllocation": "Target BTC Allocation",
+        "targetAllocationHelp": "Target percentage of portfolio in BTC (default: 80%)",
+        "targetAllocationTooltip": "The target percentage of your portfolio that should be in BTC. For example, 0.8 (80%) means you want 80% of your portfolio value in BTC and 20% in USDC. The strategy will automatically buy or sell to maintain this allocation.",
+        "rebalanceThreshold": "Rebalancing Threshold",
+        "rebalanceThresholdHelp": "Percentage drift from target before rebalancing (default: 10%)",
+        "rebalanceThresholdTooltip": "How much the allocation can drift from the target before rebalancing is triggered. For example, with 80% target and 10% threshold, rebalancing occurs when allocation goes above 90% (sell BTC) or below 70% (buy BTC). Lower thresholds mean more frequent rebalancing."
       }
     },
     "results": {
@@ -346,21 +356,25 @@
         "title": "Transactions",
         "modalTitle": "Transactions - {strategy}",
         "date": "Date",
-        "dateTooltip": "The date when this purchase was made according to the strategy rules.",
+        "dateTooltip": "The date when this transaction was made according to the strategy rules.",
+        "type": "Type",
+        "typeTooltip": "Whether this is a buy transaction (purchasing BTC) or a sell transaction (selling BTC).",
+        "buy": "Buy",
+        "sell": "Sell",
         "price": "Price",
-        "priceTooltip": "The price of the cryptocurrency (e.g., BTC) at the time of purchase, in USD.",
+        "priceTooltip": "The price of the cryptocurrency (e.g., BTC) at the time of transaction, in USD.",
         "amount": "Amount (USD)",
-        "amountTooltip": "How much money (in USD) was spent on this specific purchase.",
-        "quantityPurchased": "Quantity Purchased",
-        "quantityPurchasedTooltip": "The amount of cryptocurrency (e.g., BTC) bought in this transaction. Calculated as: Amount ÷ Price.",
+        "amountTooltip": "The USD value of this transaction. For buys, this is money spent. For sells, this is money received.",
+        "quantityPurchased": "Quantity",
+        "quantityPurchasedTooltip": "The amount of cryptocurrency (e.g., BTC) bought or sold in this transaction. Positive for buys, negative for sells. Calculated as: Amount ÷ Price.",
         "remainingCoin": "Remaining Coin ({coinSymbol})",
         "remainingCoinTooltip": "The total value (in USD) of all cryptocurrency you own after this transaction. This is calculated as: Total Quantity × Current Price.",
         "remainingUsdc": "Remaining USDC",
-        "remainingUsdcTooltip": "The amount of cash (USDC) you still have available after this purchase. This is money that hasn't been invested yet.",
+        "remainingUsdcTooltip": "The amount of cash (USDC) you still have available after this transaction. Buys reduce this amount, sells increase it.",
         "totalPortfolioValue": "Total Portfolio Value",
         "totalPortfolioValueTooltip": "Your complete portfolio value after this transaction. This includes both the value of your coins and any remaining cash. Formula: Coin Value + Remaining USDC.",
         "reason": "Reason",
-        "reasonTooltip": "Why this purchase was made. For example, 'Weekly DCA purchase' means it was a scheduled regular purchase, or 'RSI < 30' means the strategy detected oversold conditions."
+        "reasonTooltip": "Why this transaction was made. For example, 'Weekly DCA purchase' means it was a scheduled regular purchase, 'RSI < 30' means the strategy detected oversold conditions, or 'Rebalancing: BTC allocation 90% > 90% threshold' means the portfolio was rebalanced."
       }
     }
   }

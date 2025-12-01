@@ -16,10 +16,11 @@ export interface Candlestick {
 
 export interface Transaction {
   date: string; // ISO 8601
-  price: number;
-  amount: number; // USD
-  quantityPurchased: number; // Amount of asset purchased
-  reason?: string;
+  type?: 'buy' | 'sell'; // Transaction type (optional for backward compatibility, defaults to 'buy')
+  price: number; // Price at which the asset was bought or sold
+  amount: number; // USD value of the transaction (always positive)
+  quantityPurchased: number; // Amount of asset: positive for buys, negative for sells
+  reason?: string; // Optional reason for the transaction
   portfolioValue: {
     coinValue: number; // Value of coin holdings (quantityHeld * price)
     usdcValue: number; // Value of USDC holdings (remaining cash)

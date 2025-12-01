@@ -1,12 +1,13 @@
 /**
- * Transaction record for a strategy purchase
+ * Transaction record for a strategy purchase or sale
  */
 export interface Transaction {
   date: string; // ISO 8601
-  price: number; // Price at which the asset was purchased
-  amount: number; // USD amount invested
-  quantityPurchased: number; // Amount of asset purchased
-  reason?: string; // Optional reason for the purchase (e.g., "RSI < 30", "Dip detected")
+  type?: 'buy' | 'sell'; // Transaction type (optional for backward compatibility, defaults to 'buy')
+  price: number; // Price at which the asset was bought or sold
+  amount: number; // USD value of the transaction (always positive)
+  quantityPurchased: number; // Amount of asset: positive for buys, negative for sells
+  reason?: string; // Optional reason for the transaction (e.g., "RSI < 30", "Rebalancing: BTC allocation 90% > 90% threshold")
   portfolioValue: {
     coinValue: number; // Value of coin holdings (quantityHeld * price)
     usdcValue: number; // Value of USDC holdings (remaining cash)

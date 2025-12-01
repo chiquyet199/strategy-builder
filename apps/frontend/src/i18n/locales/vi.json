@@ -100,6 +100,80 @@
   },
   "backtest": {
     "title": "So sánh Chiến lược Đầu tư",
+    "hero": {
+      "title": "Xem chiến lược crypto của bạn có thể làm được gì",
+      "subtitle": "Kiểm tra và so sánh các chiến lược giao dịch với dữ liệu lịch sử thực - trước khi rủi ro với tiền thật",
+      "cta": "Bắt đầu So sánh Chiến lược",
+      "badges": {
+        "free": "100% Miễn phí",
+        "noSignup": "Không cần đăng ký",
+        "realData": "Dữ liệu thị trường thực",
+        "instant": "Kết quả tức thì"
+      }
+    },
+    "howItWorks": {
+      "title": "Cách hoạt động",
+      "subtitle": "So sánh chiến lược trong ba bước đơn giản",
+      "steps": {
+        "setParameters": {
+          "title": "Thiết lập Tham số",
+          "description": "Chọn số tiền đầu tư và khoảng thời gian bạn muốn kiểm tra"
+        },
+        "chooseStrategies": {
+          "title": "Chọn Chiến lược",
+          "description": "Chọn từ 6+ chiến lược đã được chứng minh để so sánh cạnh nhau"
+        },
+        "compareResults": {
+          "title": "So sánh Kết quả",
+          "description": "Xem các chỉ số hiệu suất, biểu đồ và phân tích chi tiết ngay lập tức"
+        }
+      }
+    },
+    "trustIndicators": {
+      "educational": {
+        "title": "Công cụ Giáo dục",
+        "description": "Công cụ này chỉ dành cho mục đích giáo dục. Tìm hiểu cách các chiến lược khác nhau hoạt động."
+      },
+      "dataSource": {
+        "title": "Dữ liệu Thị trường Thực",
+        "description": "Được cung cấp bởi dữ liệu thị trường Binance thực từ năm 2020 đến nay"
+      },
+      "privacy": {
+        "title": "Bảo mật Trước tiên",
+        "description": "Không cần tài khoản - dữ liệu của bạn được giữ riêng tư và an toàn"
+      }
+    },
+    "disclaimer": {
+      "title": "Tuyên bố Miễn trừ Trách nhiệm Quan trọng",
+      "educational": "Công cụ này chỉ dành cho mục đích giáo dục.",
+      "notAdvice": "Hiệu suất trong quá khứ không đảm bảo kết quả trong tương lai. Đây không phải là lời khuyên tài chính.",
+      "dataAccuracy": "Kết quả dựa trên dữ liệu lịch sử và không tính đến phí, thuế, trượt giá hoặc điều kiện thị trường thay đổi."
+    },
+    "form": {
+      "investmentAmount": {
+        "label": "Số tiền đầu tư (USD)",
+        "helper": "Bạn muốn đầu tư bao nhiêu?",
+        "quickSelect": "Chọn nhanh"
+      },
+      "dateRange": {
+        "label": "Khoảng thời gian",
+        "helper": "Bạn muốn kiểm tra khoảng thời gian nào?",
+        "presets": {
+          "last1Year": "1 Năm qua",
+          "last3Years": "3 Năm qua",
+          "last5Years": "5 Năm qua",
+          "custom": "Tùy chỉnh"
+        }
+      },
+      "strategySelection": {
+        "helper": "Chọn chiến lược để so sánh (chọn 2 trở lên)",
+        "selectAll": "Chọn tất cả",
+        "clearAll": "Xóa tất cả"
+      },
+      "mode": {
+        "helper": "Chọn cách bạn muốn so sánh chiến lược"
+      }
+    },
     "investmentAmount": "Số tiền đầu tư (USD)",
     "dateRange": "Khoảng thời gian",
     "dateRangeStart": "Bắt đầu",

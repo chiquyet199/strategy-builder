@@ -1,123 +1,336 @@
 <template>
   <div class="home-view">
-    <a-card class="strategy-selection-card">
-      <template #title>
-        <h1>{{ t('backtest.title') }}</h1>
-      </template>
+    <!-- Hero Section -->
+    <HeroSection />
 
-      <a-form :model="formState" layout="vertical" @submit.prevent="handleCompare">
-        <!-- Investment Amount -->
-        <a-form-item :label="t('backtest.investmentAmount')" required>
-          <a-input-number
-            v-model:value="formState.investmentAmount"
-            :min="1"
-            :max="10000000"
-            :step="1000"
-            :formatter="(value) => `$ ${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')"
-            :parser="(value) => value.replace(/\$\s?|(,*)/g, '')"
-            style="width: 100%"
-            size="large"
-          />
-        </a-form-item>
+    <!-- How It Works Section -->
+    <HowItWorks />
 
-        <!-- Date Range Slider -->
-        <a-form-item :label="t('backtest.dateRange')" required>
-          <DateRangeSlider
-            :initial-start-date="formState.startDate"
-            :initial-end-date="formState.endDate"
-            @change="handleDateRangeChange"
-          />
-        </a-form-item>
+    <!-- Trust Indicators Section -->
+    <TrustIndicators />
 
-        <!-- Mode Selection -->
-        <a-form-item :label="t('backtest.mode.label')" required>
-          <ModeSelection v-model="formState.mode" />
-        </a-form-item>
-        <span>formState :{{ formState.mode }}</span>
-        <!-- Strategy Selection (Compare Strategies Mode) -->
-        <a-form-item
-          v-if="formState.mode === 'compare-strategies'"
-          :label="t('backtest.selectStrategies')"
-          required
-        >
-          <StrategySelection v-model="formState.selectedStrategyIds" />
-        </a-form-item>
+    <!-- Main Form Section -->
+    <div id="strategy-form-section" class="form-section">
+      <div class="container">
+        <a-card class="form-card">
+          <template #title>
+            <h2>{{ t('backtest.title') }}</h2>
+          </template>
 
-        <!-- Parameter Variant Selection (Compare Variants Mode) -->
-        <a-form-item
-          v-if="formState.mode === 'compare-variants'"
-          :label="t('backtest.variantMode.label')"
-          required
-          :key="'variant-mode'"
-        >
-          <ParameterVariantSelection
-            :model-value="formState.selectedVariants"
-            @update:model-value="(value: Variant[]) => (formState.selectedVariants = value)"
-          />
-        </a-form-item>
+          <a-form :model="formState" layout="vertical" @submit.prevent="handleCompare">
+            <!-- Investment Amount Section -->
+            <div class="form-section-item">
+              <a-form-item :label="t('backtest.form.investmentAmount.label')" required>
+                <template #extra>
+                  <span class="helper-text">{{ t('backtest.form.investmentAmount.helper') }}</span>
+                </template>
+                
+                <!-- Quick Select Buttons -->
+                <div class="quick-select-buttons">
+                  <a-button
+                    v-for="amount in quickSelectAmounts"
+                    :key="amount"
+                    :type="formState.investmentAmount === amount ? 'primary' : 'default'"
+                    @click="formState.investmentAmount = amount"
+                  >
+                    ${{ amount.toLocaleString() }}
+                  </a-button>
+                </div>
 
-        <!-- Error Message -->
-        <a-alert
-          v-if="backtestStore.error"
-          :message="backtestStore.error"
-          type="error"
-          show-icon
-          closable
-          @close="backtestStore.error = null"
-          style="margin-bottom: 16px"
-        />
+                <!-- Custom Amount Input -->
+                <a-input-number
+                  v-model:value="formState.investmentAmount"
+                  :min="1"
+                  :max="10000000"
+                  :step="1000"
+                  :formatter="(value) => `$ ${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')"
+                  :parser="(value) => value.replace(/\$\s?|(,*)/g, '')"
+                  style="width: 100%"
+                  size="large"
+                  class="investment-input"
+                />
+              </a-form-item>
+            </div>
 
-        <!-- Submit Button -->
-        <a-form-item>
-          <a-button
-            type="primary"
-            html-type="submit"
-            size="large"
-            :loading="backtestStore.isLoading"
-            :disabled="
-              (formState.mode === 'compare-strategies' &&
-                formState.selectedStrategyIds.length === 0) ||
-              (formState.mode === 'compare-variants' && formState.selectedVariants.length === 0)
-            "
-            block
-          >
-            {{ t('backtest.compareStrategies') }}
-          </a-button>
-        </a-form-item>
-      </a-form>
-    </a-card>
+            <!-- Date Range Section -->
+            <div class="form-section-item">
+              <a-form-item :label="t('backtest.form.dateRange.label')" required>
+                <template #extra>
+                  <span class="helper-text">{{ t('backtest.form.dateRange.helper') }}</span>
+                </template>
+
+                <!-- Preset Options -->
+                <div class="preset-buttons">
+                  <a-button
+                    v-for="preset in datePresets.filter(p => p.key !== 'custom')"
+                    :key="preset.key"
+                    :type="isDatePresetActive(preset) ? 'primary' : 'default'"
+                    @click="applyDatePreset(preset)"
+                  >
+                    {{ t(`backtest.form.dateRange.presets.${preset.key}`) }}
+                  </a-button>
+                </div>
+
+                <!-- Date Range Slider -->
+                <DateRangeSlider
+                  :initial-start-date="formState.startDate"
+                  :initial-end-date="formState.endDate"
+                  @change="handleDateRangeChange"
+                />
+              </a-form-item>
+            </div>
+
+            <!-- Mode Selection -->
+            <div class="form-section-item">
+              <a-form-item :label="t('backtest.mode.label')" required>
+                <template #extra>
+                  <span class="helper-text">{{ t('backtest.form.mode.helper') }}</span>
+                </template>
+                <ModeSelection v-model="formState.mode" />
+              </a-form-item>
+            </div>
+
+            <!-- Strategy Selection (Compare Strategies Mode) -->
+            <div class="form-section-item" v-if="formState.mode === 'compare-strategies'">
+              <a-form-item :label="t('backtest.selectStrategies')" required>
+                <template #extra>
+                  <span class="helper-text">{{ t('backtest.form.strategySelection.helper') }}</span>
+                </template>
+                <StrategySelection
+                  v-model="formState.selectedStrategyIds"
+                />
+              </a-form-item>
+            </div>
+
+            <!-- Parameter Variant Selection (Compare Variants Mode) -->
+            <div class="form-section-item" v-if="formState.mode === 'compare-variants'">
+              <a-form-item :label="t('backtest.variantMode.label')" required>
+                <template #extra>
+                  <span class="helper-text">{{ t('backtest.form.strategySelection.helper') }}</span>
+                </template>
+                <ParameterVariantSelection
+                  :model-value="formState.selectedVariants"
+                  @update:model-value="(value: Variant[]) => (formState.selectedVariants = value)"
+                />
+              </a-form-item>
+            </div>
+
+            <!-- Error Message -->
+            <a-alert
+              v-if="backtestStore.error"
+              :message="backtestStore.error"
+              type="error"
+              show-icon
+              closable
+              @close="backtestStore.error = null"
+              style="margin-bottom: 24px"
+            />
+
+            <!-- Submit Button -->
+            <a-form-item>
+              <a-button
+                type="primary"
+                html-type="submit"
+                size="large"
+                :loading="backtestStore.isLoading"
+                :disabled="
+                  (formState.mode === 'compare-strategies' &&
+                    formState.selectedStrategyIds.length === 0) ||
+                  (formState.mode === 'compare-variants' && formState.selectedVariants.length === 0)
+                "
+                block
+                class="submit-button"
+              >
+                <template #icon>
+                  <BarChartOutlined />
+                </template>
+                {{ t('backtest.compareStrategies') }}
+              </a-button>
+            </a-form-item>
+          </a-form>
+        </a-card>
+      </div>
+    </div>
+
+    <!-- Disclaimer Section -->
+    <DisclaimerSection />
   </div>
 </template>
 
 <script setup lang="ts">
+import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
+import { BarChartOutlined } from '@ant-design/icons-vue'
 import { useBacktestStore } from '../stores/backtestStore'
 import { useBacktestForm } from '../composables/useBacktestForm'
+import HeroSection from '../components/HeroSection.vue'
+import HowItWorks from '../components/HowItWorks.vue'
+import TrustIndicators from '../components/TrustIndicators.vue'
+import DisclaimerSection from '../components/DisclaimerSection.vue'
 import DateRangeSlider from '../components/DateRangeSlider.vue'
 import StrategySelection from '../components/StrategySelection.vue'
 import ModeSelection from '../components/ModeSelection.vue'
 import ParameterVariantSelection from '../components/ParameterVariantSelection.vue'
 import type { Variant } from '@/shared/types/backtest'
+import dayjs from 'dayjs'
 
 const { t } = useI18n()
 const backtestStore = useBacktestStore()
 const { formState, handleDateRangeChange, handleCompare } = useBacktestForm()
+
+// Quick select amounts
+const quickSelectAmounts = [1000, 5000, 10000, 25000, 50000, 100000]
+
+// Date presets
+const datePresets = [
+  {
+    key: 'last1Year',
+    getStartDate: () => dayjs().subtract(1, 'year').startOf('month'),
+    getEndDate: () => dayjs().startOf('month'),
+  },
+  {
+    key: 'last3Years',
+    getStartDate: () => dayjs().subtract(3, 'year').startOf('month'),
+    getEndDate: () => dayjs().startOf('month'),
+  },
+  {
+    key: 'last5Years',
+    getStartDate: () => dayjs().subtract(5, 'year').startOf('month'),
+    getEndDate: () => dayjs().startOf('month'),
+  },
+  {
+    key: 'custom',
+    getStartDate: () => dayjs('2020-01-01').startOf('month'),
+    getEndDate: () => dayjs().startOf('month'),
+  },
+]
+
+function isDatePresetActive(preset: typeof datePresets[0]): boolean {
+  const startDate = preset.getStartDate()
+  const endDate = preset.getEndDate()
+  const formStart = dayjs(formState.startDate).startOf('month')
+  const formEnd = dayjs(formState.endDate).startOf('month')
+  
+  return formStart.isSame(startDate, 'month') && formEnd.isSame(endDate, 'month')
+}
+
+function applyDatePreset(preset: typeof datePresets[0]) {
+  const startDate = preset.getStartDate()
+  const endDate = preset.getEndDate()
+  
+  handleDateRangeChange({
+    startDate: startDate.toISOString(),
+    endDate: endDate.toISOString(),
+  })
+}
 </script>
 
 <style scoped>
 .home-view {
+  width: 100%;
+  min-height: 100vh;
+  background-color: #f5f5f5;
+}
+
+.container {
   max-width: 1200px;
   margin: 0 auto;
-  padding: 24px;
+  padding: 0 24px;
 }
 
-.strategy-selection-card {
-  margin-top: 24px;
+.form-section {
+  padding: 80px 0;
+  background-color: white;
 }
 
-.strategy-selection-card h1 {
-  margin: 0;
-  font-size: 24px;
+.form-card {
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+  border-radius: 12px;
+}
+
+.form-card :deep(.ant-card-head-title) {
+  font-size: 28px;
+  font-weight: 700;
+  color: #1a1a1a;
+}
+
+.form-section-item {
+  margin-bottom: 32px;
+}
+
+.helper-text {
+  font-size: 14px;
+  color: #666;
+  font-weight: normal;
+}
+
+.quick-select-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.quick-select-buttons .ant-btn {
+  border-radius: 6px;
+  font-weight: 500;
+}
+
+.investment-input {
+  margin-top: 8px;
+}
+
+.preset-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.preset-buttons .ant-btn {
+  border-radius: 6px;
+  font-weight: 500;
+}
+
+.submit-button {
+  height: 56px;
+  font-size: 18px;
   font-weight: 600;
+  border-radius: 8px;
+  margin-top: 8px;
+}
+
+@media (max-width: 768px) {
+  .container {
+    padding: 0 16px;
+  }
+
+  .form-section {
+    padding: 40px 0;
+  }
+
+  .form-card :deep(.ant-card-head-title) {
+    font-size: 24px;
+  }
+
+  .form-section-item {
+    margin-bottom: 24px;
+  }
+
+  .quick-select-buttons,
+  .preset-buttons {
+    gap: 6px;
+  }
+
+  .quick-select-buttons .ant-btn,
+  .preset-buttons .ant-btn {
+    font-size: 12px;
+    padding: 4px 12px;
+  }
+
+  .submit-button {
+    height: 48px;
+    font-size: 16px;
+  }
 }
 </style>

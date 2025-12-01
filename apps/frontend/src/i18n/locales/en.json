@@ -100,6 +100,80 @@
   },
   "backtest": {
     "title": "Compare Investment Strategies",
+    "hero": {
+      "title": "See what your crypto strategy could have done",
+      "subtitle": "Test and compare trading strategies with real historical data - before risking real money",
+      "cta": "Start Comparing Strategies",
+      "badges": {
+        "free": "100% Free",
+        "noSignup": "No Signup Required",
+        "realData": "Real Market Data",
+        "instant": "Instant Results"
+      }
+    },
+    "howItWorks": {
+      "title": "How It Works",
+      "subtitle": "Compare strategies in three simple steps",
+      "steps": {
+        "setParameters": {
+          "title": "Set Your Parameters",
+          "description": "Choose your investment amount and the time period you want to test"
+        },
+        "chooseStrategies": {
+          "title": "Choose Strategies",
+          "description": "Select from 6+ proven strategies to compare side-by-side"
+        },
+        "compareResults": {
+          "title": "Compare Results",
+          "description": "See performance metrics, charts, and detailed analysis instantly"
+        }
+      }
+    },
+    "trustIndicators": {
+      "educational": {
+        "title": "Educational Tool",
+        "description": "This tool is for educational purposes only. Learn how different strategies perform."
+      },
+      "dataSource": {
+        "title": "Real Market Data",
+        "description": "Powered by real Binance market data from 2020 to present"
+      },
+      "privacy": {
+        "title": "Privacy First",
+        "description": "No account required - your data stays private and secure"
+      }
+    },
+    "disclaimer": {
+      "title": "Important Disclaimer",
+      "educational": "This tool is for educational purposes only.",
+      "notAdvice": "Past performance does not guarantee future results. This is not financial advice.",
+      "dataAccuracy": "Results are based on historical data and do not account for fees, taxes, slippage, or changing market conditions."
+    },
+    "form": {
+      "investmentAmount": {
+        "label": "Investment Amount (USD)",
+        "helper": "How much would you invest?",
+        "quickSelect": "Quick Select"
+      },
+      "dateRange": {
+        "label": "Date Range",
+        "helper": "What time period do you want to test?",
+        "presets": {
+          "last1Year": "Last 1 Year",
+          "last3Years": "Last 3 Years",
+          "last5Years": "Last 5 Years",
+          "custom": "Custom Range"
+        }
+      },
+      "strategySelection": {
+        "helper": "Select strategies to compare (choose 2 or more)",
+        "selectAll": "Select All",
+        "clearAll": "Clear All"
+      },
+      "mode": {
+        "helper": "Choose how you want to compare strategies"
+      }
+    },
     "investmentAmount": "Investment Amount (USD)",
     "dateRange": "Date Range",
     "dateRangeStart": "Start",

@@ -1,5 +1,23 @@
 <template>
   <div class="strategy-selection">
+    <!-- Select All / Clear All Buttons -->
+    <div class="strategy-selection-actions">
+      <a-button-group>
+        <a-button @click="selectAll">
+          <template #icon>
+            <CheckSquareOutlined />
+          </template>
+          {{ t('backtest.form.strategySelection.selectAll') }}
+        </a-button>
+        <a-button @click="clearAll">
+          <template #icon>
+            <CloseSquareOutlined />
+          </template>
+          {{ t('backtest.form.strategySelection.clearAll') }}
+        </a-button>
+      </a-button-group>
+    </div>
+
     <a-row :gutter="[16, 16]">
       <a-col :xs="24" :sm="12" :md="8" v-for="strategy in availableStrategies" :key="strategy.id">
         <a-card
@@ -230,7 +248,7 @@
 <script setup lang="ts">
 import { computed, ref, reactive } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { SettingOutlined } from '@ant-design/icons-vue'
+import { SettingOutlined, CheckSquareOutlined, CloseSquareOutlined } from '@ant-design/icons-vue'
 
 interface StrategyInfo {
   id: string
@@ -364,11 +382,29 @@ function resetParameters() {
   if (!selectedStrategyForParams.value?.defaultParameters) return
   Object.assign(parameterForm, selectedStrategyForParams.value.defaultParameters)
 }
+
+function selectAll() {
+  const allStrategies = availableStrategies.map((strategy) => ({
+    strategyId: strategy.id,
+    parameters: strategy.defaultParameters ? { ...strategy.defaultParameters } : undefined,
+  }))
+  emit('update:modelValue', allStrategies)
+}
+
+function clearAll() {
+  emit('update:modelValue', [])
+}
 </script>
 
 <style scoped>
 .strategy-selection {
   width: 100%;
+}
+
+.strategy-selection-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 16px;
 }
 
 .strategy-card {

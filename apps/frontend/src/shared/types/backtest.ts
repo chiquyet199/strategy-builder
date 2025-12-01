@@ -68,8 +68,28 @@ export interface Variant extends StrategyConfig {
   variantName: string; // Required variant name for parameter variant comparisons
 }
 
+export interface Asset {
+  symbol: string; // e.g., "BTC", "ETH" (for future multi-asset support)
+  quantity: number; // Quantity of the asset
+}
+
+export interface InitialPortfolio {
+  assets: Asset[]; // Array of assets (e.g., [{symbol: "BTC", quantity: 0.5}])
+  usdcAmount: number; // Starting USDC amount
+  // Note: "Initial Investment" in UI = InitialPortfolio with assets=[], usdcAmount=investmentAmount
+  // Total value is calculated from assets (using startDate price) + usdcAmount
+}
+
+export interface FundingSchedule {
+  enabled: boolean;
+  frequency: 'daily' | 'weekly' | 'monthly';
+  amount: number; // USD amount per period
+}
+
 export interface CompareStrategiesRequest {
-  investmentAmount: number;
+  investmentAmount?: number; // Legacy - use initialPortfolio instead
+  initialPortfolio?: InitialPortfolio; // New format
+  fundingSchedule?: FundingSchedule; // Optional periodic funding
   startDate: string; // ISO 8601
   endDate: string; // ISO 8601
   strategies: StrategyConfig[];

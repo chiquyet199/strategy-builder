@@ -1,5 +1,5 @@
 import { BaseStrategy } from './base.strategy';
-import { StrategyResult, Transaction } from '../interfaces/strategy-result.interface';
+import { StrategyResult, Transaction, InitialPortfolio, FundingSchedule } from '../interfaces/strategy-result.interface';
 import { Candlestick } from '../../market-data/interfaces/candlestick.interface';
 import { MetricsCalculator } from '../utils/metrics-calculator';
 import { DipBuyerDcaParameters } from '../interfaces/strategy-parameters.interface';
@@ -60,25 +60,44 @@ export class DipBuyerDcaStrategy extends BaseStrategy {
       throw new Error('No candles provided for calculation');
     }
 
+    const initialPortfolio: InitialPortfolio | undefined = parameters._initialPortfolio;
+    const fundingSchedule: FundingSchedule | undefined = parameters._fundingSchedule;
     const params = parameters as DipBuyerDcaParameters;
     const lookbackDays = params.lookbackDays || 30;
     const dropThreshold = params.dropThreshold || 0.10;
     const buyMultiplier = params.buyMultiplier || 2.0;
+    const allowNegativeUsdc = parameters.allowNegativeUsdc ?? false;
 
-    // Calculate base DCA amount (weekly)
+    const firstCandlePrice = candles[0].close;
+
+    // Get initial state from portfolio or use investmentAmount (backward compatibility)
+    let initialAssetQuantity = 0;
+    let initialUsdc = investmentAmount;
+    let totalInitialValue = investmentAmount;
+
+    if (initialPortfolio) {
+      const initialState = this.getInitialState(initialPortfolio, firstCandlePrice, 'BTC');
+      initialAssetQuantity = initialState.initialAssetQuantity;
+      initialUsdc = initialState.initialUsdc;
+      totalInitialValue = initialState.totalInitialValue;
+    }
+
+    // Calculate base DCA amount (weekly) from initial USDC
     const start = new Date(startDate);
     const end = new Date(endDate);
     const totalDays = Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
     const totalWeeks = Math.ceil(totalDays / 7);
-    const baseWeeklyAmount = investmentAmount / totalWeeks;
+    const baseWeeklyAmount = initialUsdc / totalWeeks;
 
     const transactions: Transaction[] = [];
     let lastPurchaseDate = new Date(start);
     lastPurchaseDate.setDate(lastPurchaseDate.getDate() - 7);
-    let totalQuantityHeld = 0;
+    let lastFundingDate = new Date(start);
+    lastFundingDate.setDate(lastFundingDate.getDate() - 1);
+    let totalQuantityHeld = initialAssetQuantity;
     let totalInvested = 0;
-    let availableCash = investmentAmount; // Track available cash
-    const allowNegativeUsdc = parameters.allowNegativeUsdc ?? false;
+    let availableCash = initialUsdc;
+    let totalFunding = 0;
 
     // Process each candle
     for (let i = 0; i < candles.length; i++) {
@@ -87,6 +106,46 @@ export class DipBuyerDcaStrategy extends BaseStrategy {
       const daysSinceLastPurchase = Math.floor(
         (candleDate.getTime() - lastPurchaseDate.getTime()) / (1000 * 60 * 60 * 24),
       );
+
+      // Handle periodic funding (separate from DCA purchases)
+      if (fundingSchedule?.enabled && fundingSchedule.amount > 0) {
+        const fundingPeriodDays =
+          fundingSchedule.frequency === 'daily'
+            ? 1
+            : fundingSchedule.frequency === 'weekly'
+              ? 7
+              : 30; // monthly
+
+        const daysSinceLastFunding = Math.floor(
+          (candleDate.getTime() - lastFundingDate.getTime()) / (1000 * 60 * 60 * 24),
+        );
+
+        if (daysSinceLastFunding >= fundingPeriodDays) {
+          availableCash += fundingSchedule.amount;
+          totalFunding += fundingSchedule.amount;
+          lastFundingDate = new Date(candleDate);
+
+          // Create funding transaction
+          const coinValue = totalQuantityHeld * candle.close;
+          const usdcValue = availableCash;
+          const totalValue = coinValue + usdcValue;
+
+          transactions.push({
+            date: candle.timestamp,
+            type: 'buy',
+            price: candle.close,
+            amount: fundingSchedule.amount,
+            quantityPurchased: 0,
+            reason: `Periodic funding: ${fundingSchedule.frequency} +$${fundingSchedule.amount}`,
+            portfolioValue: {
+              coinValue,
+              usdcValue,
+              totalValue,
+              quantityHeld: totalQuantityHeld,
+            },
+          });
+        }
+      }
 
       // Calculate recent high (lookback period)
       const lookbackStart = Math.max(0, i - lookbackDays);
@@ -152,17 +211,23 @@ export class DipBuyerDcaStrategy extends BaseStrategy {
     }
 
     // Build portfolio history
+    // Build portfolio history (pass initial state)
     const portfolioHistory = MetricsCalculator.buildPortfolioHistory(
       transactions,
       candles,
       startDate,
-      investmentAmount,
+      totalInitialValue + totalFunding,
+      initialAssetQuantity,
+      initialUsdc,
     );
 
+    // Calculate total capital (initial + funding) for return calculations
+    const totalCapital = totalInitialValue + totalFunding;
+
     // Calculate metrics
-    // Use investmentAmount (total capital allocated) not totalInvested (amount spent)
+    // Use totalCapital (total capital allocated including funding) not totalInvested (amount spent)
     // because return should be calculated against total capital, including remaining USDC
-    const metrics = MetricsCalculator.calculate(transactions, portfolioHistory, investmentAmount);
+    const metrics = MetricsCalculator.calculate(transactions, portfolioHistory, totalCapital);
 
     return {
       strategyId: this.getStrategyId(),

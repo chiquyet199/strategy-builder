@@ -1,16 +1,20 @@
 import { reactive, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useBacktestStore } from '../stores/backtestStore'
-import type { StrategyConfig, ComparisonMode, Variant, Timeframe } from '@/shared/types/backtest'
+import type { StrategyConfig, ComparisonMode, Variant, Timeframe, InitialPortfolio, FundingSchedule } from '@/shared/types/backtest'
 
 interface FormState {
-  investmentAmount: number
+  investmentAmount: number // Simple mode: quick way to set initial portfolio with assets=[], usdcAmount=investmentAmount
   startDate: string
   endDate: string
   timeframe: Timeframe
   mode: ComparisonMode
   selectedStrategyIds: StrategyConfig[]
   selectedVariants: Variant[]
+  // Advanced mode: initial portfolio
+  initialPortfolio?: InitialPortfolio // If set, overrides investmentAmount
+  // Periodic funding
+  fundingSchedule: FundingSchedule
 }
 
 export function useBacktestForm() {
@@ -25,6 +29,12 @@ export function useBacktestForm() {
     mode: backtestStore.formMode,
     selectedStrategyIds: [...backtestStore.formSelectedStrategyIds],
     selectedVariants: [...backtestStore.formSelectedVariants],
+    initialPortfolio: undefined, // Advanced mode: not set by default
+    fundingSchedule: {
+      enabled: false,
+      frequency: 'weekly',
+      amount: 0,
+    },
   })
 
   function handleDateRangeChange(dates: { startDate: string; endDate: string }) {
@@ -65,6 +75,10 @@ export function useBacktestForm() {
 
     // Set strategies for comparison
     backtestStore.setSelectedStrategies(strategiesToCompare)
+
+    // Set initial portfolio and funding schedule
+    backtestStore.setInitialPortfolio(formState.initialPortfolio)
+    backtestStore.setFundingSchedule(formState.fundingSchedule)
 
     // Run comparison
     await backtestStore.compareStrategies()

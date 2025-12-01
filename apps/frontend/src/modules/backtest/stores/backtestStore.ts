@@ -7,6 +7,8 @@ import type {
   Timeframe,
   ComparisonMode,
   Variant,
+  InitialPortfolio,
+  FundingSchedule,
 } from '@/shared/types/backtest'
 import { backtestService } from '../services/backtestService'
 
@@ -25,6 +27,14 @@ export const useBacktestStore = defineStore('backtest', () => {
   const formMode = ref<ComparisonMode>('compare-strategies')
   const formSelectedStrategyIds = ref<StrategyConfig[]>([])
   const formSelectedVariants = ref<Variant[]>([])
+  
+  // Initial portfolio and funding schedule
+  const initialPortfolio = ref<InitialPortfolio | undefined>(undefined)
+  const fundingSchedule = ref<FundingSchedule>({
+    enabled: false,
+    frequency: 'weekly',
+    amount: 0,
+  })
 
   // Getters
   const hasResults = computed(() => results.value !== null)
@@ -60,6 +70,14 @@ export const useBacktestStore = defineStore('backtest', () => {
     formSelectedVariants.value = variants
   }
 
+  function setInitialPortfolio(portfolio: InitialPortfolio | undefined) {
+    initialPortfolio.value = portfolio
+  }
+
+  function setFundingSchedule(schedule: FundingSchedule) {
+    fundingSchedule.value = schedule
+  }
+
   async function compareStrategies() {
     if (selectedStrategies.value.length === 0) {
       error.value = 'Please select at least one strategy'
@@ -70,13 +88,25 @@ export const useBacktestStore = defineStore('backtest', () => {
     error.value = null
 
     try {
-      const response = await backtestService.compareStrategies({
-        investmentAmount: investmentAmount.value,
+      // Build request: use initialPortfolio if set, otherwise use investmentAmount (backward compatibility)
+      const request: any = {
         startDate: startDate.value,
         endDate: endDate.value,
         strategies: selectedStrategies.value,
         timeframe: timeframe.value,
-      })
+      }
+
+      if (initialPortfolio.value) {
+        request.initialPortfolio = initialPortfolio.value
+      } else {
+        request.investmentAmount = investmentAmount.value
+      }
+
+      if (fundingSchedule.value.enabled) {
+        request.fundingSchedule = fundingSchedule.value
+      }
+
+      const response = await backtestService.compareStrategies(request)
 
       results.value = response
     } catch (err) {
@@ -119,6 +149,8 @@ export const useBacktestStore = defineStore('backtest', () => {
     formMode,
     formSelectedStrategyIds,
     formSelectedVariants,
+    initialPortfolio,
+    fundingSchedule,
     // Getters
     hasResults,
     strategyResults,
@@ -130,6 +162,8 @@ export const useBacktestStore = defineStore('backtest', () => {
     setFormMode,
     setFormSelectedStrategyIds,
     setFormSelectedVariants,
+    setInitialPortfolio,
+    setFundingSchedule,
     compareStrategies,
     clearResults,
     reset,

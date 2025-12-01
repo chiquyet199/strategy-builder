@@ -9,9 +9,12 @@ import {
   Min,
   ArrayMinSize,
   ValidateNested,
+  IsBoolean,
+  ValidateIf,
 } from 'class-validator';
 import { Type } from 'class-transformer';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { Asset, InitialPortfolio, FundingSchedule } from '../../strategy/interfaces/strategy-result.interface';
 
 /**
  * Strategy configuration DTO
@@ -52,17 +55,106 @@ export class StrategyConfigDto {
 }
 
 /**
+ * Asset DTO for initial portfolio
+ */
+export class AssetDto {
+  @ApiProperty({ description: 'Asset symbol (e.g., "BTC", "ETH")', example: 'BTC' })
+  @IsString()
+  @IsNotEmpty()
+  symbol: string;
+
+  @ApiProperty({ description: 'Quantity of the asset', example: 0.5, minimum: 0 })
+  @IsNumber()
+  @Min(0)
+  quantity: number;
+}
+
+/**
+ * Initial Portfolio DTO
+ */
+export class InitialPortfolioDto {
+  @ApiProperty({
+    description: 'Array of assets in the portfolio',
+    type: [AssetDto],
+    example: [{ symbol: 'BTC', quantity: 0.5 }],
+  })
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => AssetDto)
+  assets: AssetDto[];
+
+  @ApiProperty({
+    description: 'Starting USDC amount',
+    example: 2000,
+    minimum: 0,
+  })
+  @IsNumber()
+  @Min(0)
+  usdcAmount: number;
+}
+
+/**
+ * Funding Schedule DTO
+ */
+export class FundingScheduleDto {
+  @ApiProperty({ description: 'Whether periodic funding is enabled', example: false })
+  @IsBoolean()
+  enabled: boolean;
+
+  @ApiPropertyOptional({
+    description: 'Funding frequency',
+    enum: ['daily', 'weekly', 'monthly'],
+    example: 'weekly',
+  })
+  @IsOptional()
+  @IsIn(['daily', 'weekly', 'monthly'])
+  frequency?: 'daily' | 'weekly' | 'monthly';
+
+  @ApiPropertyOptional({
+    description: 'USD amount per funding period',
+    example: 500,
+    minimum: 0,
+  })
+  @IsOptional()
+  @IsNumber()
+  @Min(0)
+  amount?: number;
+}
+
+/**
  * Compare strategies request DTO
+ * Supports both old format (investmentAmount) and new format (initialPortfolio)
  */
 export class CompareStrategiesDto {
-  @ApiProperty({
-    description: 'Total investment amount in USD',
+  @ApiPropertyOptional({
+    description: 'Total investment amount in USD (legacy - use initialPortfolio instead)',
     example: 10000,
     minimum: 1,
   })
+  @IsOptional()
   @IsNumber()
   @Min(1)
-  investmentAmount: number;
+  @ValidateIf((o) => !o.initialPortfolio)
+  investmentAmount?: number;
+
+  @ApiPropertyOptional({
+    description: 'Initial portfolio configuration (assets + USDC)',
+    type: InitialPortfolioDto,
+  })
+  @IsOptional()
+  @ValidateNested()
+  @Type(() => InitialPortfolioDto)
+  @ValidateIf((o) => !o.investmentAmount)
+  initialPortfolio?: InitialPortfolioDto;
+
+  @ApiPropertyOptional({
+    description: 'Periodic funding schedule',
+    type: FundingScheduleDto,
+  })
+  @IsOptional()
+  @ValidateNested()
+  @Type(() => FundingScheduleDto)
+  fundingSchedule?: FundingScheduleDto;
 
   @ApiProperty({
     description: 'Start date (ISO 8601 format)',

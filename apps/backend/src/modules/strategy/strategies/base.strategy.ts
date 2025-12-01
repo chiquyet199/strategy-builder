@@ -1,5 +1,5 @@
 import { IStrategy } from '../interfaces/strategy.interface';
-import { StrategyResult } from '../interfaces/strategy-result.interface';
+import { StrategyResult, InitialPortfolio, FundingSchedule } from '../interfaces/strategy-result.interface';
 import { Candlestick } from '../../market-data/interfaces/candlestick.interface';
 
 /**
@@ -20,6 +20,7 @@ export abstract class BaseStrategy implements IStrategy {
   /**
    * Calculate strategy results
    * Merges user parameters with defaults before calculation
+   * Supports both old format (investmentAmount) and new format (InitialPortfolio via parameters)
    */
   calculate(
     candles: Candlestick[],
@@ -34,8 +35,32 @@ export abstract class BaseStrategy implements IStrategy {
     // Validate parameters
     this.validateParameters(mergedParams);
 
+    // Extract InitialPortfolio and FundingSchedule from parameters if present
+    const initialPortfolio: InitialPortfolio | undefined = mergedParams._initialPortfolio;
+    const fundingSchedule: FundingSchedule | undefined = mergedParams._fundingSchedule;
+
+    // If InitialPortfolio is provided, use it; otherwise use investmentAmount (backward compatibility)
+    let actualInvestmentAmount = investmentAmount;
+    if (initialPortfolio) {
+      const firstCandlePrice = candles[0]?.close || 0;
+      const btcAsset = initialPortfolio.assets.find((a) => a.symbol === 'BTC');
+      const btcValue = (btcAsset?.quantity || 0) * firstCandlePrice;
+      actualInvestmentAmount = btcValue + initialPortfolio.usdcAmount;
+    }
+
     // Perform calculation with merged parameters
-    return this.calculateInternal(candles, investmentAmount, startDate, endDate, mergedParams);
+    // Pass InitialPortfolio and FundingSchedule in parameters for strategies to use
+    return this.calculateInternal(
+      candles,
+      actualInvestmentAmount,
+      startDate,
+      endDate,
+      {
+        ...mergedParams,
+        _initialPortfolio: initialPortfolio,
+        _fundingSchedule: fundingSchedule,
+      },
+    );
   }
 
   /**
@@ -95,6 +120,39 @@ export abstract class BaseStrategy implements IStrategy {
     }
     // Cap purchase amount to available cash
     return Math.max(0, Math.min(desiredAmount, availableCash));
+  }
+
+  /**
+   * Get initial state from portfolio configuration
+   * Calculates initial asset quantity, USDC, and total value
+   * @param initialPortfolio - Initial portfolio configuration
+   * @param firstCandlePrice - Price at startDate for calculating total value
+   * @param assetSymbol - Asset symbol to track (defaults to 'BTC' for backward compatibility, but extensible)
+   * @returns Initial state with asset quantity, USDC, and total value
+   */
+  protected getInitialState(
+    initialPortfolio: InitialPortfolio,
+    firstCandlePrice: number,
+    assetSymbol: string = 'BTC',
+  ): {
+    initialAssetQuantity: number;
+    initialUsdc: number;
+    totalInitialValue: number;
+  } {
+    // Find asset in assets array
+    const asset = initialPortfolio.assets.find((a) => a.symbol === assetSymbol);
+    const initialAssetQuantity = asset?.quantity || 0;
+    const initialUsdc = initialPortfolio.usdcAmount || 0;
+
+    // Calculate total initial value from assets + USDC
+    const assetValue = initialAssetQuantity * firstCandlePrice;
+    const totalInitialValue = assetValue + initialUsdc;
+
+    return {
+      initialAssetQuantity,
+      initialUsdc,
+      totalInitialValue,
+    };
   }
 }
 

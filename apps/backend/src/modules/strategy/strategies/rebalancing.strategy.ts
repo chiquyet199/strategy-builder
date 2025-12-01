@@ -1,5 +1,5 @@
 import { BaseStrategy } from './base.strategy';
-import { StrategyResult, Transaction } from '../interfaces/strategy-result.interface';
+import { StrategyResult, Transaction, InitialPortfolio, FundingSchedule } from '../interfaces/strategy-result.interface';
 import { Candlestick } from '../../market-data/interfaces/candlestick.interface';
 import { MetricsCalculator } from '../utils/metrics-calculator';
 
@@ -74,44 +74,66 @@ export class RebalancingStrategy extends BaseStrategy {
       throw new Error('No candles provided for calculation');
     }
 
+    const initialPortfolio: InitialPortfolio | undefined = parameters._initialPortfolio;
+    const fundingSchedule: FundingSchedule | undefined = parameters._fundingSchedule;
     const targetAllocation = parameters.targetAllocation ?? 0.8;
     const rebalanceThreshold = parameters.rebalanceThreshold ?? 0.1;
     const allowNegativeUsdc = parameters.allowNegativeUsdc ?? false;
 
+    const firstCandlePrice = candles[0].close;
+
+    // Get initial state from portfolio or use investmentAmount (backward compatibility)
+    let initialAssetQuantity = 0;
+    let initialUsdc = investmentAmount;
+    let totalInitialValue = investmentAmount;
+
+    if (initialPortfolio) {
+      const initialState = this.getInitialState(initialPortfolio, firstCandlePrice, 'BTC');
+      initialAssetQuantity = initialState.initialAssetQuantity;
+      initialUsdc = initialState.initialUsdc;
+      totalInitialValue = initialState.totalInitialValue;
+    }
+
     const transactions: Transaction[] = [];
-    let totalQuantityHeld = 0;
-    let availableCash = investmentAmount; // Start with all cash
+    let totalQuantityHeld = initialAssetQuantity;
+    let availableCash = initialUsdc;
     let totalInvested = 0; // Track amount spent on buys
     let totalSold = 0; // Track amount received from sells
+    let totalFunding = 0; // Track total funding added
 
     const upperThreshold = targetAllocation + rebalanceThreshold;
     const lowerThreshold = targetAllocation - rebalanceThreshold;
+
+    // Track last funding date for periodic funding
+    let lastFundingDate = new Date(startDate);
+    lastFundingDate.setDate(lastFundingDate.getDate() - 1); // Initialize to before start
 
     // Process each candle
     for (let i = 0; i < candles.length; i++) {
       const candle = candles[i];
       const price = candle.close;
-      const currentCoinValue = totalQuantityHeld * price;
-      const currentTotalValue = currentCoinValue + availableCash;
-      const currentAllocation =
-        currentTotalValue > 0 ? currentCoinValue / currentTotalValue : 0;
+      const candleDate = new Date(candle.timestamp);
 
-      // First candle: buy to reach target allocation
-      if (i === 0) {
-        const targetCoinValue = investmentAmount * targetAllocation;
-        const buyAmount = targetCoinValue;
-        const actualBuyAmount = this.calculatePurchaseAmount(
-          buyAmount,
-          availableCash,
-          allowNegativeUsdc,
+      // Handle periodic funding before checking rebalancing
+      if (fundingSchedule?.enabled && fundingSchedule.amount > 0 && i > 0) {
+        const periodDays =
+          fundingSchedule.frequency === 'daily'
+            ? 1
+            : fundingSchedule.frequency === 'weekly'
+              ? 7
+              : 30; // monthly
+
+        const daysSinceLastFunding = Math.floor(
+          (candleDate.getTime() - lastFundingDate.getTime()) / (1000 * 60 * 60 * 24),
         );
 
-        if (actualBuyAmount > 0) {
-          const quantityPurchased = actualBuyAmount / price;
-          totalQuantityHeld += quantityPurchased;
-          totalInvested += actualBuyAmount;
-          availableCash -= actualBuyAmount;
+        // Check if funding should be added on this day
+        if (daysSinceLastFunding >= periodDays) {
+          availableCash += fundingSchedule.amount;
+          totalFunding += fundingSchedule.amount;
+          lastFundingDate = new Date(candleDate);
 
+          // Create funding transaction
           const coinValue = totalQuantityHeld * price;
           const usdcValue = availableCash;
           const totalValue = coinValue + usdcValue;
@@ -120,9 +142,9 @@ export class RebalancingStrategy extends BaseStrategy {
             date: candle.timestamp,
             type: 'buy',
             price,
-            amount: actualBuyAmount,
-            quantityPurchased,
-            reason: `Initial allocation: Buy to reach ${(targetAllocation * 100).toFixed(0)}% BTC allocation`,
+            amount: fundingSchedule.amount,
+            quantityPurchased: 0,
+            reason: `Periodic funding: ${fundingSchedule.frequency} +$${fundingSchedule.amount}`,
             portfolioValue: {
               coinValue,
               usdcValue,
@@ -130,6 +152,54 @@ export class RebalancingStrategy extends BaseStrategy {
               quantityHeld: totalQuantityHeld,
             },
           });
+        }
+      }
+
+      // Calculate current allocation (after funding if any)
+      const currentCoinValue = totalQuantityHeld * price;
+      const currentTotalValue = currentCoinValue + availableCash;
+      const currentAllocation =
+        currentTotalValue > 0 ? currentCoinValue / currentTotalValue : 0;
+
+      // First candle: buy to reach target allocation (if starting with cash only)
+      if (i === 0) {
+        const currentTotalValue = totalQuantityHeld * price + availableCash;
+        const targetCoinValue = currentTotalValue * targetAllocation;
+        const currentCoinValue = totalQuantityHeld * price;
+        const buyAmount = targetCoinValue - currentCoinValue;
+
+        if (buyAmount > 0) {
+          const actualBuyAmount = this.calculatePurchaseAmount(
+            buyAmount,
+            availableCash,
+            allowNegativeUsdc,
+          );
+
+          if (actualBuyAmount > 0) {
+            const quantityPurchased = actualBuyAmount / price;
+            totalQuantityHeld += quantityPurchased;
+            totalInvested += actualBuyAmount;
+            availableCash -= actualBuyAmount;
+
+            const coinValue = totalQuantityHeld * price;
+            const usdcValue = availableCash;
+            const totalValue = coinValue + usdcValue;
+
+            transactions.push({
+              date: candle.timestamp,
+              type: 'buy',
+              price,
+              amount: actualBuyAmount,
+              quantityPurchased,
+              reason: `Initial allocation: Buy to reach ${(targetAllocation * 100).toFixed(0)}% asset allocation`,
+              portfolioValue: {
+                coinValue,
+                usdcValue,
+                totalValue,
+                quantityHeld: totalQuantityHeld,
+              },
+            });
+          }
         }
         continue;
       }
@@ -166,7 +236,7 @@ export class RebalancingStrategy extends BaseStrategy {
             price,
             amount: sellAmount,
             quantityPurchased: -quantitySold, // Negative for sells
-            reason: `Rebalancing: BTC allocation ${(currentAllocation * 100).toFixed(2)}% > ${(upperThreshold * 100).toFixed(0)}% threshold`,
+            reason: `Rebalancing: Asset allocation ${(currentAllocation * 100).toFixed(2)}% > ${(upperThreshold * 100).toFixed(0)}% threshold`,
             portfolioValue: {
               coinValue,
               usdcValue,
@@ -196,7 +266,7 @@ export class RebalancingStrategy extends BaseStrategy {
           const usdcValue = availableCash;
           const totalValue = coinValue + usdcValue;
 
-          let reason = `Rebalancing: BTC allocation ${(currentAllocation * 100).toFixed(2)}% < ${(lowerThreshold * 100).toFixed(0)}% threshold`;
+          let reason = `Rebalancing: Asset allocation ${(currentAllocation * 100).toFixed(2)}% < ${(lowerThreshold * 100).toFixed(0)}% threshold`;
           if (actualBuyAmount < buyAmount) {
             reason += ' (capped to available cash)';
           }
@@ -219,19 +289,24 @@ export class RebalancingStrategy extends BaseStrategy {
       }
     }
 
-    // Build portfolio history
+    // Build portfolio history (pass initial state)
     const portfolioHistory = MetricsCalculator.buildPortfolioHistory(
       transactions,
       candles,
       startDate,
-      investmentAmount,
+      totalInitialValue + totalFunding,
+      initialAssetQuantity,
+      initialUsdc,
     );
+
+    // Calculate total capital (initial + funding) for return calculations
+    const totalCapital = totalInitialValue + totalFunding;
 
     // Calculate metrics
     const metrics = MetricsCalculator.calculate(
       transactions,
       portfolioHistory,
-      investmentAmount,
+      totalCapital,
     );
 
     return {

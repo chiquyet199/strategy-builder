@@ -122,17 +122,21 @@ export class MetricsCalculator {
   /**
    * Build portfolio value history from transactions and candles
    * Includes remaining USDC in portfolio value calculation
+   * Supports initial portfolio state (assets + USDC)
    */
   static buildPortfolioHistory(
     transactions: Transaction[],
     candles: Candlestick[],
     startDate: string,
     totalInvestment: number,
+    initialAssetQuantity: number = 0,
+    initialUsdc: number = 0,
   ): PortfolioValuePoint[] {
     const history: PortfolioValuePoint[] = [];
-    let totalQuantity = 0;
-    let totalInvested = 0; // Sum of buy amounts
+    let totalQuantity = initialAssetQuantity; // Start with initial assets
+    let totalInvested = 0; // Sum of buy amounts (initial assets don't count as "invested")
     let totalSold = 0; // Sum of sell amounts
+    let availableCash = initialUsdc; // Start with initial USDC
 
     // Create a map of transactions by date for quick lookup
     const transactionsByDate = new Map<string, Transaction[]>();
@@ -159,16 +163,26 @@ export class MetricsCalculator {
 
         if (txType === 'sell') {
           totalSold += tx.amount; // Sells add USDC back
+          availableCash += tx.amount;
         } else {
-          totalInvested += tx.amount; // Buys spend USDC
+          // For buys: if quantityPurchased is 0, it's funding (adds to cash)
+          // Otherwise, it's a purchase (spends cash)
+          if (tx.quantityPurchased === 0 && tx.amount > 0) {
+            // Funding transaction: adds to cash, doesn't count as invested
+            availableCash += tx.amount;
+          } else if (tx.amount > 0) {
+            // Purchase transaction: spends cash, counts as invested
+            totalInvested += tx.amount;
+            availableCash -= tx.amount;
+          }
         }
       }
 
       // Calculate portfolio value at this point
       // Include both coin value and remaining USDC
       const coinValue = totalQuantity * candle.close;
-      // Remaining USDC = initial investment - amount spent on buys + amount received from sells
-      const remainingUsdc = totalInvestment - totalInvested + totalSold;
+      // Remaining USDC = initial USDC - amount spent on buys + amount received from sells
+      const remainingUsdc = availableCash;
       const portfolioValue = coinValue + remainingUsdc;
 
       history.push({

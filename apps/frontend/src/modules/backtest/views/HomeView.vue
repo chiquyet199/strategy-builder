@@ -18,8 +18,8 @@
           </template>
 
           <a-form :model="formState" layout="vertical" @submit.prevent="handleCompare">
-            <!-- Investment Amount Section -->
-            <a-form-item required>
+            <!-- Investment Amount Section (Simple Mode) -->
+            <a-form-item v-if="!formState.initialPortfolio" required>
               <template #label>
                 <span>
                   {{ t('backtest.form.investmentAmount.label') }}
@@ -57,6 +57,92 @@
                 size="large"
                 class="investment-input"
               />
+              <!-- Advanced Portfolio Setup Link -->
+              <div style="margin-top: 8px;">
+                <a-button type="link" size="small" @click="showAdvancedPortfolioModal = true">
+                  {{ t('backtest.form.advancedPortfolio.setup') }}
+                </a-button>
+              </div>
+            </a-form-item>
+
+            <!-- Portfolio Info Display (Advanced Mode) -->
+            <a-form-item v-if="formState.initialPortfolio">
+              <template #label>
+                <span>
+                  {{ t('backtest.form.advancedPortfolio.currentPortfolio') }}
+                  <a-tooltip :title="t('backtest.form.advancedPortfolio.currentPortfolioTooltip')">
+                    <QuestionCircleOutlined style="margin-left: 4px; color: #8c8c8c; cursor: help;" />
+                  </a-tooltip>
+                </span>
+              </template>
+              <a-card size="small" class="portfolio-info-card">
+                <a-descriptions :column="1" size="small" bordered>
+                  <a-descriptions-item :label="t('backtest.form.advancedPortfolio.preview.assets')">
+                    <div v-if="formState.initialPortfolio.assets.length === 0" style="color: #8c8c8c;">
+                      {{ t('backtest.form.advancedPortfolio.preview.noAssets') }}
+                    </div>
+                    <div v-else>
+                      <div v-for="(asset, index) in formState.initialPortfolio.assets" :key="index" style="margin-bottom: 4px;">
+                        <a-tag color="blue">{{ asset.quantity }} {{ asset.symbol }}</a-tag>
+                      </div>
+                    </div>
+                  </a-descriptions-item>
+                  <a-descriptions-item :label="t('backtest.form.advancedPortfolio.preview.usdc')">
+                    <span style="font-weight: 500;">${{ formState.initialPortfolio.usdcAmount.toLocaleString() }}</span>
+                  </a-descriptions-item>
+                </a-descriptions>
+                <div style="margin-top: 12px; text-align: right;">
+                  <a-button type="link" size="small" @click="showAdvancedPortfolioModal = true">
+                    {{ t('backtest.form.advancedPortfolio.edit') }}
+                  </a-button>
+                  <a-button type="link" size="small" danger @click="formState.initialPortfolio = undefined">
+                    {{ t('backtest.form.advancedPortfolio.resetToSimple') }}
+                  </a-button>
+                </div>
+              </a-card>
+            </a-form-item>
+
+            <!-- Periodic Funding Section -->
+            <a-form-item>
+              <template #label>
+                <span>
+                  {{ t('backtest.form.fundingSchedule.label') }}
+                  <a-tooltip :title="t('backtest.form.fundingSchedule.tooltip')">
+                    <QuestionCircleOutlined style="margin-left: 4px; color: #8c8c8c; cursor: help;" />
+                  </a-tooltip>
+                </span>
+              </template>
+              <template #extra>
+                <span class="helper-text">{{ t('backtest.form.fundingSchedule.helper') }}</span>
+              </template>
+
+              <a-checkbox v-model:checked="formState.fundingSchedule.enabled">
+                {{ t('backtest.form.fundingSchedule.enable') }}
+              </a-checkbox>
+
+              <template v-if="formState.fundingSchedule.enabled">
+                <div style="margin-top: 16px; display: flex; gap: 16px; flex-wrap: wrap;">
+                  <a-form-item :label="t('backtest.form.fundingSchedule.frequency.label')" style="flex: 1; min-width: 150px;">
+                    <a-select v-model:value="formState.fundingSchedule.frequency" style="width: 100%">
+                      <a-select-option value="daily">{{ t('backtest.form.fundingSchedule.frequency.daily') }}</a-select-option>
+                      <a-select-option value="weekly">{{ t('backtest.form.fundingSchedule.frequency.weekly') }}</a-select-option>
+                      <a-select-option value="monthly">{{ t('backtest.form.fundingSchedule.frequency.monthly') }}</a-select-option>
+                    </a-select>
+                  </a-form-item>
+
+                  <a-form-item :label="t('backtest.form.fundingSchedule.amount.label')" style="flex: 1; min-width: 150px;">
+                    <a-input-number
+                      v-model:value="formState.fundingSchedule.amount"
+                      :min="0"
+                      :max="1000000"
+                      :step="100"
+                      :formatter="(value) => `$ ${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')"
+                      :parser="(value) => value.replace(/\$\s?|(,*)/g, '')"
+                      style="width: 100%"
+                    />
+                  </a-form-item>
+                </div>
+              </template>
             </a-form-item>
 
             <!-- Date Range Section -->
@@ -199,6 +285,13 @@
 
     <!-- Disclaimer Section -->
     <DisclaimerSection />
+
+    <!-- Advanced Portfolio Setup Modal -->
+    <AdvancedPortfolioSetup
+      v-model:visible="showAdvancedPortfolioModal"
+      :initial-portfolio="formState.initialPortfolio"
+      @update:initial-portfolio="(portfolio) => (formState.initialPortfolio = portfolio)"
+    />
   </div>
 </template>
 
@@ -216,12 +309,17 @@ import StrategySelection from '../components/StrategySelection.vue'
 import ModeSelection from '../components/ModeSelection.vue'
 import TimeframeSelection from '../components/TimeframeSelection.vue'
 import ParameterVariantSelection from '../components/ParameterVariantSelection.vue'
+import AdvancedPortfolioSetup from '../components/AdvancedPortfolioSetup.vue'
 import type { Variant } from '@/shared/types/backtest'
+import { ref } from 'vue'
 import dayjs from 'dayjs'
 
 const { t } = useI18n()
 const backtestStore = useBacktestStore()
 const { formState, handleDateRangeChange, handleCompare } = useBacktestForm()
+
+// Advanced Portfolio Setup Modal
+const showAdvancedPortfolioModal = ref(false)
 
 // Quick select amounts
 const quickSelectAmounts = [1000, 5000, 10000, 25000, 50000, 100000]
@@ -335,6 +433,15 @@ function applyDatePreset(preset: (typeof datePresets)[0]) {
 
 .investment-input {
   margin-top: 4px;
+}
+
+.portfolio-info-card {
+  background: #fafafa;
+  border: 1px solid #e8e8e8;
+}
+
+.portfolio-info-card :deep(.ant-card-body) {
+  padding: 16px;
 }
 
 .preset-buttons {

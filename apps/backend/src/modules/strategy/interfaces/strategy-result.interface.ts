@@ -1,4 +1,31 @@
 /**
+ * Asset in a portfolio
+ */
+export interface Asset {
+  symbol: string; // e.g., "BTC", "ETH" (for future multi-asset support)
+  quantity: number; // Quantity of the asset
+}
+
+/**
+ * Initial portfolio configuration
+ */
+export interface InitialPortfolio {
+  assets: Asset[]; // Array of assets (e.g., [{symbol: "BTC", quantity: 0.5}])
+  usdcAmount: number; // Starting USDC amount
+  // Note: "Initial Investment" in UI = InitialPortfolio with assets=[], usdcAmount=investmentAmount
+  // Total value is calculated from assets (using startDate price) + usdcAmount
+}
+
+/**
+ * Periodic funding schedule
+ */
+export interface FundingSchedule {
+  enabled: boolean;
+  frequency: 'daily' | 'weekly' | 'monthly';
+  amount: number; // USD amount per period
+}
+
+/**
  * Transaction record for a strategy purchase or sale
  */
 export interface Transaction {

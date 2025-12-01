@@ -1,5 +1,5 @@
 import { BaseStrategy } from './base.strategy';
-import { StrategyResult, Transaction } from '../interfaces/strategy-result.interface';
+import { StrategyResult, Transaction, InitialPortfolio, FundingSchedule } from '../interfaces/strategy-result.interface';
 import { Candlestick } from '../../market-data/interfaces/candlestick.interface';
 import { MetricsCalculator } from '../utils/metrics-calculator';
 
@@ -35,49 +35,141 @@ export class LumpSumStrategy extends BaseStrategy {
       throw new Error('No candles provided for calculation');
     }
 
-    // Buy at the first candle (start date)
+    const initialPortfolio: InitialPortfolio | undefined = parameters._initialPortfolio;
+    const fundingSchedule: FundingSchedule | undefined = parameters._fundingSchedule;
+    const allowNegativeUsdc = parameters.allowNegativeUsdc ?? false;
+
     const firstCandle = candles[0];
-    const price = firstCandle.close;
-    const quantityPurchased = investmentAmount / price;
-    const quantityHeld = quantityPurchased;
-    const coinValue = quantityHeld * price;
-    const usdcValue = 0; // All invested, no cash left
-    const totalValue = coinValue + usdcValue;
+    const firstCandlePrice = firstCandle.close;
 
-    const transaction: Transaction = {
-      date: firstCandle.timestamp,
-      price,
-      amount: investmentAmount,
-      quantityPurchased,
-      reason: 'Initial lump sum purchase',
-      portfolioValue: {
-        coinValue,
-        usdcValue,
-        totalValue,
-        quantityHeld,
-      },
-    };
+    // Get initial state from portfolio or use investmentAmount (backward compatibility)
+    let initialAssetQuantity = 0;
+    let initialUsdc = investmentAmount;
+    let totalInitialValue = investmentAmount;
 
-    // Build portfolio history
+    if (initialPortfolio) {
+      const initialState = this.getInitialState(initialPortfolio, firstCandlePrice, 'BTC');
+      initialAssetQuantity = initialState.initialAssetQuantity;
+      initialUsdc = initialState.initialUsdc;
+      totalInitialValue = initialState.totalInitialValue;
+    }
+
+    const transactions: Transaction[] = [];
+    let totalQuantityHeld = initialAssetQuantity;
+    let availableCash = initialUsdc;
+    let totalInvested = 0; // Track total invested (for metrics)
+
+    // If we have initial assets, no transaction needed
+    // If we only have USDC, buy all at first candle
+    if (initialAssetQuantity === 0 && availableCash > 0) {
+      const price = firstCandle.close;
+      const buyAmount = availableCash;
+      const actualBuyAmount = this.calculatePurchaseAmount(buyAmount, availableCash, allowNegativeUsdc);
+
+      if (actualBuyAmount > 0) {
+        const quantityPurchased = actualBuyAmount / price;
+        totalQuantityHeld += quantityPurchased;
+        totalInvested += actualBuyAmount;
+        availableCash -= actualBuyAmount;
+
+        const coinValue = totalQuantityHeld * price;
+        const usdcValue = availableCash;
+        const totalValue = coinValue + usdcValue;
+
+        transactions.push({
+          date: firstCandle.timestamp,
+          type: 'buy',
+          price,
+          amount: actualBuyAmount,
+          quantityPurchased,
+          reason: 'Initial lump sum purchase',
+          portfolioValue: {
+            coinValue,
+            usdcValue,
+            totalValue,
+            quantityHeld: totalQuantityHeld,
+          },
+        });
+      }
+    }
+
+    // Track total funding for metrics
+    let totalFunding = 0;
+
+    // Handle periodic funding
+    if (fundingSchedule?.enabled && fundingSchedule.amount > 0) {
+      const start = new Date(startDate);
+      let lastFundingDate = new Date(start);
+      lastFundingDate.setDate(lastFundingDate.getDate() - 1); // Initialize to before start
+
+      const periodDays =
+        fundingSchedule.frequency === 'daily'
+          ? 1
+          : fundingSchedule.frequency === 'weekly'
+            ? 7
+            : 30; // monthly
+
+      for (let i = 0; i < candles.length; i++) {
+        const candle = candles[i];
+        const candleDate = new Date(candle.timestamp);
+        const daysSinceLastFunding = Math.floor(
+          (candleDate.getTime() - lastFundingDate.getTime()) / (1000 * 60 * 60 * 24),
+        );
+
+        if (daysSinceLastFunding >= periodDays) {
+          // Add funding
+          availableCash += fundingSchedule.amount;
+          totalFunding += fundingSchedule.amount;
+          lastFundingDate = new Date(candleDate);
+
+          // Create a transaction to track funding (amount=0, but updates portfolio state)
+          const coinValue = totalQuantityHeld * candle.close;
+          const usdcValue = availableCash;
+          const totalValue = coinValue + usdcValue;
+
+          transactions.push({
+            date: candle.timestamp,
+            type: 'buy', // Using 'buy' type for funding
+            price: candle.close,
+            amount: fundingSchedule.amount, // Track funding amount
+            quantityPurchased: 0, // No asset purchased, just cash added
+            reason: `Periodic funding: ${fundingSchedule.frequency} +$${fundingSchedule.amount}`,
+            portfolioValue: {
+              coinValue,
+              usdcValue,
+              totalValue,
+              quantityHeld: totalQuantityHeld,
+            },
+          });
+        }
+      }
+    }
+
+    // Build portfolio history (pass initial state)
     const portfolioHistory = MetricsCalculator.buildPortfolioHistory(
-      [transaction],
+      transactions,
       candles,
       startDate,
-      investmentAmount,
+      totalInitialValue,
+      initialAssetQuantity,
+      initialUsdc,
     );
+
+    // Calculate total capital (initial + funding) for return calculations
+    const totalCapital = totalInitialValue + totalFunding;
 
     // Calculate metrics
     const metrics = MetricsCalculator.calculate(
-      [transaction],
+      transactions,
       portfolioHistory,
-      investmentAmount,
+      totalCapital,
     );
 
     return {
       strategyId: this.getStrategyId(),
       strategyName: this.getStrategyName(),
       parameters,
-      transactions: [transaction],
+      transactions,
       metrics,
       portfolioValueHistory: portfolioHistory,
     };

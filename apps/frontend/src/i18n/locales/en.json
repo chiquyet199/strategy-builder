@@ -156,6 +156,49 @@
           "tooltip": "The total amount of money you want to invest in this backtest. This is the starting capital that will be used across all selected strategies.",
           "quickSelect": "Quick Select"
         },
+        "advancedPortfolio": {
+          "setup": "Advanced Portfolio Setup",
+          "title": "Advanced Portfolio Setup",
+          "description": "Set up your initial portfolio with specific assets and USDC amounts. This allows you to simulate starting with an existing portfolio or a custom allocation.",
+          "useThisSetup": "Use This Setup",
+          "cancel": "Cancel",
+          "resetToSimple": "Reset to Simple",
+          "edit": "Edit",
+          "currentPortfolio": "Initial Portfolio",
+          "currentPortfolioTooltip": "Your current portfolio configuration. Click Edit to modify or Reset to Simple to use investment amount instead.",
+          "assets": {
+            "label": "Assets",
+            "helper": "Add assets to your initial portfolio. For now, only BTC is supported, but more assets will be available in the future.",
+            "add": "Add Asset",
+            "remove": "Remove",
+            "quantityPlaceholder": "Quantity"
+          },
+          "usdcAmount": {
+            "label": "USDC Amount",
+            "helper": "Starting USDC (stablecoin) amount in your portfolio."
+          },
+          "preview": {
+            "title": "Portfolio Preview",
+            "assets": "Assets",
+            "usdc": "USDC",
+            "noAssets": "No assets added"
+          }
+        },
+        "fundingSchedule": {
+          "label": "Periodic Funding",
+          "helper": "Add funds to your portfolio on a regular schedule (daily, weekly, or monthly).",
+          "tooltip": "Periodic funding allows you to simulate adding money to your portfolio over time, similar to dollar-cost averaging with additional capital.",
+          "enable": "Enable periodic funding",
+          "frequency": {
+            "label": "Frequency",
+            "daily": "Daily",
+            "weekly": "Weekly",
+            "monthly": "Monthly"
+          },
+          "amount": {
+            "label": "Amount per Period (USD)"
+          }
+        },
         "dateRange": {
           "label": "Date Range",
           "helper": "What time period do you want to test?",

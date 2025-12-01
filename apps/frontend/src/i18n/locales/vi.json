@@ -156,6 +156,49 @@
           "tooltip": "Tổng số tiền bạn muốn đầu tư trong bài kiểm tra này. Đây là vốn ban đầu sẽ được sử dụng cho tất cả các chiến lược đã chọn.",
           "quickSelect": "Chọn nhanh"
         },
+        "advancedPortfolio": {
+          "setup": "Thiết lập Danh mục Nâng cao",
+          "title": "Thiết lập Danh mục Nâng cao",
+          "description": "Thiết lập danh mục ban đầu của bạn với các tài sản và số tiền USDC cụ thể. Điều này cho phép bạn mô phỏng bắt đầu với một danh mục hiện có hoặc phân bổ tùy chỉnh.",
+          "useThisSetup": "Sử dụng Thiết lập Này",
+          "cancel": "Hủy",
+          "resetToSimple": "Đặt lại về Đơn giản",
+          "edit": "Chỉnh sửa",
+          "currentPortfolio": "Danh mục Ban đầu",
+          "currentPortfolioTooltip": "Cấu hình danh mục hiện tại của bạn. Nhấp Chỉnh sửa để sửa đổi hoặc Đặt lại về Đơn giản để sử dụng số tiền đầu tư thay thế.",
+          "assets": {
+            "label": "Tài sản",
+            "helper": "Thêm tài sản vào danh mục ban đầu của bạn. Hiện tại chỉ hỗ trợ BTC, nhưng sẽ có thêm tài sản trong tương lai.",
+            "add": "Thêm Tài sản",
+            "remove": "Xóa",
+            "quantityPlaceholder": "Số lượng"
+          },
+          "usdcAmount": {
+            "label": "Số tiền USDC",
+            "helper": "Số tiền USDC (stablecoin) ban đầu trong danh mục của bạn."
+          },
+          "preview": {
+            "title": "Xem trước Danh mục",
+            "assets": "Tài sản",
+            "usdc": "USDC",
+            "noAssets": "Chưa thêm tài sản"
+          }
+        },
+        "fundingSchedule": {
+          "label": "Tài trợ Định kỳ",
+          "helper": "Thêm tiền vào danh mục của bạn theo lịch trình đều đặn (hàng ngày, hàng tuần hoặc hàng tháng).",
+          "tooltip": "Tài trợ định kỳ cho phép bạn mô phỏng việc thêm tiền vào danh mục theo thời gian, tương tự như trung bình hóa chi phí đô la với vốn bổ sung.",
+          "enable": "Bật tài trợ định kỳ",
+          "frequency": {
+            "label": "Tần suất",
+            "daily": "Hàng ngày",
+            "weekly": "Hàng tuần",
+            "monthly": "Hàng tháng"
+          },
+          "amount": {
+            "label": "Số tiền mỗi Kỳ (USD)"
+          }
+        },
         "dateRange": {
           "label": "Khoảng thời gian",
           "helper": "Bạn muốn kiểm tra khoảng thời gian nào?",

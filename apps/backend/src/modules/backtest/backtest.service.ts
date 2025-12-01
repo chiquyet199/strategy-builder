@@ -1,8 +1,9 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, BadRequestException } from '@nestjs/common';
 import { MarketDataService } from '../market-data/market-data.service';
 import { StrategyService } from '../strategy/strategy.service';
 import { CompareStrategiesDto } from './dto/compare-strategies.dto';
 import { BacktestResponse } from './interfaces/backtest-response.interface';
+import { InitialPortfolio, FundingSchedule } from '../strategy/interfaces/strategy-result.interface';
 
 @Injectable()
 export class BacktestService {
@@ -17,13 +18,32 @@ export class BacktestService {
    * Compare multiple strategies
    */
   async compareStrategies(dto: CompareStrategiesDto): Promise<BacktestResponse> {
-    this.logger.log(
-      `Comparing ${dto.strategies.length} strategies for $${dto.investmentAmount} from ${dto.startDate} to ${dto.endDate}`,
-    );
+    // Normalize input: convert old format (investmentAmount) to new format (initialPortfolio) if needed
+    const initialPortfolio: InitialPortfolio = dto.initialPortfolio
+      ? {
+          assets: dto.initialPortfolio.assets.map((a) => ({ symbol: a.symbol, quantity: a.quantity })),
+          usdcAmount: dto.initialPortfolio.usdcAmount,
+        }
+      : {
+          assets: [], // Simple mode: no initial assets
+          usdcAmount: dto.investmentAmount || 0,
+        };
 
+    if (!dto.initialPortfolio && !dto.investmentAmount) {
+      throw new BadRequestException('Either investmentAmount or initialPortfolio must be provided');
+    }
+
+    // Normalize funding schedule
+    const fundingSchedule: FundingSchedule | undefined = dto.fundingSchedule
+      ? {
+          enabled: dto.fundingSchedule.enabled || false,
+          frequency: dto.fundingSchedule.frequency || 'weekly',
+          amount: dto.fundingSchedule.amount || 0,
+        }
+      : undefined;
+
+    // Calculate total initial investment for metadata (assets value + USDC)
     const timeframe = dto.timeframe || '1d';
-
-    // Fetch market data
     const candles = await this.marketDataService.getCandles(
       'BTC/USD',
       timeframe,
@@ -35,6 +55,16 @@ export class BacktestService {
       throw new Error('No market data available for the specified date range');
     }
 
+    // Calculate total initial value from portfolio
+    const firstCandlePrice = candles[0].close;
+    const btcAsset = initialPortfolio.assets.find((a) => a.symbol === 'BTC');
+    const btcValue = (btcAsset?.quantity || 0) * firstCandlePrice;
+    const totalInitialValue = btcValue + initialPortfolio.usdcAmount;
+
+    this.logger.log(
+      `Comparing ${dto.strategies.length} strategies with initial portfolio (assets: ${initialPortfolio.assets.length}, USDC: $${initialPortfolio.usdcAmount}) from ${dto.startDate} to ${dto.endDate}`,
+    );
+
     // Calculate each strategy
     const results = await Promise.all(
       dto.strategies.map(async (strategyConfig) => {
@@ -42,7 +72,8 @@ export class BacktestService {
           const result = await this.strategyService.calculateStrategy(
             strategyConfig.strategyId,
             candles,
-            dto.investmentAmount,
+            initialPortfolio,
+            fundingSchedule,
             dto.startDate,
             dto.endDate,
             strategyConfig.parameters,
@@ -65,7 +96,7 @@ export class BacktestService {
     return {
       results,
       metadata: {
-        investmentAmount: dto.investmentAmount,
+        investmentAmount: totalInitialValue, // For backward compatibility
         startDate: dto.startDate,
         endDate: dto.endDate,
         timeframe,

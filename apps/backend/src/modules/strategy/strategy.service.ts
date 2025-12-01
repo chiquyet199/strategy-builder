@@ -1,6 +1,6 @@
 import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { IStrategy } from './interfaces/strategy.interface';
-import { StrategyResult } from './interfaces/strategy-result.interface';
+import { StrategyResult, InitialPortfolio, FundingSchedule } from './interfaces/strategy-result.interface';
 import { Candlestick } from '../market-data/interfaces/candlestick.interface';
 import { LumpSumStrategy } from './strategies/lump-sum.strategy';
 import { DcaStrategy } from './strategies/dca.strategy';
@@ -68,17 +68,42 @@ export class StrategyService {
 
   /**
    * Calculate a strategy with given parameters
+   * Supports both old format (investmentAmount) and new format (initialPortfolio)
    */
   calculateStrategy(
     strategyId: string,
     candles: Candlestick[],
-    investmentAmount: number,
+    initialPortfolioOrAmount: InitialPortfolio | number,
+    fundingScheduleOrUndefined: FundingSchedule | undefined,
     startDate: string,
     endDate: string,
     parameters?: Record<string, any>,
   ): StrategyResult {
     const strategy = this.getStrategy(strategyId);
-    return strategy.calculate(candles, investmentAmount, startDate, endDate, parameters);
+    
+    // Handle backward compatibility: if number is passed, convert to InitialPortfolio
+    const initialPortfolio: InitialPortfolio =
+      typeof initialPortfolioOrAmount === 'number'
+        ? { assets: [], usdcAmount: initialPortfolioOrAmount }
+        : initialPortfolioOrAmount;
+    
+    const fundingSchedule: FundingSchedule | undefined = fundingScheduleOrUndefined;
+    
+    // For now, strategies still use the old interface, so we calculate investmentAmount from portfolio
+    // TODO: Update all strategies to use InitialPortfolio directly
+    const firstCandlePrice = candles[0]?.close || 0;
+    const btcAsset = initialPortfolio.assets.find((a) => a.symbol === 'BTC');
+    const btcValue = (btcAsset?.quantity || 0) * firstCandlePrice;
+    const investmentAmount = btcValue + initialPortfolio.usdcAmount;
+    
+    // Pass funding schedule in parameters for now (strategies will be updated to accept it directly)
+    const paramsWithFunding = {
+      ...parameters,
+      _initialPortfolio: initialPortfolio,
+      _fundingSchedule: fundingSchedule,
+    };
+    
+    return strategy.calculate(candles, investmentAmount, startDate, endDate, paramsWithFunding);
   }
 }
 

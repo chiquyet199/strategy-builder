@@ -148,8 +148,8 @@ export class MetricsCalculator {
   ): PortfolioValuePoint[] {
     const history: PortfolioValuePoint[] = [];
     let totalQuantity = initialAssetQuantity; // Start with initial assets
-    let totalInvested = 0; // Sum of buy amounts (initial assets don't count as "invested")
-    let totalSold = 0; // Sum of sell amounts
+    // const totalInvested = 0; // Sum of buy amounts (currently unused)
+    // const totalSold = 0; // Sum of sell amounts (currently unused)
     let availableCash = initialUsdc; // Start with initial USDC
 
     // Create a map of transactions by date for quick lookup
@@ -176,7 +176,7 @@ export class MetricsCalculator {
         totalQuantity += tx.quantityPurchased; // Positive for buys, negative for sells
 
         if (txType === 'sell') {
-          totalSold += tx.amount; // Sells add USDC back
+          // Sells add USDC back
           availableCash += tx.amount;
         } else if (txType === 'funding') {
           // Funding transaction: adds to cash, doesn't count as invested (doesn't affect average buy price)
@@ -184,7 +184,6 @@ export class MetricsCalculator {
         } else {
           // Buy transaction: spends cash, counts as invested
           if (tx.amount > 0) {
-            totalInvested += tx.amount;
             availableCash -= tx.amount;
           }
         }

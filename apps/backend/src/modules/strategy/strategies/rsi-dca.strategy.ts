@@ -138,7 +138,8 @@ export class RsiDcaStrategy extends BaseStrategy {
     let lastFundingDate = new Date(start);
     lastFundingDate.setDate(lastFundingDate.getDate() - 1);
     let totalQuantityHeld = initialAssetQuantity;
-    let totalInvested = 0;
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const totalInvested = 0; // Currently unused - using totalCapital instead
     let availableCash = initialUsdc;
     let totalFunding = 0;
 
@@ -226,7 +227,7 @@ export class RsiDcaStrategy extends BaseStrategy {
         const price = candle.close;
         const quantityPurchased = actualBuyAmount / price;
         totalQuantityHeld += quantityPurchased;
-        totalInvested += actualBuyAmount;
+        // totalInvested += actualBuyAmount; // Currently unused - using totalCapital instead
         availableCash -= actualBuyAmount;
 
         const coinValue = totalQuantityHeld * price;

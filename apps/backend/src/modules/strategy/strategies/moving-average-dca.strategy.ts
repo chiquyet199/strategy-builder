@@ -111,7 +111,8 @@ export class MovingAverageDcaStrategy extends BaseStrategy {
     let lastFundingDate = new Date(start);
     lastFundingDate.setDate(lastFundingDate.getDate() - 1);
     let totalQuantityHeld = initialAssetQuantity;
-    let totalInvested = 0;
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const totalInvested = 0; // Currently unused - using totalCapital instead
     let availableCash = initialUsdc;
     let totalFunding = 0;
 
@@ -194,7 +195,7 @@ export class MovingAverageDcaStrategy extends BaseStrategy {
 
         const quantityPurchased = actualBuyAmount / currentPrice;
         totalQuantityHeld += quantityPurchased;
-        totalInvested += actualBuyAmount;
+        // totalInvested += actualBuyAmount; // Currently unused - using totalCapital instead
         availableCash -= actualBuyAmount;
 
         const coinValue = totalQuantityHeld * currentPrice;

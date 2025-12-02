@@ -116,7 +116,7 @@ export class DcaStrategy extends BaseStrategy {
     let currentQuantityHeld = initialAssetQuantity;
     let currentUsdcBalance = initialUsdc;
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    let totalInvested = 0; // Currently unused - using totalCapital instead
+    const totalInvested = 0; // Currently unused - using totalCapital instead
     let totalFunding = 0; // Track total funding added
 
     // Track last purchase date and last funding date
@@ -213,7 +213,7 @@ export class DcaStrategy extends BaseStrategy {
 
         currentQuantityHeld += quantityPurchased;
         currentUsdcBalance -= actualPurchaseAmount;
-        totalInvested += actualPurchaseAmount;
+        // totalInvested += actualPurchaseAmount; // Currently unused - using totalCapital instead
 
         const coinValue = currentQuantityHeld * price;
         const totalValue = coinValue + currentUsdcBalance;

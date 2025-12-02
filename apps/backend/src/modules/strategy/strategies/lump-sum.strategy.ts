@@ -25,8 +25,9 @@ export class LumpSumStrategy extends BaseStrategy {
     return {}; // No parameters for lump sum
   }
 
-  validateParameters(parameters?: Record<string, any>): void {
-    // No parameters to validate
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  validateParameters(_parameters?: Record<string, any>): void {
+    // No parameters to validate - prefix with _ to indicate intentionally unused
   }
 
   protected calculateInternal(
@@ -69,7 +70,7 @@ export class LumpSumStrategy extends BaseStrategy {
     let totalQuantityHeld = initialAssetQuantity;
     let availableCash = initialUsdc;
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    let totalInvested = 0; // Track total invested (for metrics, currently unused - using totalCapital instead)
+    const totalInvested = 0; // Track total invested (for metrics, currently unused - using totalCapital instead)
 
     // If we have initial assets, no transaction needed
     // If we only have USDC, buy all at first candle
@@ -85,7 +86,7 @@ export class LumpSumStrategy extends BaseStrategy {
       if (actualBuyAmount > 0) {
         const quantityPurchased = actualBuyAmount / price;
         totalQuantityHeld += quantityPurchased;
-        totalInvested += actualBuyAmount;
+        // totalInvested += actualBuyAmount; // Currently unused - using totalCapital instead
         availableCash -= actualBuyAmount;
 
         const coinValue = totalQuantityHeld * price;

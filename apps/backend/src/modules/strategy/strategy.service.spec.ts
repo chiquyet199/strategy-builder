@@ -1,8 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { NotFoundException } from '@nestjs/common';
 import { StrategyService } from './strategy.service';
-import { IStrategy } from './interfaces/strategy.interface';
-import { StrategyResult } from './interfaces/strategy-result.interface';
 import { Candlestick } from '../market-data/interfaces/candlestick.interface';
 
 describe('StrategyService', () => {
@@ -19,23 +17,6 @@ describe('StrategyService', () => {
       timeframe: '1d',
     },
   ];
-
-  const mockStrategyResult: StrategyResult = {
-    strategyId: 'test-strategy',
-    strategyName: 'Test Strategy',
-    parameters: {},
-    transactions: [],
-    metrics: {
-      totalReturn: 10.5,
-      avgBuyPrice: 7280.3,
-      maxDrawdown: 5.2,
-      finalValue: 11050,
-      sharpeRatio: 1.2,
-      totalInvestment: 10000,
-      totalQuantity: 1.3889,
-    },
-    portfolioValueHistory: [],
-  };
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({

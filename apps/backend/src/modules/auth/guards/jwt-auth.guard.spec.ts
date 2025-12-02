@@ -1,6 +1,5 @@
 import { ExecutionContext } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
-import { AuthGuard } from '@nestjs/passport';
 import { JwtAuthGuard } from './jwt-auth.guard';
 import { IS_PUBLIC_KEY } from './public.decorator';
 
@@ -17,17 +16,16 @@ describe('JwtAuthGuard', () => {
 
     guard = new JwtAuthGuard(reflector);
     // Override the guard's canActivate to call our mock for super.canActivate
-    const originalCanActivate = guard.canActivate.bind(guard);
     guard.canActivate = jest.fn(async (context: ExecutionContext) => {
       const isPublic = reflector.getAllAndOverride<boolean>(IS_PUBLIC_KEY, [
         context.getHandler(),
         context.getClass(),
       ]);
-      
+
       if (isPublic) {
         return true;
       }
-      
+
       return mockSuperCanActivate(context);
     }) as any;
   });
@@ -36,7 +34,9 @@ describe('JwtAuthGuard', () => {
     jest.clearAllMocks();
   });
 
-  const createMockContext = (headers: Record<string, string> = {}): ExecutionContext => {
+  const createMockContext = (
+    headers: Record<string, string> = {},
+  ): ExecutionContext => {
     return {
       switchToHttp: () => ({
         getRequest: () => ({
@@ -105,8 +105,9 @@ describe('JwtAuthGuard', () => {
         authorization: 'Bearer token',
       });
 
-      await expect(guard.canActivate(context)).rejects.toThrow('Authentication failed');
+      await expect(guard.canActivate(context)).rejects.toThrow(
+        'Authentication failed',
+      );
     });
   });
 });
-

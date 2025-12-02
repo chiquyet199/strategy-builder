@@ -21,7 +21,7 @@ export interface DatabaseConfig {
 function parseDatabaseUrl(url: string): DatabaseConfig {
   try {
     const parsedUrl = new URL(url);
-    
+
     return {
       type: 'postgres',
       host: parsedUrl.hostname,
@@ -55,7 +55,7 @@ export function getDatabaseConfig(): DatabaseConfig {
   // Set DB_SSL=true explicitly if you need SSL (e.g., for external database services)
   // For Docker Compose deployments, SSL is not needed (services communicate internally)
   const enableSSL = process.env.DB_SSL === 'true';
-  
+
   return {
     type: 'postgres',
     host: process.env.DB_HOST || 'localhost',
@@ -66,4 +66,3 @@ export function getDatabaseConfig(): DatabaseConfig {
     ssl: enableSSL ? { rejectUnauthorized: false } : false,
   };
 }
-

@@ -1,7 +1,7 @@
 import { Injectable, UnauthorizedException, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { PassportStrategy } from '@nestjs/passport';
-import { ExtractJwt, Strategy } from 'passport-jwt';
+import { Strategy } from 'passport-jwt';
 import { Repository } from 'typeorm';
 import { User, UserRole } from '../entities/user.entity';
 
@@ -19,36 +19,39 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     @InjectRepository(User)
     private readonly userRepository: Repository<User>,
   ) {
-    const jwtSecret = process.env.JWT_SECRET || 'your-secret-key-change-in-production';
-    
+    const jwtSecret =
+      process.env.JWT_SECRET || 'your-secret-key-change-in-production';
+
     // Custom extractor to handle "Bearer Bearer" issue
     const extractJwt = (request: any) => {
       const authHeader = request.headers?.authorization;
       if (!authHeader) {
         return null;
       }
-      
+
       // Handle duplicate "Bearer Bearer" case
       if (authHeader.startsWith('Bearer Bearer ')) {
         // Note: Logger not available in constructor, using console.warn for this edge case
-        console.warn('JWT Strategy: Detected duplicate "Bearer" in header, fixing...');
+        console.warn(
+          'JWT Strategy: Detected duplicate "Bearer" in header, fixing...',
+        );
         return authHeader.substring(14); // Skip "Bearer Bearer "
       }
-      
+
       // Normal case: "Bearer <token>"
       if (authHeader.startsWith('Bearer ')) {
         return authHeader.substring(7); // Skip "Bearer "
       }
-      
+
       return authHeader;
     };
-    
+
     super({
       jwtFromRequest: extractJwt,
       ignoreExpiration: false,
       secretOrKey: jwtSecret,
     });
-    
+
     // Log JWT_SECRET status after super() call
     this.logger.log('Initializing with JWT_SECRET', {
       isSet: !!process.env.JWT_SECRET,

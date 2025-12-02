@@ -2,7 +2,13 @@ import { CandleAggregator } from './candle-aggregator';
 import { Candlestick } from '../interfaces/candlestick.interface';
 
 describe('CandleAggregator', () => {
-  const createDailyCandle = (date: string, open: number, high: number, low: number, close: number): Candlestick => ({
+  const createDailyCandle = (
+    date: string,
+    open: number,
+    high: number,
+    low: number,
+    close: number,
+  ): Candlestick => ({
     timestamp: date,
     open,
     high,
@@ -71,15 +77,18 @@ describe('CandleAggregator', () => {
 
     it('should aggregate to hourly candles correctly', () => {
       // Create hourly candles (simulating 1h timeframe input)
-      const hourlyCandles: Candlestick[] = Array.from({ length: 24 }, (_, i) => ({
-        timestamp: `2024-01-01T${String(i).padStart(2, '0')}:00:00.000Z`,
-        open: 100 + i,
-        high: 105 + i,
-        low: 95 + i,
-        close: 102 + i,
-        volume: 100000,
-        timeframe: '1h',
-      }));
+      const hourlyCandles: Candlestick[] = Array.from(
+        { length: 24 },
+        (_, i) => ({
+          timestamp: `2024-01-01T${String(i).padStart(2, '0')}:00:00.000Z`,
+          open: 100 + i,
+          high: 105 + i,
+          low: 95 + i,
+          close: 102 + i,
+          volume: 100000,
+          timeframe: '1h',
+        }),
+      );
 
       const result = CandleAggregator.aggregateCandles(hourlyCandles, '4h');
 
@@ -126,4 +135,3 @@ describe('CandleAggregator', () => {
     });
   });
 });
-

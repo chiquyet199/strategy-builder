@@ -1,5 +1,8 @@
 import { CompareStrategiesDto } from '../dto/compare-strategies.dto';
-import { InitialPortfolio, FundingSchedule } from '../../strategy/interfaces/strategy-result.interface';
+import {
+  InitialPortfolio,
+  FundingSchedule,
+} from '../../strategy/interfaces/strategy-result.interface';
 
 /**
  * Pure functions for normalizing DTOs
@@ -64,4 +67,3 @@ export function calculateTotalInitialValue(
   const btcValue = (btcAsset?.quantity || 0) * firstCandlePrice;
   return btcValue + initialPortfolio.usdcAmount;
 }
-

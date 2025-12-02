@@ -29,4 +29,3 @@ export interface CombinedSmartDcaParameters {
   dropThreshold?: number; // Default: 0.10
   maxMultiplier?: number; // Default: 2.5
 }
-

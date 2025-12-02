@@ -1,5 +1,10 @@
 import { BaseStrategy } from './base.strategy';
-import { StrategyResult, Transaction, InitialPortfolio, FundingSchedule } from '../interfaces/strategy-result.interface';
+import {
+  StrategyResult,
+  Transaction,
+  InitialPortfolio,
+  FundingSchedule,
+} from '../interfaces/strategy-result.interface';
 import { Candlestick } from '../../market-data/interfaces/candlestick.interface';
 import { MetricsCalculator } from '../utils/metrics-calculator';
 
@@ -35,8 +40,10 @@ export class LumpSumStrategy extends BaseStrategy {
       throw new Error('No candles provided for calculation');
     }
 
-    const initialPortfolio: InitialPortfolio | undefined = parameters._initialPortfolio;
-    const fundingSchedule: FundingSchedule | undefined = parameters._fundingSchedule;
+    const initialPortfolio: InitialPortfolio | undefined =
+      parameters._initialPortfolio;
+    const fundingSchedule: FundingSchedule | undefined =
+      parameters._fundingSchedule;
     const allowNegativeUsdc = parameters.allowNegativeUsdc ?? false;
 
     const firstCandle = candles[0];
@@ -48,7 +55,11 @@ export class LumpSumStrategy extends BaseStrategy {
     let totalInitialValue = investmentAmount;
 
     if (initialPortfolio) {
-      const initialState = this.getInitialState(initialPortfolio, firstCandlePrice, 'BTC');
+      const initialState = this.getInitialState(
+        initialPortfolio,
+        firstCandlePrice,
+        'BTC',
+      );
       initialAssetQuantity = initialState.initialAssetQuantity;
       initialUsdc = initialState.initialUsdc;
       totalInitialValue = initialState.totalInitialValue;
@@ -57,14 +68,19 @@ export class LumpSumStrategy extends BaseStrategy {
     const transactions: Transaction[] = [];
     let totalQuantityHeld = initialAssetQuantity;
     let availableCash = initialUsdc;
-    let totalInvested = 0; // Track total invested (for metrics)
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    let totalInvested = 0; // Track total invested (for metrics, currently unused - using totalCapital instead)
 
     // If we have initial assets, no transaction needed
     // If we only have USDC, buy all at first candle
     if (initialAssetQuantity === 0 && availableCash > 0) {
       const price = firstCandle.close;
       const buyAmount = availableCash;
-      const actualBuyAmount = this.calculatePurchaseAmount(buyAmount, availableCash, allowNegativeUsdc);
+      const actualBuyAmount = this.calculatePurchaseAmount(
+        buyAmount,
+        availableCash,
+        allowNegativeUsdc,
+      );
 
       if (actualBuyAmount > 0) {
         const quantityPurchased = actualBuyAmount / price;
@@ -113,7 +129,8 @@ export class LumpSumStrategy extends BaseStrategy {
         const candle = candles[i];
         const candleDate = new Date(candle.timestamp);
         const daysSinceLastFunding = Math.floor(
-          (candleDate.getTime() - lastFundingDate.getTime()) / (1000 * 60 * 60 * 24),
+          (candleDate.getTime() - lastFundingDate.getTime()) /
+            (1000 * 60 * 60 * 24),
         );
 
         if (daysSinceLastFunding >= periodDays) {
@@ -175,4 +192,3 @@ export class LumpSumStrategy extends BaseStrategy {
     };
   }
 }
-

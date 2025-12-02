@@ -3,7 +3,6 @@ import { MarketDataService } from '../market-data/market-data.service';
 import { StrategyService } from '../strategy/strategy.service';
 import { CompareStrategiesDto } from './dto/compare-strategies.dto';
 import { BacktestResponse } from './interfaces/backtest-response.interface';
-import { InitialPortfolio, FundingSchedule } from '../strategy/interfaces/strategy-result.interface';
 import { BacktestException } from '../../common/exceptions/backtest.exception';
 import {
   normalizeInitialPortfolio,
@@ -28,10 +27,14 @@ export class BacktestService {
    * @throws BadRequestException if neither investmentAmount nor initialPortfolio is provided
    * @throws BacktestException if no market data is available for the date range
    */
-  async compareStrategies(dto: CompareStrategiesDto): Promise<BacktestResponse> {
+  async compareStrategies(
+    dto: CompareStrategiesDto,
+  ): Promise<BacktestResponse> {
     // Validate input
     if (!dto.initialPortfolio && !dto.investmentAmount) {
-      throw new BadRequestException('Either investmentAmount or initialPortfolio must be provided');
+      throw new BadRequestException(
+        'Either investmentAmount or initialPortfolio must be provided',
+      );
     }
 
     // Normalize input using pure functions
@@ -48,12 +51,17 @@ export class BacktestService {
     );
 
     if (candles.length === 0) {
-      throw new BacktestException('No market data available for the specified date range');
+      throw new BacktestException(
+        'No market data available for the specified date range',
+      );
     }
 
     // Calculate total initial value from portfolio using pure function
     const firstCandlePrice = candles[0].close;
-    const totalInitialValue = calculateTotalInitialValue(initialPortfolio, firstCandlePrice);
+    const totalInitialValue = calculateTotalInitialValue(
+      initialPortfolio,
+      firstCandlePrice,
+    );
 
     this.logger.log(
       `Comparing ${dto.strategies.length} strategies with initial portfolio (assets: ${initialPortfolio.assets.length}, USDC: $${initialPortfolio.usdcAmount}) from ${dto.startDate} to ${dto.endDate}`,
@@ -99,4 +107,3 @@ export class BacktestService {
     };
   }
 }
-

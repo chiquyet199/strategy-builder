@@ -65,9 +65,9 @@ describe('StrategyService', () => {
         true,
       );
       expect(strategies.some((s) => s.getStrategyId() === 'dca')).toBe(true);
-      expect(
-        strategies.some((s) => s.getStrategyId() === 'rebalancing'),
-      ).toBe(true);
+      expect(strategies.some((s) => s.getStrategyId() === 'rebalancing')).toBe(
+        true,
+      );
     });
   });
 
@@ -254,4 +254,3 @@ describe('StrategyService', () => {
     });
   });
 });
-

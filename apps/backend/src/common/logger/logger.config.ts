@@ -9,7 +9,9 @@ import * as winston from 'winston';
  * - Log levels: error, warn, info, debug
  */
 export const loggerConfig: WinstonModuleOptions = {
-  level: process.env.LOG_LEVEL || (process.env.NODE_ENV === 'production' ? 'info' : 'debug'),
+  level:
+    process.env.LOG_LEVEL ||
+    (process.env.NODE_ENV === 'production' ? 'info' : 'debug'),
   format: winston.format.combine(
     winston.format.timestamp({ format: 'YYYY-MM-DD HH:mm:ss.SSS' }),
     winston.format.errors({ stack: true }),
@@ -17,23 +19,33 @@ export const loggerConfig: WinstonModuleOptions = {
       ? winston.format.json() // JSON format for production (easier to parse)
       : winston.format.combine(
           winston.format.colorize(),
-          winston.format.printf(({ timestamp, level, message, context, trace, correlationId, ...meta }) => {
-            let log = `${timestamp} [${context || 'Application'}] ${level}: ${message}`;
-            
-            if (correlationId) {
-              log = `[${correlationId}] ${log}`;
-            }
-            
-            if (trace) {
-              log += `\n${trace}`;
-            }
-            
-            if (Object.keys(meta).length > 0) {
-              log += `\n${JSON.stringify(meta, null, 2)}`;
-            }
-            
-            return log;
-          }),
+          winston.format.printf(
+            ({
+              timestamp,
+              level,
+              message,
+              context,
+              trace,
+              correlationId,
+              ...meta
+            }) => {
+              let log = `${timestamp} [${context || 'Application'}] ${level}: ${message}`;
+
+              if (correlationId) {
+                log = `[${correlationId}] ${log}`;
+              }
+
+              if (trace) {
+                log += `\n${trace}`;
+              }
+
+              if (Object.keys(meta).length > 0) {
+                log += `\n${JSON.stringify(meta, null, 2)}`;
+              }
+
+              return log;
+            },
+          ),
         ),
   ),
   defaultMeta: {
@@ -50,23 +62,33 @@ export const loggerConfig: WinstonModuleOptions = {
           ? winston.format.json()
           : winston.format.combine(
               winston.format.colorize(),
-              winston.format.printf(({ timestamp, level, message, context, trace, correlationId, ...meta }) => {
-                let log = `${timestamp} [${context || 'Application'}] ${level}: ${message}`;
-                
-                if (correlationId) {
-                  log = `[${correlationId}] ${log}`;
-                }
-                
-                if (trace) {
-                  log += `\n${trace}`;
-                }
-                
-                if (Object.keys(meta).length > 0) {
-                  log += `\n${JSON.stringify(meta, null, 2)}`;
-                }
-                
-                return log;
-              }),
+              winston.format.printf(
+                ({
+                  timestamp,
+                  level,
+                  message,
+                  context,
+                  trace,
+                  correlationId,
+                  ...meta
+                }) => {
+                  let log = `${timestamp} [${context || 'Application'}] ${level}: ${message}`;
+
+                  if (correlationId) {
+                    log = `[${correlationId}] ${log}`;
+                  }
+
+                  if (trace) {
+                    log += `\n${trace}`;
+                  }
+
+                  if (Object.keys(meta).length > 0) {
+                    log += `\n${JSON.stringify(meta, null, 2)}`;
+                  }
+
+                  return log;
+                },
+              ),
             ),
       ),
     }),
@@ -104,7 +126,10 @@ export const loggerConfig: WinstonModuleOptions = {
         winston.format.errors({ stack: true }),
         process.env.NODE_ENV === 'production'
           ? winston.format.json()
-          : winston.format.combine(winston.format.colorize(), winston.format.simple()),
+          : winston.format.combine(
+              winston.format.colorize(),
+              winston.format.simple(),
+            ),
       ),
     }),
     ...(process.env.NODE_ENV === 'production'
@@ -127,7 +152,10 @@ export const loggerConfig: WinstonModuleOptions = {
         winston.format.errors({ stack: true }),
         process.env.NODE_ENV === 'production'
           ? winston.format.json()
-          : winston.format.combine(winston.format.colorize(), winston.format.simple()),
+          : winston.format.combine(
+              winston.format.colorize(),
+              winston.format.simple(),
+            ),
       ),
     }),
     ...(process.env.NODE_ENV === 'production'
@@ -144,4 +172,3 @@ export const loggerConfig: WinstonModuleOptions = {
       : []),
   ],
 };
-

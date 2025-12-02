@@ -1,5 +1,10 @@
 import { BaseStrategy } from './base.strategy';
-import { StrategyResult, Transaction, InitialPortfolio, FundingSchedule } from '../interfaces/strategy-result.interface';
+import {
+  StrategyResult,
+  Transaction,
+  InitialPortfolio,
+  FundingSchedule,
+} from '../interfaces/strategy-result.interface';
 import { Candlestick } from '../../market-data/interfaces/candlestick.interface';
 import { MetricsCalculator } from '../utils/metrics-calculator';
 
@@ -26,7 +31,9 @@ export class DcaStrategy extends BaseStrategy {
     if (parameters?.frequency) {
       const validFrequencies = ['daily', 'weekly', 'monthly'];
       if (!validFrequencies.includes(parameters.frequency)) {
-        throw new Error(`Frequency must be one of: ${validFrequencies.join(', ')}`);
+        throw new Error(
+          `Frequency must be one of: ${validFrequencies.join(', ')}`,
+        );
       }
     }
   }
@@ -42,8 +49,10 @@ export class DcaStrategy extends BaseStrategy {
       throw new Error('No candles provided for calculation');
     }
 
-    const initialPortfolio: InitialPortfolio | undefined = parameters._initialPortfolio;
-    const fundingSchedule: FundingSchedule | undefined = parameters._fundingSchedule;
+    const initialPortfolio: InitialPortfolio | undefined =
+      parameters._initialPortfolio;
+    const fundingSchedule: FundingSchedule | undefined =
+      parameters._fundingSchedule;
     const frequency = parameters.frequency || 'weekly';
     const allowNegativeUsdc = parameters.allowNegativeUsdc ?? false;
 
@@ -55,7 +64,11 @@ export class DcaStrategy extends BaseStrategy {
     let totalInitialValue = investmentAmount;
 
     if (initialPortfolio) {
-      const initialState = this.getInitialState(initialPortfolio, firstCandlePrice, 'BTC');
+      const initialState = this.getInitialState(
+        initialPortfolio,
+        firstCandlePrice,
+        'BTC',
+      );
       initialAssetQuantity = initialState.initialAssetQuantity;
       initialUsdc = initialState.initialUsdc;
       totalInitialValue = initialState.totalInitialValue;
@@ -71,24 +84,30 @@ export class DcaStrategy extends BaseStrategy {
 
     switch (frequency) {
       case 'daily':
-        totalPeriods = Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24))
-        periodDays = 1
-        break
+        totalPeriods = Math.ceil(
+          (end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24),
+        );
+        periodDays = 1;
+        break;
       case 'weekly':
-        totalPeriods = Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24 * 7))
-        periodDays = 7
-        break
+        totalPeriods = Math.ceil(
+          (end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24 * 7),
+        );
+        periodDays = 7;
+        break;
       case 'monthly':
         const monthsDiff =
           (end.getFullYear() - start.getFullYear()) * 12 +
           (end.getMonth() - start.getMonth()) +
-          1
-        totalPeriods = monthsDiff
-        periodDays = 30 // Approximate
-        break
+          1;
+        totalPeriods = monthsDiff;
+        periodDays = 30; // Approximate
+        break;
       default:
-        totalPeriods = Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24 * 7))
-        periodDays = 7
+        totalPeriods = Math.ceil(
+          (end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24 * 7),
+        );
+        periodDays = 7;
     }
 
     // DCA period amount is calculated from initial USDC (not including funding)
@@ -96,7 +115,8 @@ export class DcaStrategy extends BaseStrategy {
 
     let currentQuantityHeld = initialAssetQuantity;
     let currentUsdcBalance = initialUsdc;
-    let totalInvested = 0;
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    let totalInvested = 0; // Currently unused - using totalCapital instead
     let totalFunding = 0; // Track total funding added
 
     // Track last purchase date and last funding date
@@ -109,7 +129,8 @@ export class DcaStrategy extends BaseStrategy {
     for (const candle of candles) {
       const candleDate = new Date(candle.timestamp);
       const daysSinceLastPurchase = Math.floor(
-        (candleDate.getTime() - lastPurchaseDate.getTime()) / (1000 * 60 * 60 * 24),
+        (candleDate.getTime() - lastPurchaseDate.getTime()) /
+          (1000 * 60 * 60 * 24),
       );
 
       // Handle periodic funding (separate from DCA purchases)
@@ -122,7 +143,8 @@ export class DcaStrategy extends BaseStrategy {
               : 30; // monthly
 
         const daysSinceLastFunding = Math.floor(
-          (candleDate.getTime() - lastFundingDate.getTime()) / (1000 * 60 * 60 * 24),
+          (candleDate.getTime() - lastFundingDate.getTime()) /
+            (1000 * 60 * 60 * 24),
         );
 
         if (daysSinceLastFunding >= fundingPeriodDays) {
@@ -168,13 +190,13 @@ export class DcaStrategy extends BaseStrategy {
           candleYear > lastPurchaseYear ||
           (candleYear === lastPurchaseYear && candleMonth > lastPurchaseMonth)
         ) {
-          shouldPurchase = true
+          shouldPurchase = true;
         }
       }
 
       if (shouldPurchase) {
         const price = candle.close;
-        
+
         // Calculate actual purchase amount (capped to available cash if negative USDC not allowed)
         const actualPurchaseAmount = this.calculatePurchaseAmount(
           periodAmount,
@@ -208,7 +230,7 @@ export class DcaStrategy extends BaseStrategy {
             totalValue,
             quantityHeld: currentQuantityHeld,
           },
-        })
+        });
 
         lastPurchaseDate = new Date(candleDate);
       }
@@ -222,7 +244,7 @@ export class DcaStrategy extends BaseStrategy {
       totalInitialValue + totalFunding,
       initialAssetQuantity,
       initialUsdc,
-    )
+    );
 
     // Calculate total capital (initial + funding) for return calculations
     const totalCapital = totalInitialValue + totalFunding;
@@ -230,7 +252,11 @@ export class DcaStrategy extends BaseStrategy {
     // Calculate metrics
     // Use totalCapital (total capital allocated including funding) not totalInvested (amount spent)
     // because return should be calculated against total capital, including remaining USDC
-    const metrics = MetricsCalculator.calculate(transactions, portfolioHistory, totalCapital)
+    const metrics = MetricsCalculator.calculate(
+      transactions,
+      portfolioHistory,
+      totalCapital,
+    );
 
     return {
       strategyId: this.getStrategyId(),
@@ -239,7 +265,6 @@ export class DcaStrategy extends BaseStrategy {
       transactions,
       metrics,
       portfolioValueHistory: portfolioHistory,
-    }
+    };
   }
 }
-

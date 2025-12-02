@@ -5,7 +5,10 @@ import { Candlestick } from '../entities/candlestick.entity';
 import { BinanceApiService } from './binance-api.service';
 import { Timeframe } from '../interfaces/candlestick.interface';
 import { MarketDataException } from '../../../common/exceptions/market-data.exception';
-import { parseSupportedSymbolsFromEnv, calculateGapRanges } from '../utils/sync-helpers';
+import {
+  parseSupportedSymbolsFromEnv,
+  calculateGapRanges,
+} from '../utils/sync-helpers';
 
 @Injectable()
 export class MarketDataSyncService {
@@ -173,7 +176,6 @@ export class MarketDataSyncService {
   getSupportedSymbols(): string[] {
     return [...this.supportedSymbols];
   }
-
 
   /**
    * Sync data for a specific date range and timeframe

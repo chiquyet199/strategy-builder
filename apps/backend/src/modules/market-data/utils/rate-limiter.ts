@@ -47,11 +47,11 @@ export class BinanceRateLimiter {
    */
   trackRequestFromHeader(weightHeader: string | null): void {
     const now = Date.now();
-    const usedWeight = weightHeader
+    const actualWeight = weightHeader
       ? parseInt(weightHeader, 10)
       : this.requestWeight;
 
-    this.weightUsage.push({ timestamp: now, weight: this.requestWeight });
+    this.weightUsage.push({ timestamp: now, weight: actualWeight });
     this.requestCount.push({ timestamp: now });
 
     // Clean up old entries
@@ -157,4 +157,3 @@ export class BinanceRateLimiter {
     return new Promise((resolve) => setTimeout(resolve, ms));
   }
 }
-

@@ -11,4 +11,3 @@ import { RedisThrottlerStorage } from './redis-throttler.storage';
   exports: [RedisThrottlerStorage],
 })
 export class ThrottlerStorageModule {}
-

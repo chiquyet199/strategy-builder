@@ -1,5 +1,5 @@
 import { IsString, IsIn, IsDateString, IsOptional } from 'class-validator';
-import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { ApiProperty } from '@nestjs/swagger';
 import { Timeframe } from '../interfaces/candlestick.interface';
 
 export class GetCandlesDto {
@@ -36,4 +36,3 @@ export class GetCandlesDto {
   @IsDateString()
   endDate: string;
 }
-

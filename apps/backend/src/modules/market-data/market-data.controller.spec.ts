@@ -2,7 +2,6 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { MarketDataController } from './market-data.controller';
 import { MarketDataService } from './market-data.service';
 import { MarketDataSyncService } from './services/market-data-sync.service';
-import { UserRole } from '../auth/entities/user.entity';
 
 describe('MarketDataController', () => {
   let controller: MarketDataController;
@@ -227,4 +226,3 @@ describe('MarketDataController', () => {
     });
   });
 });
-

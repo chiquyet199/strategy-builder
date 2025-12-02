@@ -146,7 +146,7 @@ describe('BinanceApiService', () => {
       } as unknown as Response);
 
       const promise = service.getKlines(symbol, timeframe, startTime, endTime);
-      
+
       // Advance timers to handle rate limiting delays
       while (jest.getTimerCount() > 0) {
         jest.advanceTimersByTime(250);
@@ -188,7 +188,7 @@ describe('BinanceApiService', () => {
         } as unknown as Response);
 
       const promise = service.getKlines(symbol, timeframe, startTime, endTime);
-      
+
       // Run all pending timers
       await jest.runAllTimersAsync();
 
@@ -217,7 +217,7 @@ describe('BinanceApiService', () => {
         } as unknown as Response);
 
       const promise = service.getKlines(symbol, timeframe, startTime, endTime);
-      
+
       // Run all pending timers (rate limiting + retry delays)
       await jest.runAllTimersAsync();
 
@@ -237,14 +237,16 @@ describe('BinanceApiService', () => {
       } as Response);
 
       const promise = service.getKlines(symbol, timeframe, startTime, endTime);
-      
+
       // Run all pending timers (rate limiting + retry delays)
       while (jest.getTimerCount() > 0) {
         jest.advanceTimersByTime(1000);
         await Promise.resolve();
       }
 
-      await expect(promise).rejects.toThrow(/Rate limit exceeded after \d+ retries/);
+      await expect(promise).rejects.toThrow(
+        /Rate limit exceeded after \d+ retries/,
+      );
 
       expect(mockFetch).toHaveBeenCalledTimes(4); // Initial + 3 retries
     }, 10000);
@@ -258,7 +260,7 @@ describe('BinanceApiService', () => {
       } as unknown as Response);
 
       const promise = service.getKlines(symbol, timeframe, startTime, endTime);
-      
+
       // Run all pending timers (rate limiting delay)
       while (jest.getTimerCount() > 0) {
         jest.advanceTimersByTime(250);
@@ -280,16 +282,16 @@ describe('BinanceApiService', () => {
 
       for (const tf of timeframes) {
         const promise = service.getKlines(symbol, tf, startTime, endTime);
-        
+
         // Run all pending timers (rate limiting delay)
         await jest.runAllTimersAsync();
-        
+
         await promise;
-        const callUrl = mockFetch.mock.calls[mockFetch.mock.calls.length - 1][0] as string;
+        const callUrl = mockFetch.mock.calls[
+          mockFetch.mock.calls.length - 1
+        ][0] as string;
         const url = new URL(callUrl);
-        expect(url.searchParams.get('interval')).toBe(
-          tf === '1m' ? '1M' : tf,
-        );
+        expect(url.searchParams.get('interval')).toBe(tf === '1m' ? '1M' : tf);
       }
     });
 
@@ -304,7 +306,7 @@ describe('BinanceApiService', () => {
       } as unknown as Response);
 
       const promise = service.getKlines(symbol, timeframe, startTime, endTime);
-      
+
       // Run all pending timers (rate limiting delay)
       await jest.runAllTimersAsync();
 
@@ -324,7 +326,7 @@ describe('BinanceApiService', () => {
       } as unknown as Response);
 
       const promise = service.getKlines(symbol, timeframe, startTime, endTime);
-      
+
       // Run all pending timers (rate limiting delay)
       await jest.runAllTimersAsync();
 
@@ -335,4 +337,3 @@ describe('BinanceApiService', () => {
     });
   });
 });
-

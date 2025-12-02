@@ -36,7 +36,9 @@ export function calculateGapRanges(
     return [{ start: startDate, end: endDate }];
   }
 
-  const sortedCandles = [...existingCandles].sort((a, b) => a.getTime() - b.getTime());
+  const sortedCandles = [...existingCandles].sort(
+    (a, b) => a.getTime() - b.getTime(),
+  );
   const earliest = sortedCandles[0];
   const latest = sortedCandles[sortedCandles.length - 1];
 
@@ -52,4 +54,3 @@ export function calculateGapRanges(
 
   return gaps;
 }
-

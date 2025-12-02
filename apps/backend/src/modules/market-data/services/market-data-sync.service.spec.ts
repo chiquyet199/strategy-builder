@@ -413,7 +413,7 @@ describe('MarketDataSyncService', () => {
         .mockResolvedValueOnce(mockCandlestick) // 1d - exists, should skip
         .mockResolvedValueOnce(mockCandlestick) // 1w - exists, should skip
         .mockResolvedValueOnce(mockCandlestick); // 1m - exists, should skip
-      
+
       binanceApiService.checkApiHealth.mockResolvedValue(true);
       binanceApiService.getKlines.mockResolvedValue([mockCandlestickInterface]);
       repository.create.mockReturnValue(mockCandlestick);
@@ -432,11 +432,12 @@ describe('MarketDataSyncService', () => {
       // Note: getKlines may be called multiple times per timeframe due to pagination
       expect(binanceApiService.getKlines).toHaveBeenCalled();
       // Should be called at least for 1h and 4h (may be more due to pagination)
-      expect(binanceApiService.getKlines.mock.calls.length).toBeGreaterThanOrEqual(2);
+      expect(
+        binanceApiService.getKlines.mock.calls.length,
+      ).toBeGreaterThanOrEqual(2);
       // Should NOT sync daily/weekly/monthly since they already exist
       // findOne is only called for non-intraday timeframes (1d, 1w, 1m) = 3 times
       expect(repository.findOne).toHaveBeenCalledTimes(3);
     });
   });
 });
-

@@ -37,7 +37,9 @@ export function validateDateRange(
   }
 
   if (maxDate && endDate > maxDate) {
-    throw new Error(`End date cannot be beyond ${maxDate.toISOString().split('T')[0]}`);
+    throw new Error(
+      `End date cannot be beyond ${maxDate.toISOString().split('T')[0]}`,
+    );
   }
 }
 
@@ -54,4 +56,3 @@ export function parseSupportedSymbols(
   const symbolsEnv = envValue || defaultValue;
   return symbolsEnv.split(',').map((s) => s.trim());
 }
-

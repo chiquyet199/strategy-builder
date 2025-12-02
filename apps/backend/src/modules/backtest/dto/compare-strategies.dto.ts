@@ -9,12 +9,10 @@ import {
   Min,
   ArrayMinSize,
   ValidateNested,
-  IsBoolean,
   ValidateIf,
 } from 'class-validator';
 import { Type } from 'class-transformer';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { Asset, InitialPortfolio, FundingSchedule } from '../../strategy/interfaces/strategy-result.interface';
 
 /**
  * Strategy configuration DTO
@@ -38,7 +36,8 @@ export class StrategyConfigDto {
   strategyId: string;
 
   @ApiPropertyOptional({
-    description: 'Strategy-specific parameters (optional, uses defaults if not provided)',
+    description:
+      'Strategy-specific parameters (optional, uses defaults if not provided)',
     example: { rsiPeriod: 14, oversoldThreshold: 30 },
   })
   @IsObject()
@@ -58,12 +57,19 @@ export class StrategyConfigDto {
  * Asset DTO for initial portfolio
  */
 export class AssetDto {
-  @ApiProperty({ description: 'Asset symbol (e.g., "BTC", "ETH")', example: 'BTC' })
+  @ApiProperty({
+    description: 'Asset symbol (e.g., "BTC", "ETH")',
+    example: 'BTC',
+  })
   @IsString()
   @IsNotEmpty()
   symbol: string;
 
-  @ApiProperty({ description: 'Quantity of the asset', example: 0.5, minimum: 0 })
+  @ApiProperty({
+    description: 'Quantity of the asset',
+    example: 0.5,
+    minimum: 0,
+  })
   @IsNumber()
   @Min(0)
   quantity: number;
@@ -121,7 +127,8 @@ export class FundingScheduleDto {
  */
 export class CompareStrategiesDto {
   @ApiPropertyOptional({
-    description: 'Total investment amount in USD (legacy - use initialPortfolio instead)',
+    description:
+      'Total investment amount in USD (legacy - use initialPortfolio instead)',
     example: 10000,
     minimum: 1,
   })
@@ -172,7 +179,11 @@ export class CompareStrategiesDto {
     example: [
       { strategyId: 'lump-sum' },
       { strategyId: 'dca', parameters: { frequency: 'weekly' } },
-      { strategyId: 'rsi-dca', parameters: { rsiPeriod: 14 }, variantName: 'Aggressive RSI' },
+      {
+        strategyId: 'rsi-dca',
+        parameters: { rsiPeriod: 14 },
+        variantName: 'Aggressive RSI',
+      },
     ],
   })
   @IsArray()
@@ -191,4 +202,3 @@ export class CompareStrategiesDto {
   @IsIn(['1h', '4h', '1d', '1w', '1m'])
   timeframe?: '1h' | '4h' | '1d' | '1w' | '1m' = '1d';
 }
-

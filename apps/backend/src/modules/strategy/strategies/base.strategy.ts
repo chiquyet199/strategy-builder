@@ -1,5 +1,9 @@
 import { IStrategy } from '../interfaces/strategy.interface';
-import { StrategyResult, InitialPortfolio, FundingSchedule } from '../interfaces/strategy-result.interface';
+import {
+  StrategyResult,
+  InitialPortfolio,
+  FundingSchedule,
+} from '../interfaces/strategy-result.interface';
 import { Candlestick } from '../../market-data/interfaces/candlestick.interface';
 
 /**
@@ -36,8 +40,10 @@ export abstract class BaseStrategy implements IStrategy {
     this.validateParameters(mergedParams);
 
     // Extract InitialPortfolio and FundingSchedule from parameters if present
-    const initialPortfolio: InitialPortfolio | undefined = mergedParams._initialPortfolio;
-    const fundingSchedule: FundingSchedule | undefined = mergedParams._fundingSchedule;
+    const initialPortfolio: InitialPortfolio | undefined =
+      mergedParams._initialPortfolio;
+    const fundingSchedule: FundingSchedule | undefined =
+      mergedParams._fundingSchedule;
 
     // If InitialPortfolio is provided, use it; otherwise use investmentAmount (backward compatibility)
     let actualInvestmentAmount = investmentAmount;
@@ -89,7 +95,9 @@ export abstract class BaseStrategy implements IStrategy {
    * Merge user parameters with defaults
    * User parameters override defaults
    */
-  protected mergeParameters(userParams?: Record<string, any>): Record<string, any> {
+  protected mergeParameters(
+    userParams?: Record<string, any>,
+  ): Record<string, any> {
     const defaults = this.getDefaultParameters();
     // Add global configuration defaults
     const globalDefaults = {
@@ -155,4 +163,3 @@ export abstract class BaseStrategy implements IStrategy {
     };
   }
 }
-

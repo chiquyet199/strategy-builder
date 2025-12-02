@@ -1,13 +1,12 @@
 import { Module, Provider } from '@nestjs/common';
 import { EmailService } from './email.service';
 import { ConsoleEmailProvider } from './providers/console-email.provider';
-import { EmailProvider } from './interfaces/email-provider.interface';
 
 /**
  * Email Module
  * Following SOLID principles - Open/Closed Principle
  * Easy to extend with new providers without modifying existing code
- * 
+ *
  * To add a new provider (e.g., SendGrid, AWS SES, etc.):
  * 1. Create a new provider class implementing EmailProvider interface
  * 2. Update the EMAIL_PROVIDER provider below to use the new provider
@@ -27,4 +26,3 @@ const emailProvider: Provider = {
   exports: [EmailService],
 })
 export class EmailModule {}
-

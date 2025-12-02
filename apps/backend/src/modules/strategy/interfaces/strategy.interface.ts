@@ -44,4 +44,3 @@ export interface IStrategy {
    */
   validateParameters(parameters?: Record<string, any>): void;
 }
-

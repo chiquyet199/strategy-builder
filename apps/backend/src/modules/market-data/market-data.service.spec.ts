@@ -170,7 +170,9 @@ describe('MarketDataService', () => {
         close: '1500.00' as any,
         volume: '1000000.123' as any,
       };
-      repository.find.mockResolvedValue([entityWithStringNumbers as Candlestick]);
+      repository.find.mockResolvedValue([
+        entityWithStringNumbers as Candlestick,
+      ]);
 
       const result = await service.getCandles(
         symbol,
@@ -217,4 +219,3 @@ describe('MarketDataService', () => {
     });
   });
 });
-

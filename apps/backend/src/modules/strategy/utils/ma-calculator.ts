@@ -13,7 +13,9 @@ export class MaCalculator {
    */
   static calculate(candles: Candlestick[], period: number): number[] {
     if (candles.length < period) {
-      throw new Error(`Need at least ${period} candles to calculate ${period}-period MA`);
+      throw new Error(
+        `Need at least ${period} candles to calculate ${period}-period MA`,
+      );
     }
 
     const maValues: number[] = new Array(candles.length).fill(NaN);
@@ -32,7 +34,11 @@ export class MaCalculator {
   /**
    * Get MA value at a specific index
    */
-  static getMaAt(candles: Candlestick[], index: number, period: number): number {
+  static getMaAt(
+    candles: Candlestick[],
+    index: number,
+    period: number,
+  ): number {
     if (index < period - 1) {
       return NaN;
     }
@@ -43,4 +49,3 @@ export class MaCalculator {
     return sum / period;
   }
 }
-

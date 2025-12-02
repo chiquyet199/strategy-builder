@@ -10,4 +10,3 @@ import { StrategyModule } from '../strategy/strategy.module';
   providers: [BacktestService],
 })
 export class BacktestModule {}
-

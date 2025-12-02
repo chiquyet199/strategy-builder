@@ -1,5 +1,8 @@
 import { MetricsCalculator } from './metrics-calculator';
-import { Transaction, PortfolioValuePoint } from '../interfaces/strategy-result.interface';
+import {
+  Transaction,
+  PortfolioValuePoint,
+} from '../interfaces/strategy-result.interface';
 import { StrategyException } from '../../../common/exceptions/strategy.exception';
 
 describe('MetricsCalculator', () => {
@@ -10,10 +13,18 @@ describe('MetricsCalculator', () => {
       const totalInvestment = 10000;
 
       expect(() =>
-        MetricsCalculator.calculate(transactions, portfolioHistory, totalInvestment),
+        MetricsCalculator.calculate(
+          transactions,
+          portfolioHistory,
+          totalInvestment,
+        ),
       ).toThrow(StrategyException);
       expect(() =>
-        MetricsCalculator.calculate(transactions, portfolioHistory, totalInvestment),
+        MetricsCalculator.calculate(
+          transactions,
+          portfolioHistory,
+          totalInvestment,
+        ),
       ).toThrow('Portfolio history is empty');
     });
 
@@ -425,4 +436,3 @@ describe('MetricsCalculator', () => {
     });
   });
 });
-

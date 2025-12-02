@@ -126,7 +126,7 @@ export class AppModule implements NestModule, OnModuleInit {
 
     try {
       this.logger.log(`🔍 Checking for master account: ${masterEmail}`);
-      let user = await this.userRepository.findOne({
+      const user = await this.userRepository.findOne({
         where: { email: masterEmail },
       });
 

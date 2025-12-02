@@ -19,7 +19,7 @@ function parseRedisUrl(url: string): RedisConfig {
   try {
     const parsedUrl = new URL(url);
     const isTls = parsedUrl.protocol === 'rediss:';
-    
+
     return {
       host: parsedUrl.hostname,
       port: parseInt(parsedUrl.port || '6379', 10),
@@ -43,7 +43,7 @@ export function getRedisConfig(): RedisConfig {
 
   // Fall back to individual environment variables
   const password = process.env.REDIS_PASSWORD;
-  
+
   if (process.env.NODE_ENV === 'production' && !password) {
     throw new Error(
       'REDIS_PASSWORD or REDIS_URL is required in production. Please set it in your environment variables.',
@@ -56,4 +56,3 @@ export function getRedisConfig(): RedisConfig {
     password: password || 'redis', // Default for development only
   };
 }
-

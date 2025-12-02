@@ -15,4 +15,3 @@ import { loggerConfig } from './logger.config';
   exports: [WinstonModule],
 })
 export class LoggerModule {}
-

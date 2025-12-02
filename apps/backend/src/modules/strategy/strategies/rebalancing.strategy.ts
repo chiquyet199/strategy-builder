@@ -425,9 +425,14 @@ export class RebalancingStrategy extends BaseStrategy {
 
     if (parameters.rebalanceSchedule !== undefined) {
       if (
-        !['none', 'weekly', 'monthly', 'quarterly', 'half-yearly', 'yearly'].includes(
-          parameters.rebalanceSchedule,
-        )
+        ![
+          'none',
+          'weekly',
+          'monthly',
+          'quarterly',
+          'half-yearly',
+          'yearly',
+        ].includes(parameters.rebalanceSchedule)
       ) {
         throw new Error(
           'Rebalance schedule must be "none", "weekly", "monthly", "quarterly", "half-yearly", or "yearly"',

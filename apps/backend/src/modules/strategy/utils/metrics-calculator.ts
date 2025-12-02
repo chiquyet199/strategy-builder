@@ -1,4 +1,8 @@
-import { Transaction, PortfolioValuePoint, StrategyMetrics } from '../interfaces/strategy-result.interface';
+import {
+  Transaction,
+  PortfolioValuePoint,
+  StrategyMetrics,
+} from '../interfaces/strategy-result.interface';
 import { Candlestick } from '../../market-data/interfaces/candlestick.interface';
 import { StrategyException } from '../../../common/exceptions/strategy.exception';
 
@@ -20,7 +24,8 @@ export class MetricsCalculator {
     }
 
     const finalValue = portfolioHistory[portfolioHistory.length - 1].value;
-    const totalQuantity = portfolioHistory[portfolioHistory.length - 1].quantityHeld;
+    const totalQuantity =
+      portfolioHistory[portfolioHistory.length - 1].quantityHeld;
 
     // Calculate total amount spent on buys only (for average buy price)
     // Only count buy transactions (type === 'buy' or type is undefined for backward compatibility)
@@ -35,7 +40,8 @@ export class MetricsCalculator {
     // Total return percentage
     // Use totalInvestment (total capital allocated) for return calculation
     // This includes remaining USDC in the final value
-    const totalReturn = ((finalValue - totalInvestment) / totalInvestment) * 100;
+    const totalReturn =
+      ((finalValue - totalInvestment) / totalInvestment) * 100;
 
     // Average buy price
     // Use totalAmountSpentOnCoins (amount actually spent on buys) for average buy price
@@ -45,7 +51,9 @@ export class MetricsCalculator {
       0,
     );
     const avgBuyPrice =
-      totalQuantityFromBuys > 0 ? totalAmountSpentOnCoins / totalQuantityFromBuys : 0;
+      totalQuantityFromBuys > 0
+        ? totalAmountSpentOnCoins / totalQuantityFromBuys
+        : 0;
 
     // Maximum drawdown
     const maxDrawdown = this.calculateMaxDrawdown(portfolioHistory);
@@ -67,7 +75,9 @@ export class MetricsCalculator {
   /**
    * Calculate maximum drawdown
    */
-  private static calculateMaxDrawdown(portfolioHistory: PortfolioValuePoint[]): number {
+  private static calculateMaxDrawdown(
+    portfolioHistory: PortfolioValuePoint[],
+  ): number {
     let peak = portfolioHistory[0].value;
     let maxDrawdown = 0;
 
@@ -87,7 +97,9 @@ export class MetricsCalculator {
   /**
    * Calculate Sharpe ratio (simplified - assumes 0% risk-free rate)
    */
-  private static calculateSharpeRatio(portfolioHistory: PortfolioValuePoint[]): number {
+  private static calculateSharpeRatio(
+    portfolioHistory: PortfolioValuePoint[],
+  ): number {
     if (portfolioHistory.length < 2) {
       return 0;
     }
@@ -106,7 +118,8 @@ export class MetricsCalculator {
 
     // Calculate standard deviation
     const variance =
-      returns.reduce((sum, r) => sum + Math.pow(r - avgReturn, 2), 0) / returns.length;
+      returns.reduce((sum, r) => sum + Math.pow(r - avgReturn, 2), 0) /
+      returns.length;
     const stdDev = Math.sqrt(variance);
 
     if (stdDev === 0) {
@@ -195,4 +208,3 @@ export class MetricsCalculator {
     return history;
   }
 }
-

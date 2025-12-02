@@ -13,4 +13,3 @@ export interface BacktestResponse {
     calculatedAt: string;
   };
 }
-

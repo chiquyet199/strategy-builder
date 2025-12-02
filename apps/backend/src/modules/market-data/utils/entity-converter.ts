@@ -19,4 +19,3 @@ export function convertEntitiesToInterface(
     timeframe: entity.timeframe,
   }));
 }
-

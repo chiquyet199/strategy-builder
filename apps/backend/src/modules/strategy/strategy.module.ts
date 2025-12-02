@@ -6,4 +6,3 @@ import { StrategyService } from './strategy.service';
   exports: [StrategyService],
 })
 export class StrategyModule {}
-

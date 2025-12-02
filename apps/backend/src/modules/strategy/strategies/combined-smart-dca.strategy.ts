@@ -1,5 +1,10 @@
 import { BaseStrategy } from './base.strategy';
-import { StrategyResult, Transaction, InitialPortfolio, FundingSchedule } from '../interfaces/strategy-result.interface';
+import {
+  StrategyResult,
+  Transaction,
+  InitialPortfolio,
+  FundingSchedule,
+} from '../interfaces/strategy-result.interface';
 import { Candlestick } from '../../market-data/interfaces/candlestick.interface';
 import { MetricsCalculator } from '../utils/metrics-calculator';
 import { RsiCalculator } from '../utils/rsi-calculator';
@@ -25,7 +30,7 @@ export class CombinedSmartDcaStrategy extends BaseStrategy {
       oversoldThreshold: 30,
       maPeriod: 200,
       lookbackDays: 30,
-      dropThreshold: 0.10, // 10%
+      dropThreshold: 0.1, // 10%
       maxMultiplier: 2.5,
     };
   }
@@ -83,14 +88,16 @@ export class CombinedSmartDcaStrategy extends BaseStrategy {
       throw new Error('No candles provided for calculation');
     }
 
-    const initialPortfolio: InitialPortfolio | undefined = parameters._initialPortfolio;
-    const fundingSchedule: FundingSchedule | undefined = parameters._fundingSchedule;
+    const initialPortfolio: InitialPortfolio | undefined =
+      parameters._initialPortfolio;
+    const fundingSchedule: FundingSchedule | undefined =
+      parameters._fundingSchedule;
     const params = parameters as CombinedSmartDcaParameters;
     const rsiPeriod = params.rsiPeriod || 14;
     const oversoldThreshold = params.oversoldThreshold || 30;
     const maPeriod = params.maPeriod || 200;
     const lookbackDays = params.lookbackDays || 30;
-    const dropThreshold = params.dropThreshold || 0.10;
+    const dropThreshold = params.dropThreshold || 0.1;
     const maxMultiplier = params.maxMultiplier || 2.5;
     const allowNegativeUsdc = parameters.allowNegativeUsdc ?? false;
 
@@ -102,7 +109,11 @@ export class CombinedSmartDcaStrategy extends BaseStrategy {
     let totalInitialValue = investmentAmount;
 
     if (initialPortfolio) {
-      const initialState = this.getInitialState(initialPortfolio, firstCandlePrice, 'BTC');
+      const initialState = this.getInitialState(
+        initialPortfolio,
+        firstCandlePrice,
+        'BTC',
+      );
       initialAssetQuantity = initialState.initialAssetQuantity;
       initialUsdc = initialState.initialUsdc;
       totalInitialValue = initialState.totalInitialValue;
@@ -111,7 +122,9 @@ export class CombinedSmartDcaStrategy extends BaseStrategy {
     // Need enough candles for all indicators
     const minCandles = Math.max(rsiPeriod + 1, maPeriod, lookbackDays);
     if (candles.length < minCandles) {
-      throw new Error(`Need at least ${minCandles} candles for combined strategy`);
+      throw new Error(
+        `Need at least ${minCandles} candles for combined strategy`,
+      );
     }
 
     // Calculate indicators
@@ -121,7 +134,9 @@ export class CombinedSmartDcaStrategy extends BaseStrategy {
     // Calculate base DCA amount (weekly) from initial USDC
     const start = new Date(startDate);
     const end = new Date(endDate);
-    const totalDays = Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
+    const totalDays = Math.ceil(
+      (end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24),
+    );
     const totalWeeks = Math.ceil(totalDays / 7);
     const baseWeeklyAmount = initialUsdc / totalWeeks;
 
@@ -131,7 +146,8 @@ export class CombinedSmartDcaStrategy extends BaseStrategy {
     let lastFundingDate = new Date(start);
     lastFundingDate.setDate(lastFundingDate.getDate() - 1);
     let totalQuantityHeld = initialAssetQuantity;
-    let totalInvested = 0;
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    let totalInvested = 0; // Currently unused - using totalCapital instead
     let availableCash = initialUsdc;
     let totalFunding = 0;
 
@@ -141,7 +157,8 @@ export class CombinedSmartDcaStrategy extends BaseStrategy {
       const candle = candles[i];
       const candleDate = new Date(candle.timestamp);
       const daysSinceLastPurchase = Math.floor(
-        (candleDate.getTime() - lastPurchaseDate.getTime()) / (1000 * 60 * 60 * 24),
+        (candleDate.getTime() - lastPurchaseDate.getTime()) /
+          (1000 * 60 * 60 * 24),
       );
 
       // Handle periodic funding (separate from DCA purchases)
@@ -154,7 +171,8 @@ export class CombinedSmartDcaStrategy extends BaseStrategy {
               : 30; // monthly
 
         const daysSinceLastFunding = Math.floor(
-          (candleDate.getTime() - lastFundingDate.getTime()) / (1000 * 60 * 60 * 24),
+          (candleDate.getTime() - lastFundingDate.getTime()) /
+            (1000 * 60 * 60 * 24),
         );
 
         if (daysSinceLastFunding >= fundingPeriodDays) {
@@ -218,7 +236,7 @@ export class CombinedSmartDcaStrategy extends BaseStrategy {
         multiplier = Math.min(multiplier, maxMultiplier);
 
         const desiredBuyAmount = baseWeeklyAmount * multiplier;
-        
+
         // Calculate actual purchase amount (capped to available cash if negative USDC not allowed)
         const actualBuyAmount = this.calculatePurchaseAmount(
           desiredBuyAmount,
@@ -231,9 +249,10 @@ export class CombinedSmartDcaStrategy extends BaseStrategy {
           continue;
         }
 
-        let reason = reasons.length > 0 
-          ? `Combined signals: ${reasons.join(', ')} - ${multiplier.toFixed(2)}x purchase`
-          : 'Weekly DCA purchase';
+        let reason =
+          reasons.length > 0
+            ? `Combined signals: ${reasons.join(', ')} - ${multiplier.toFixed(2)}x purchase`
+            : 'Weekly DCA purchase';
 
         if (actualBuyAmount < desiredBuyAmount) {
           reason += ' (capped to available cash)';
@@ -288,7 +307,11 @@ export class CombinedSmartDcaStrategy extends BaseStrategy {
     // Calculate metrics
     // Use totalCapital (total capital allocated including funding) not totalInvested (amount spent)
     // because return should be calculated against total capital, including remaining USDC
-    const metrics = MetricsCalculator.calculate(transactions, portfolioHistory, totalCapital);
+    const metrics = MetricsCalculator.calculate(
+      transactions,
+      portfolioHistory,
+      totalCapital,
+    );
 
     return {
       strategyId: this.getStrategyId(),
@@ -300,4 +323,3 @@ export class CombinedSmartDcaStrategy extends BaseStrategy {
     };
   }
 }
-

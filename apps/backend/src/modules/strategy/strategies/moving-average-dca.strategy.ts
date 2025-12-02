@@ -1,5 +1,10 @@
 import { BaseStrategy } from './base.strategy';
-import { StrategyResult, Transaction, InitialPortfolio, FundingSchedule } from '../interfaces/strategy-result.interface';
+import {
+  StrategyResult,
+  Transaction,
+  InitialPortfolio,
+  FundingSchedule,
+} from '../interfaces/strategy-result.interface';
 import { Candlestick } from '../../market-data/interfaces/candlestick.interface';
 import { MetricsCalculator } from '../utils/metrics-calculator';
 import { MaCalculator } from '../utils/ma-calculator';
@@ -54,8 +59,10 @@ export class MovingAverageDcaStrategy extends BaseStrategy {
       throw new Error('No candles provided for calculation');
     }
 
-    const initialPortfolio: InitialPortfolio | undefined = parameters._initialPortfolio;
-    const fundingSchedule: FundingSchedule | undefined = parameters._fundingSchedule;
+    const initialPortfolio: InitialPortfolio | undefined =
+      parameters._initialPortfolio;
+    const fundingSchedule: FundingSchedule | undefined =
+      parameters._fundingSchedule;
     const params = parameters as MovingAverageDcaParameters;
     const maPeriod = params.maPeriod || 200;
     const buyMultiplier = params.buyMultiplier || 2.0;
@@ -69,7 +76,11 @@ export class MovingAverageDcaStrategy extends BaseStrategy {
     let totalInitialValue = investmentAmount;
 
     if (initialPortfolio) {
-      const initialState = this.getInitialState(initialPortfolio, firstCandlePrice, 'BTC');
+      const initialState = this.getInitialState(
+        initialPortfolio,
+        firstCandlePrice,
+        'BTC',
+      );
       initialAssetQuantity = initialState.initialAssetQuantity;
       initialUsdc = initialState.initialUsdc;
       totalInitialValue = initialState.totalInitialValue;
@@ -77,7 +88,9 @@ export class MovingAverageDcaStrategy extends BaseStrategy {
 
     // Need enough candles for MA calculation
     if (candles.length < maPeriod) {
-      throw new Error(`Need at least ${maPeriod} candles to calculate ${maPeriod}-period MA`);
+      throw new Error(
+        `Need at least ${maPeriod} candles to calculate ${maPeriod}-period MA`,
+      );
     }
 
     // Calculate MA for all candles
@@ -86,7 +99,9 @@ export class MovingAverageDcaStrategy extends BaseStrategy {
     // Calculate base DCA amount (weekly) from initial USDC
     const start = new Date(startDate);
     const end = new Date(endDate);
-    const totalDays = Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
+    const totalDays = Math.ceil(
+      (end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24),
+    );
     const totalWeeks = Math.ceil(totalDays / 7);
     const baseWeeklyAmount = initialUsdc / totalWeeks;
 
@@ -107,7 +122,8 @@ export class MovingAverageDcaStrategy extends BaseStrategy {
       const currentPrice = candle.close;
       const candleDate = new Date(candle.timestamp);
       const daysSinceLastPurchase = Math.floor(
-        (candleDate.getTime() - lastPurchaseDate.getTime()) / (1000 * 60 * 60 * 24),
+        (candleDate.getTime() - lastPurchaseDate.getTime()) /
+          (1000 * 60 * 60 * 24),
       );
 
       // Handle periodic funding (separate from DCA purchases)
@@ -120,7 +136,8 @@ export class MovingAverageDcaStrategy extends BaseStrategy {
               : 30; // monthly
 
         const daysSinceLastFunding = Math.floor(
-          (candleDate.getTime() - lastFundingDate.getTime()) / (1000 * 60 * 60 * 24),
+          (candleDate.getTime() - lastFundingDate.getTime()) /
+            (1000 * 60 * 60 * 24),
         );
 
         if (daysSinceLastFunding >= fundingPeriodDays) {
@@ -222,7 +239,11 @@ export class MovingAverageDcaStrategy extends BaseStrategy {
     // Calculate metrics
     // Use totalCapital (total capital allocated including funding) not totalInvested (amount spent)
     // because return should be calculated against total capital, including remaining USDC
-    const metrics = MetricsCalculator.calculate(transactions, portfolioHistory, totalCapital);
+    const metrics = MetricsCalculator.calculate(
+      transactions,
+      portfolioHistory,
+      totalCapital,
+    );
 
     return {
       strategyId: this.getStrategyId(),
@@ -234,4 +255,3 @@ export class MovingAverageDcaStrategy extends BaseStrategy {
     };
   }
 }
-

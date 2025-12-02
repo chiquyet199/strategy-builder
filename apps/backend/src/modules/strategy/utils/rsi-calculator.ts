@@ -13,7 +13,9 @@ export class RsiCalculator {
    */
   static calculate(candles: Candlestick[], period: number = 14): number[] {
     if (candles.length < period + 1) {
-      throw new Error(`Need at least ${period + 1} candles to calculate RSI with period ${period}`);
+      throw new Error(
+        `Need at least ${period + 1} candles to calculate RSI with period ${period}`,
+      );
     }
 
     const rsiValues: number[] = new Array(candles.length).fill(NaN);
@@ -28,8 +30,10 @@ export class RsiCalculator {
     }
 
     // Calculate initial average gain and loss
-    let avgGain = gains.slice(0, period).reduce((sum, g) => sum + g, 0) / period;
-    let avgLoss = losses.slice(0, period).reduce((sum, l) => sum + l, 0) / period;
+    let avgGain =
+      gains.slice(0, period).reduce((sum, g) => sum + g, 0) / period;
+    let avgLoss =
+      losses.slice(0, period).reduce((sum, l) => sum + l, 0) / period;
 
     // Calculate first RSI value
     if (avgLoss === 0) {
@@ -59,9 +63,12 @@ export class RsiCalculator {
   /**
    * Get RSI value at a specific index
    */
-  static getRsiAt(candles: Candlestick[], index: number, period: number = 14): number {
+  static getRsiAt(
+    candles: Candlestick[],
+    index: number,
+    period: number = 14,
+  ): number {
     const rsiValues = this.calculate(candles, period);
     return rsiValues[index];
   }
 }
-

@@ -1,7 +1,6 @@
 import { ExecutionContext, ForbiddenException } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { RolesGuard } from './roles.guard';
-import { ROLES_KEY } from '../decorators/roles.decorator';
 import { UserRole } from '../entities/user.entity';
 
 describe('RolesGuard', () => {
@@ -47,7 +46,9 @@ describe('RolesGuard', () => {
       const context = createMockContext(null);
 
       expect(() => guard.canActivate(context)).toThrow(ForbiddenException);
-      expect(() => guard.canActivate(context)).toThrow('User not authenticated');
+      expect(() => guard.canActivate(context)).toThrow(
+        'User not authenticated',
+      );
     });
 
     it('should allow access if user has master role', () => {
@@ -77,7 +78,10 @@ describe('RolesGuard', () => {
     });
 
     it('should allow access if user has one of multiple required roles', () => {
-      reflector.getAllAndOverride.mockReturnValue([UserRole.ADMIN, UserRole.USER]);
+      reflector.getAllAndOverride.mockReturnValue([
+        UserRole.ADMIN,
+        UserRole.USER,
+      ]);
       const context = createMockContext({
         userId: 'user-123',
         email: 'user@example.com',
@@ -98,7 +102,9 @@ describe('RolesGuard', () => {
       });
 
       expect(() => guard.canActivate(context)).toThrow(ForbiddenException);
-      expect(() => guard.canActivate(context)).toThrow('Insufficient permissions');
+      expect(() => guard.canActivate(context)).toThrow(
+        'Insufficient permissions',
+      );
     });
 
     it('should handle empty roles array', () => {
@@ -114,4 +120,3 @@ describe('RolesGuard', () => {
     });
   });
 });
-

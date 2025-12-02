@@ -66,4 +66,3 @@ export class BacktestController {
     return this.backtestService.compareStrategies(dto);
   }
 }
-

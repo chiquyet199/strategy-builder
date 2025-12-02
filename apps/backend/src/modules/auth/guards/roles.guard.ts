@@ -41,9 +41,7 @@ export class RolesGuard implements CanActivate {
 
     this.logger.debug(
       'User from request',
-      user
-        ? { userId: user.userId, email: user.email, role: user.role }
-        : null,
+      user ? { userId: user.userId, email: user.email, role: user.role } : null,
     );
 
     if (!user) {

@@ -153,7 +153,7 @@
         "investmentAmount": {
           "label": "Số tiền đầu tư (USD)",
           "helper": "Bạn muốn đầu tư bao nhiêu?",
-          "tooltip": "Tổng số tiền bạn muốn đầu tư trong bài kiểm tra này. Đây là vốn ban đầu sẽ được sử dụng cho tất cả các chiến lược đã chọn.",
+          "tooltip": "Số tiền ban đầu bạn muốn đầu tư khi bắt đầu bài kiểm tra này. Đây là vốn ban đầu sẽ được sử dụng cho tất cả các chiến lược đã chọn. Bạn cũng có thể thêm tài trợ định kỳ (hàng ngày/hàng tuần/hàng tháng) ngoài số tiền ban đầu này.",
           "quickSelect": "Chọn nhanh"
         },
         "advancedPortfolio": {
@@ -344,6 +344,25 @@
         "maxMultiplier": "Hệ số Tối đa",
         "maxMultiplierHelp": "Hệ số tối đa khi nhiều tín hiệu đồng bộ (mặc định: 3.0x)",
         "maxMultiplierTooltip": "Hệ số mua tối đa khi nhiều tín hiệu (RSI, Trung bình động và Đợt giảm) đều đồng bộ. Điều này giới hạn mức độ tích cực của chiến lược ngay cả khi tất cả các điều kiện đều được đáp ứng. Ví dụ, 3.0x có nghĩa là mua tối đa gấp 3 lần số tiền bình thường."
+      },
+      "rebalancing": {
+        "targetAllocation": "Phân bổ Tài sản Mục tiêu",
+        "targetAllocationHelp": "Tỷ lệ phần trăm danh mục trong tài sản (mặc định: 80%)",
+        "targetAllocationTooltip": "Tỷ lệ phần trăm mục tiêu của danh mục của bạn nên ở trong tài sản. Ví dụ: 0.8 (80%) có nghĩa là bạn muốn 80% giá trị danh mục của mình ở tài sản và 20% ở USDC. Chiến lược sẽ tự động mua hoặc bán để duy trì phân bổ này.",
+        "rebalanceThreshold": "Ngưỡng Cân bằng lại",
+        "rebalanceThresholdHelp": "Phần trăm lệch khỏi mục tiêu trước khi cân bằng lại (mặc định: 10%)",
+        "rebalanceThresholdTooltip": "Mức phân bổ có thể lệch khỏi mục tiêu trước khi kích hoạt cân bằng lại. Ví dụ: với mục tiêu 80% và ngưỡng 10%, cân bằng lại xảy ra khi phân bổ vượt quá 90% (bán tài sản) hoặc dưới 70% (mua tài sản). Ngưỡng thấp hơn có nghĩa là cân bằng lại thường xuyên hơn. Đặt thành 0 để tắt cân bằng lại dựa trên ngưỡng.",
+        "rebalanceSchedule": "Lịch Cân bằng lại",
+        "rebalanceScheduleHelp": "Cân bằng lại theo lịch trình ngoài việc cân bằng lại dựa trên ngưỡng (mặc định: không có)",
+        "rebalanceScheduleTooltip": "Cân bằng lại theo lịch trình đều đặn (hàng tuần, hàng tháng, hàng quý, nửa năm, hoặc hàng năm) ngoài việc cân bằng lại dựa trên ngưỡng. Chiến lược sẽ cân bằng lại khi lịch trình đến hạn HOẶC ngưỡng bị vi phạm, tùy điều kiện nào đến trước. Đặt thành 'không có' để chỉ sử dụng cân bằng lại dựa trên ngưỡng.",
+        "rebalanceScheduleOptions": {
+          "none": "Không có (Chỉ Ngưỡng)",
+          "weekly": "Hàng tuần",
+          "monthly": "Hàng tháng",
+          "quarterly": "Hàng quý (3 tháng)",
+          "halfYearly": "Nửa năm (6 tháng)",
+          "yearly": "Hàng năm (1 năm)"
+        }
       }
     },
     "results": {

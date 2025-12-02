@@ -153,7 +153,7 @@
         "investmentAmount": {
           "label": "Investment Amount (USD)",
           "helper": "How much would you invest?",
-          "tooltip": "The total amount of money you want to invest in this backtest. This is the starting capital that will be used across all selected strategies.",
+          "tooltip": "The initial amount of money you want to invest at the start of this backtest. This is the starting capital that will be used across all selected strategies. You can also add periodic funding (daily/weekly/monthly) in addition to this initial amount.",
           "quickSelect": "Quick Select"
         },
         "advancedPortfolio": {
@@ -346,12 +346,23 @@
         "maxMultiplierTooltip": "The maximum purchase multiplier when multiple signals (RSI, Moving Average, and Dip) all align. This caps how aggressive the strategy can be even when all conditions are met. For example, 3.0x means buying at most 3 times the normal amount."
       },
       "rebalancing": {
-        "targetAllocation": "Target BTC Allocation",
-        "targetAllocationHelp": "Target percentage of portfolio in BTC (default: 80%)",
-        "targetAllocationTooltip": "The target percentage of your portfolio that should be in BTC. For example, 0.8 (80%) means you want 80% of your portfolio value in BTC and 20% in USDC. The strategy will automatically buy or sell to maintain this allocation.",
+        "targetAllocation": "Target Asset Allocation",
+        "targetAllocationHelp": "Target percentage of portfolio in assets (default: 80%)",
+        "targetAllocationTooltip": "The target percentage of your portfolio that should be in assets. For example, 0.8 (80%) means you want 80% of your portfolio value in assets and 20% in USDC. The strategy will automatically buy or sell to maintain this allocation.",
         "rebalanceThreshold": "Rebalancing Threshold",
         "rebalanceThresholdHelp": "Percentage drift from target before rebalancing (default: 10%)",
-        "rebalanceThresholdTooltip": "How much the allocation can drift from the target before rebalancing is triggered. For example, with 80% target and 10% threshold, rebalancing occurs when allocation goes above 90% (sell BTC) or below 70% (buy BTC). Lower thresholds mean more frequent rebalancing."
+        "rebalanceThresholdTooltip": "How much the allocation can drift from the target before rebalancing is triggered. For example, with 80% target and 10% threshold, rebalancing occurs when allocation goes above 90% (sell assets) or below 70% (buy assets). Lower thresholds mean more frequent rebalancing. Set to 0 to disable threshold-based rebalancing.",
+        "rebalanceSchedule": "Rebalance Schedule",
+        "rebalanceScheduleHelp": "Rebalance on a schedule in addition to threshold-based rebalancing (default: none)",
+        "rebalanceScheduleTooltip": "Rebalance on a regular schedule (weekly, monthly, quarterly, half-yearly, or yearly) in addition to threshold-based rebalancing. The strategy will rebalance when either the schedule is due OR the threshold is breached, whichever comes first. Set to 'none' to only use threshold-based rebalancing.",
+        "rebalanceScheduleOptions": {
+          "none": "None (Threshold Only)",
+          "weekly": "Weekly",
+          "monthly": "Monthly",
+          "quarterly": "Quarterly (3 months)",
+          "halfYearly": "Half-Yearly (6 months)",
+          "yearly": "Yearly (1 year)"
+        }
       }
     },
     "results": {

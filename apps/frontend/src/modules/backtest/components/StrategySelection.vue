@@ -395,6 +395,25 @@
                 style="width: 100%"
               />
             </a-form-item>
+
+            <a-form-item :help="t('backtest.parameters.rebalancing.rebalanceScheduleHelp')">
+              <template #label>
+                <span>
+                  {{ t('backtest.parameters.rebalancing.rebalanceSchedule') }}
+                  <a-tooltip :title="t('backtest.parameters.rebalancing.rebalanceScheduleTooltip')">
+                    <QuestionCircleOutlined style="margin-left: 4px; color: #8c8c8c; cursor: help;" />
+                  </a-tooltip>
+                </span>
+              </template>
+              <a-select v-model:value="parameterForm.rebalanceSchedule" style="width: 100%">
+                <a-select-option value="none">{{ t('backtest.parameters.rebalancing.rebalanceScheduleOptions.none') }}</a-select-option>
+                <a-select-option value="weekly">{{ t('backtest.parameters.rebalancing.rebalanceScheduleOptions.weekly') }}</a-select-option>
+                <a-select-option value="monthly">{{ t('backtest.parameters.rebalancing.rebalanceScheduleOptions.monthly') }}</a-select-option>
+                <a-select-option value="quarterly">{{ t('backtest.parameters.rebalancing.rebalanceScheduleOptions.quarterly') }}</a-select-option>
+                <a-select-option value="half-yearly">{{ t('backtest.parameters.rebalancing.rebalanceScheduleOptions.halfYearly') }}</a-select-option>
+                <a-select-option value="yearly">{{ t('backtest.parameters.rebalancing.rebalanceScheduleOptions.yearly') }}</a-select-option>
+              </a-select>
+            </a-form-item>
           </template>
 
           <template v-else>
@@ -469,6 +488,7 @@ const availableStrategies: StrategyInfo[] = [
     defaultParameters: {
       targetAllocation: 0.8, // 80%
       rebalanceThreshold: 0.1, // 10%
+      rebalanceSchedule: 'none', // 'none', 'weekly', or 'monthly'
     },
   },
 ]

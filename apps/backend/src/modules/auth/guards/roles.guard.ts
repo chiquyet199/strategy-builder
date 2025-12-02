@@ -3,6 +3,7 @@ import {
   CanActivate,
   ExecutionContext,
   ForbiddenException,
+  Logger,
 } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { ROLES_KEY } from '../decorators/roles.decorator';
@@ -15,45 +16,43 @@ import { UserRole } from '../entities/user.entity';
  */
 @Injectable()
 export class RolesGuard implements CanActivate {
+  private readonly logger = new Logger(RolesGuard.name);
+
   constructor(private reflector: Reflector) {}
 
   canActivate(context: ExecutionContext): boolean {
-    console.log('RolesGuard: Starting execution');
+    this.logger.debug('Starting execution');
 
     const requiredRoles = this.reflector.getAllAndOverride<UserRole[]>(
       ROLES_KEY,
       [context.getHandler(), context.getClass()],
     );
 
-    console.log('RolesGuard: Required roles:', requiredRoles);
+    this.logger.debug(`Required roles: ${JSON.stringify(requiredRoles)}`);
 
     // No roles required, allow access
     if (!requiredRoles) {
-      console.log('RolesGuard: No roles required, allowing access');
+      this.logger.debug('No roles required, allowing access');
       return true;
     }
 
     const request = context.switchToHttp().getRequest();
     const user = request.user;
 
-    console.log(
-      'RolesGuard: User from request:',
+    this.logger.debug(
+      'User from request',
       user
         ? { userId: user.userId, email: user.email, role: user.role }
-        : 'null',
+        : null,
     );
 
     if (!user) {
-      console.log('RolesGuard: No user found, throwing ForbiddenException');
+      this.logger.warn('No user found, throwing ForbiddenException');
       throw new ForbiddenException('User not authenticated');
     }
 
-    // Debug logging (can be removed in production)
-    console.log('RolesGuard Debug:', {
+    this.logger.debug('Role check', {
       userRole: user.role,
-      userRoleType: typeof user.role,
-      masterRole: UserRole.MASTER,
-      masterRoleType: typeof UserRole.MASTER,
       requiredRoles,
       roleMatch: user.role === UserRole.MASTER,
     });

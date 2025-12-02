@@ -1,5 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { Candlestick, Timeframe } from '../interfaces/candlestick.interface';
+import { BinanceRateLimiter } from '../utils/rate-limiter';
 
 interface BinanceKline {
   0: number; // Open time
@@ -26,15 +27,23 @@ export class BinanceApiService {
   private readonly MAX_WEIGHT_PER_MINUTE = 1200;
   private readonly MAX_REQUESTS_PER_MINUTE = 1200;
 
-  // Request weight tracking
-  private weightUsage: Array<{ timestamp: number; weight: number }> = [];
-  private requestCount: Array<{ timestamp: number }> = [];
-
   // Request weight for klines endpoint based on limit
   // limit ≤ 100: weight = 1
   // 100 < limit ≤ 500: weight = 2
   // 500 < limit ≤ 1000: weight = 5
   private readonly REQUEST_WEIGHT = 5; // We use limit=1000, so weight=5
+
+  // Rate limiter instance
+  private readonly rateLimiter: BinanceRateLimiter;
+
+  constructor() {
+    this.rateLimiter = new BinanceRateLimiter(
+      this.logger,
+      this.MAX_WEIGHT_PER_MINUTE,
+      this.MAX_REQUESTS_PER_MINUTE,
+      this.REQUEST_WEIGHT,
+    );
+  }
 
   /**
    * Map our timeframe to Binance interval
@@ -123,7 +132,7 @@ export class BinanceApiService {
         }
 
         // Rate limiting: Wait to respect weight and request limits
-        await this.waitForRateLimit();
+        await this.rateLimiter.waitForRateLimit();
       }
 
       this.logger.log(
@@ -158,12 +167,13 @@ export class BinanceApiService {
     url.searchParams.append('limit', this.MAX_KLINES_PER_REQUEST.toString());
 
     // Wait before making request to respect rate limits
-    await this.waitForRateLimit();
+    await this.rateLimiter.waitForRateLimit();
 
     const response = await fetch(url.toString());
 
     // Track weight usage from response headers
-    this.trackRequestWeight(response);
+    const weightHeader = response.headers.get('X-MBX-USED-WEIGHT-1M');
+    this.rateLimiter.trackRequestFromHeader(weightHeader);
 
     if (!response.ok) {
       // Handle rate limit errors (429) with exponential backoff
@@ -177,7 +187,7 @@ export class BinanceApiService {
           `Rate limit exceeded. Waiting ${waitTime}ms before retry (attempt ${retryCount + 1})`,
         );
 
-        await this.delay(waitTime);
+        await new Promise((resolve) => setTimeout(resolve, waitTime));
 
         // Retry up to 3 times
         if (retryCount < 3) {
@@ -251,105 +261,4 @@ export class BinanceApiService {
     return data.serverTime;
   }
 
-  /**
-   * Track request weight from response headers
-   */
-  private trackRequestWeight(response: Response): void {
-    const now = Date.now();
-    const weightHeader = response.headers.get('X-MBX-USED-WEIGHT-1M');
-    const usedWeight = weightHeader
-      ? parseInt(weightHeader, 10)
-      : this.REQUEST_WEIGHT;
-
-    // Track weight usage
-    this.weightUsage.push({ timestamp: now, weight: this.REQUEST_WEIGHT });
-    this.requestCount.push({ timestamp: now });
-
-    // Clean up old entries (older than 1 minute)
-    const oneMinuteAgo = now - 60000;
-    this.weightUsage = this.weightUsage.filter(
-      (entry) => entry.timestamp > oneMinuteAgo,
-    );
-    this.requestCount = this.requestCount.filter(
-      (entry) => entry.timestamp > oneMinuteAgo,
-    );
-
-    // Log warning if approaching limits
-    const currentWeight = this.getCurrentWeightUsage();
-    const currentRequests = this.getCurrentRequestCount();
-
-    if (currentWeight > this.MAX_WEIGHT_PER_MINUTE * 0.8) {
-      this.logger.warn(
-        `Approaching weight limit: ${currentWeight}/${this.MAX_WEIGHT_PER_MINUTE}`,
-      );
-    }
-
-    if (currentRequests > this.MAX_REQUESTS_PER_MINUTE * 0.8) {
-      this.logger.warn(
-        `Approaching request limit: ${currentRequests}/${this.MAX_REQUESTS_PER_MINUTE}`,
-      );
-    }
-  }
-
-  /**
-   * Get current weight usage in the last minute
-   */
-  private getCurrentWeightUsage(): number {
-    return this.weightUsage.reduce((sum, entry) => sum + entry.weight, 0);
-  }
-
-  /**
-   * Get current request count in the last minute
-   */
-  private getCurrentRequestCount(): number {
-    return this.requestCount.length;
-  }
-
-  /**
-   * Wait if necessary to respect rate limits
-   */
-  private async waitForRateLimit(): Promise<void> {
-    const currentWeight = this.getCurrentWeightUsage();
-    const currentRequests = this.getCurrentRequestCount();
-
-    // Calculate how much weight/requests we can use
-    const availableWeight = this.MAX_WEIGHT_PER_MINUTE - currentWeight;
-    const availableRequests = this.MAX_REQUESTS_PER_MINUTE - currentRequests;
-
-    // If we're close to limits, wait
-    if (availableWeight < this.REQUEST_WEIGHT || availableRequests < 1) {
-      // Calculate wait time based on oldest entry
-      const oldestEntry = Math.min(
-        ...this.weightUsage.map((e) => e.timestamp),
-        ...this.requestCount.map((e) => e.timestamp),
-      );
-
-      if (oldestEntry) {
-        const timeSinceOldest = Date.now() - oldestEntry;
-        const waitTime = Math.max(0, 60000 - timeSinceOldest + 100); // Add 100ms buffer
-
-        if (waitTime > 0) {
-          this.logger.debug(
-            `Rate limit: Waiting ${waitTime}ms (weight: ${currentWeight}/${this.MAX_WEIGHT_PER_MINUTE}, requests: ${currentRequests}/${this.MAX_REQUESTS_PER_MINUTE})`,
-          );
-          await this.delay(waitTime);
-        }
-      } else {
-        // Conservative delay if no history
-        await this.delay(250); // 4 requests per second max (240 per minute)
-      }
-    } else {
-      // Small delay to avoid hitting limits too quickly
-      // With weight=5, we can do 240 requests per minute max
-      // That's 4 requests per second, so 250ms delay is safe
-      await this.delay(250);
-    }
-  }
-
-  /**
-   * Delay helper for rate limiting
-   */
-  private delay(ms: number): Promise<void> {
-    return new Promise((resolve) => setTimeout(resolve, ms));
-  }
 }

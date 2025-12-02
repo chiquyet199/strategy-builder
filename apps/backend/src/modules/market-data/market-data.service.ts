@@ -6,6 +6,13 @@ import {
   Candlestick as CandlestickInterface,
   Timeframe,
 } from './interfaces/candlestick.interface';
+import { MarketDataException } from '../../common/exceptions/market-data.exception';
+import {
+  validateSymbol,
+  validateDateRange,
+  parseSupportedSymbols,
+} from './utils/market-data-validators';
+import { convertEntitiesToInterface } from './utils/entity-converter';
 
 @Injectable()
 export class MarketDataService {
@@ -32,24 +39,21 @@ export class MarketDataService {
 
     // Validate symbol is supported
     const supportedSymbols = this.getSupportedSymbols();
-    if (!supportedSymbols.includes(symbol)) {
-      throw new Error(
-        `Symbol ${symbol} is not supported. Supported symbols: ${supportedSymbols.join(', ')}`,
-      );
+    try {
+      validateSymbol(symbol, supportedSymbols);
+    } catch (error) {
+      throw new MarketDataException(error.message);
     }
 
     const start = new Date(startDate);
     const end = new Date(endDate);
 
     // Validate date range
-    if (start > end) {
-      throw new Error('Start date must be before end date');
-    }
-
-    // Validate date range (not too far in the future)
     const maxDate = new Date('2025-12-31');
-    if (end > maxDate) {
-      throw new Error('End date cannot be beyond 2025-12-31');
+    try {
+      validateDateRange(start, end, maxDate);
+    } catch (error) {
+      throw new MarketDataException(error.message);
     }
 
     // Get data from database
@@ -64,7 +68,7 @@ export class MarketDataService {
       this.logger.warn(
         `No data found in database for ${symbol} ${timeframe} from ${startDate} to ${endDate}. Please sync data using admin endpoints.`,
       );
-      throw new Error(
+      throw new MarketDataException(
         `No market data available for ${symbol} in the requested date range. Please sync data first using admin endpoints.`,
       );
     }
@@ -95,31 +99,13 @@ export class MarketDataService {
       },
     });
 
-    return this.convertEntitiesToInterface(entities);
-    }
-
-  /**
-   * Convert database entities to interface format
-   */
-  private convertEntitiesToInterface(
-    entities: Candlestick[],
-  ): CandlestickInterface[] {
-    return entities.map((entity) => ({
-      timestamp: entity.timestamp.toISOString(),
-      open: Number(entity.open),
-      high: Number(entity.high),
-      low: Number(entity.low),
-      close: Number(entity.close),
-      volume: Number(entity.volume),
-      timeframe: entity.timeframe,
-    }));
+    return convertEntitiesToInterface(entities);
   }
 
   /**
    * Get supported symbols from environment variable
    */
   private getSupportedSymbols(): string[] {
-    const symbolsEnv = process.env.SUPPORTED_SYMBOLS || 'BTC/USD';
-    return symbolsEnv.split(',').map((s) => s.trim());
+    return parseSupportedSymbols(process.env.SUPPORTED_SYMBOLS, 'BTC/USD');
   }
 }

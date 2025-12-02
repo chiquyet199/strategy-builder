@@ -4,6 +4,8 @@ import { Repository } from 'typeorm';
 import { Candlestick } from '../entities/candlestick.entity';
 import { BinanceApiService } from './binance-api.service';
 import { Timeframe } from '../interfaces/candlestick.interface';
+import { MarketDataException } from '../../../common/exceptions/market-data.exception';
+import { parseSupportedSymbolsFromEnv, calculateGapRanges } from '../utils/sync-helpers';
 
 @Injectable()
 export class MarketDataSyncService {
@@ -13,8 +15,10 @@ export class MarketDataSyncService {
     10,
   );
 
-  private readonly supportedSymbols: string[] =
-    this.getSupportedSymbolsFromEnv();
+  private readonly supportedSymbols: string[] = parseSupportedSymbolsFromEnv(
+    process.env.SUPPORTED_SYMBOLS,
+    'BTC/USD',
+  );
 
   constructor(
     @InjectRepository(Candlestick)
@@ -170,13 +174,6 @@ export class MarketDataSyncService {
     return [...this.supportedSymbols];
   }
 
-  /**
-   * Get supported symbols from environment variable (private helper)
-   */
-  private getSupportedSymbolsFromEnv(): string[] {
-    const symbolsEnv = process.env.SUPPORTED_SYMBOLS || 'BTC/USD';
-    return symbolsEnv.split(',').map((s) => s.trim());
-  }
 
   /**
    * Sync data for a specific date range and timeframe
@@ -194,7 +191,7 @@ export class MarketDataSyncService {
     // Check if Binance API is available
     const isHealthy = await this.binanceApiService.checkApiHealth();
     if (!isHealthy) {
-      throw new Error(
+      throw new MarketDataException(
         'Binance API is not available. Please check your connection and API configuration.',
       );
     }
@@ -304,25 +301,16 @@ export class MarketDataSyncService {
         continue;
       }
 
-      // For intraday timeframes (1h, 4h), gap detection is more complex
-      // For simplicity, we'll check if the date range is covered
-      const earliest = existingCandles[0].timestamp;
-      const latest = existingCandles[existingCandles.length - 1].timestamp;
+      // Use pure function to calculate gap ranges
+      const timestamps = existingCandles.map((c) => c.timestamp);
+      const gaps = calculateGapRanges(timestamps, startDate, endDate);
 
-      // Check if we need to sync before earliest
-      if (earliest > startDate) {
+      // Sync each gap
+      for (const gap of gaps) {
         this.logger.log(
-          `Gap found: missing ${timeframe} data before ${earliest.toISOString()}`,
+          `Gap found: missing ${timeframe} data from ${gap.start.toISOString()} to ${gap.end.toISOString()}`,
         );
-        await this.syncDateRange(symbol, timeframe, startDate, earliest);
-      }
-
-      // Check if we need to sync after latest
-      if (latest < endDate) {
-        this.logger.log(
-          `Gap found: missing ${timeframe} data after ${latest.toISOString()}`,
-        );
-        await this.syncDateRange(symbol, timeframe, latest, endDate);
+        await this.syncDateRange(symbol, timeframe, gap.start, gap.end);
       }
 
       // Add delay between timeframes

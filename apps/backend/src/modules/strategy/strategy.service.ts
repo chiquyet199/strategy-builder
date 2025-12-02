@@ -39,7 +39,10 @@ export class StrategyService {
   }
 
   /**
-   * Get a strategy by ID
+   * Get a strategy instance by ID
+   * @param strategyId - Unique identifier of the strategy (e.g., 'lump-sum', 'dca')
+   * @returns Strategy instance implementing IStrategy interface
+   * @throws NotFoundException if strategy with given ID is not found
    */
   getStrategy(strategyId: string): IStrategy {
     const strategy = this.strategies.get(strategyId);
@@ -50,14 +53,17 @@ export class StrategyService {
   }
 
   /**
-   * Get all available strategies
+   * Get all registered strategy instances
+   * @returns Array of all available strategy instances
    */
   getAllStrategies(): IStrategy[] {
     return Array.from(this.strategies.values());
   }
 
   /**
-   * Get strategy metadata (ID and name) for all strategies
+   * Get metadata (ID and name) for all available strategies
+   * Useful for listing strategies without instantiating them
+   * @returns Array of strategy metadata objects containing id and name
    */
   getStrategyMetadata(): Array<{ id: string; name: string }> {
     return this.getAllStrategies().map((strategy) => ({
@@ -67,8 +73,17 @@ export class StrategyService {
   }
 
   /**
-   * Calculate a strategy with given parameters
-   * Supports both old format (investmentAmount) and new format (initialPortfolio)
+   * Calculate strategy results with given parameters
+   * Supports both old format (investmentAmount) and new format (initialPortfolio) for backward compatibility
+   * @param strategyId - Unique identifier of the strategy to calculate
+   * @param candles - Candlestick data for the date range
+   * @param initialPortfolioOrAmount - Initial portfolio configuration or investment amount (number)
+   * @param fundingScheduleOrUndefined - Optional periodic funding schedule
+   * @param startDate - Start date in ISO 8601 format
+   * @param endDate - End date in ISO 8601 format
+   * @param parameters - Optional strategy-specific parameters
+   * @returns Strategy calculation results with transactions and metrics
+   * @throws NotFoundException if strategy with given ID is not found
    */
   calculateStrategy(
     strategyId: string,

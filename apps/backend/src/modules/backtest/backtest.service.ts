@@ -4,6 +4,12 @@ import { StrategyService } from '../strategy/strategy.service';
 import { CompareStrategiesDto } from './dto/compare-strategies.dto';
 import { BacktestResponse } from './interfaces/backtest-response.interface';
 import { InitialPortfolio, FundingSchedule } from '../strategy/interfaces/strategy-result.interface';
+import { BacktestException } from '../../common/exceptions/backtest.exception';
+import {
+  normalizeInitialPortfolio,
+  normalizeFundingSchedule,
+  calculateTotalInitialValue,
+} from './utils/dto-normalizer';
 
 @Injectable()
 export class BacktestService {
@@ -15,32 +21,22 @@ export class BacktestService {
   ) {}
 
   /**
-   * Compare multiple strategies
+   * Compare multiple investment strategies
+   * Normalizes input DTO (supports both old and new formats) and calculates results for each strategy
+   * @param dto - Comparison request containing strategies, date range, and investment configuration
+   * @returns Backtest results with metrics for each strategy
+   * @throws BadRequestException if neither investmentAmount nor initialPortfolio is provided
+   * @throws BacktestException if no market data is available for the date range
    */
   async compareStrategies(dto: CompareStrategiesDto): Promise<BacktestResponse> {
-    // Normalize input: convert old format (investmentAmount) to new format (initialPortfolio) if needed
-    const initialPortfolio: InitialPortfolio = dto.initialPortfolio
-      ? {
-          assets: dto.initialPortfolio.assets.map((a) => ({ symbol: a.symbol, quantity: a.quantity })),
-          usdcAmount: dto.initialPortfolio.usdcAmount,
-        }
-      : {
-          assets: [], // Simple mode: no initial assets
-          usdcAmount: dto.investmentAmount || 0,
-        };
-
+    // Validate input
     if (!dto.initialPortfolio && !dto.investmentAmount) {
       throw new BadRequestException('Either investmentAmount or initialPortfolio must be provided');
     }
 
-    // Normalize funding schedule (only include if amount > 0)
-    const fundingSchedule: FundingSchedule | undefined =
-      dto.fundingSchedule && dto.fundingSchedule.amount > 0
-        ? {
-            frequency: dto.fundingSchedule.frequency || 'weekly',
-            amount: dto.fundingSchedule.amount,
-          }
-        : undefined;
+    // Normalize input using pure functions
+    const initialPortfolio = normalizeInitialPortfolio(dto);
+    const fundingSchedule = normalizeFundingSchedule(dto);
 
     // Calculate total initial investment for metadata (assets value + USDC)
     const timeframe = dto.timeframe || '1d';
@@ -52,14 +48,12 @@ export class BacktestService {
     );
 
     if (candles.length === 0) {
-      throw new Error('No market data available for the specified date range');
+      throw new BacktestException('No market data available for the specified date range');
     }
 
-    // Calculate total initial value from portfolio
+    // Calculate total initial value from portfolio using pure function
     const firstCandlePrice = candles[0].close;
-    const btcAsset = initialPortfolio.assets.find((a) => a.symbol === 'BTC');
-    const btcValue = (btcAsset?.quantity || 0) * firstCandlePrice;
-    const totalInitialValue = btcValue + initialPortfolio.usdcAmount;
+    const totalInitialValue = calculateTotalInitialValue(initialPortfolio, firstCandlePrice);
 
     this.logger.log(
       `Comparing ${dto.strategies.length} strategies with initial portfolio (assets: ${initialPortfolio.assets.length}, USDC: $${initialPortfolio.usdcAmount}) from ${dto.startDate} to ${dto.endDate}`,

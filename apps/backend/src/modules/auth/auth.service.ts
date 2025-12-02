@@ -28,6 +28,12 @@ export class AuthService {
     private emailService: EmailService,
   ) {}
 
+  /**
+   * Register a new user
+   * @param registerDto - User registration data (email, name, password)
+   * @returns Object containing access token and user information
+   * @throws ConflictException if user with email already exists
+   */
   async register(registerDto: RegisterDto) {
     const existingUser = await this.userRepository.findOne({
       where: { email: registerDto.email },
@@ -67,6 +73,12 @@ export class AuthService {
     };
   }
 
+  /**
+   * Authenticate a user and generate JWT token
+   * @param loginDto - User login credentials (email, password)
+   * @returns Object containing access token and user information
+   * @throws UnauthorizedException if credentials are invalid
+   */
   async login(loginDto: LoginDto) {
     const user = await this.userRepository.findOne({
       where: { email: loginDto.email },
@@ -104,6 +116,12 @@ export class AuthService {
     };
   }
 
+  /**
+   * Get user profile by user ID
+   * @param userId - Unique identifier of the user
+   * @returns User profile information
+   * @throws UnauthorizedException if user not found
+   */
   async getProfile(userId: string) {
     const user = await this.userRepository.findOne({
       where: { id: userId },
@@ -123,6 +141,12 @@ export class AuthService {
     };
   }
 
+  /**
+   * Initiate password reset process
+   * Generates a reset token and sends password reset email
+   * @param forgotPasswordDto - Email address for password reset
+   * @returns Success message (always returns success to prevent email enumeration)
+   */
   async forgotPassword(forgotPasswordDto: ForgotPasswordDto) {
     this.logger.log(
       `Processing forgot password request for email: ${forgotPasswordDto.email}`,
@@ -185,6 +209,12 @@ export class AuthService {
     };
   }
 
+  /**
+   * Reset user password using reset token
+   * @param resetPasswordDto - Reset token and new password
+   * @returns Success message
+   * @throws BadRequestException if token is invalid or expired
+   */
   async resetPassword(resetPasswordDto: ResetPasswordDto) {
     // Hash the provided token to compare with stored hash
     const hashedToken = crypto

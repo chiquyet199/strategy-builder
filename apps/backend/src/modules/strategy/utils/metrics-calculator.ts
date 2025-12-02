@@ -1,5 +1,6 @@
 import { Transaction, PortfolioValuePoint, StrategyMetrics } from '../interfaces/strategy-result.interface';
 import { Candlestick } from '../../market-data/interfaces/candlestick.interface';
+import { StrategyException } from '../../../common/exceptions/strategy.exception';
 
 /**
  * Metrics Calculator
@@ -15,7 +16,7 @@ export class MetricsCalculator {
     totalInvestment: number,
   ): StrategyMetrics {
     if (portfolioHistory.length === 0) {
-      throw new Error('Portfolio history is empty');
+      throw new StrategyException('Portfolio history is empty');
     }
 
     const finalValue = portfolioHistory[portfolioHistory.length - 1].value;

@@ -7,7 +7,8 @@ const router = createRouter({
   routes: [
     {
       path: '/',
-      redirect: '/backtest',
+      name: 'simple-home',
+      component: () => import('@/modules/backtest/views/SimpleHomeView.vue'),
     },
     {
       path: '/login',

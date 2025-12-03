@@ -1,6 +1,67 @@
 @import "tailwindcss";
 @import './base.css';
 
+/* Override Ant Design reset for Tailwind color utilities on buttons, links, and inputs */
+/* This ensures Tailwind color classes work even with Ant Design's reset.css */
+
+/* Input elements - override color: inherit from reset CSS */
+/* This is critical because reset CSS sets color: inherit on inputs */
+input[type="text"],
+input[type="number"],
+input[type="email"],
+input[type="password"],
+input:not([type]) {
+  color: rgb(17 24 39) !important; /* Default to dark text */
+}
+
+input.text-gray-900,
+input[class*="text-gray-900"] {
+  color: rgb(17 24 39) !important;
+}
+
+input.text-gray-600,
+input[class*="text-gray-600"] {
+  color: rgb(75 85 99) !important;
+}
+
+input.text-gray-500,
+input[class*="text-gray-500"] {
+  color: rgb(107 114 128) !important;
+}
+
+/* Buttons and links */
+button.text-indigo-600,
+a.text-indigo-600 {
+  color: rgb(79 70 229) !important;
+}
+
+button.text-indigo-600:hover,
+a.text-indigo-600:hover {
+  color: rgb(67 56 202) !important;
+}
+
+/* Handle hover classes with attribute selector for escaped colons */
+button[class*="hover:text-indigo-700"]:hover,
+a[class*="hover:text-indigo-700"]:hover {
+  color: rgb(67 56 202) !important;
+}
+
+button.text-gray-500,
+a.text-gray-500 {
+  color: rgb(107 114 128) !important;
+}
+
+button.text-gray-500:hover,
+a.text-gray-500:hover {
+  color: rgb(55 65 81) !important;
+}
+
+/* Handle hover classes with attribute selector for escaped colons */
+button[class*="hover:text-gray-700"]:hover,
+a[class*="hover:text-gray-700"]:hover {
+  color: rgb(55 65 81) !important;
+}
+
 #app {
   width: 100%;
   height: 100vh;

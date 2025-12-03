@@ -1,9 +1,8 @@
-import './assets/main.css'
-
 import { createApp } from 'vue'
 import { createPinia } from 'pinia'
 import Antd from 'ant-design-vue'
 import 'ant-design-vue/dist/reset.css'
+import './assets/main.css'
 import dayjs from 'dayjs'
 import 'dayjs/locale/en'
 import 'dayjs/locale/vi'

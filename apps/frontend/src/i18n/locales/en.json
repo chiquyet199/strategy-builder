@@ -429,6 +429,19 @@
         "totalPortfolioValueTooltip": "Your complete portfolio value after this transaction. This includes both the value of your coins and any remaining cash. Formula: Coin Value + Remaining USDC.",
         "reason": "Reason",
         "reasonTooltip": "Why this transaction was made. For example, 'Weekly DCA purchase' means it was a scheduled regular purchase, 'RSI < 30' means the strategy detected oversold conditions, or 'Rebalancing: BTC allocation 90% > 90% threshold' means the portfolio was rebalanced."
+      },
+      "share": {
+        "shareButton": "Share",
+        "shareSuccess": "Share URL copied to clipboard!",
+        "shareError": "Failed to create share URL"
+      },
+      "sharedComparison": {
+        "loading": "Loading Shared Comparison",
+        "loadingConfig": "Loading comparison configuration...",
+        "invalidCode": "Invalid share code",
+        "loadFailed": "Failed to load shared comparison",
+        "comparisonFailed": "Failed to run comparison",
+        "goHome": "Go to Home"
       }
     }
   }

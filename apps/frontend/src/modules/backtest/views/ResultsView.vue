@@ -6,6 +6,7 @@
           <h1>{{ t('backtest.results.metadata.title') }}</h1>
           <a-space>
             <a-button @click="goBack">{{ t('backtest.results.metadata.backToSelection') }}</a-button>
+            <ShareButton v-if="backtestStore.hasResults" />
             <a-button @click="downloadChart" :disabled="!backtestStore.hasResults">
               {{ t('backtest.results.metadata.downloadChart') }}
             </a-button>
@@ -238,6 +239,7 @@ import { useI18n } from 'vue-i18n'
 import { QuestionCircleOutlined } from '@ant-design/icons-vue'
 import { useBacktestStore } from '../stores/backtestStore'
 import PortfolioChart from '../components/PortfolioChart.vue'
+import ShareButton from '../components/ShareButton.vue'
 import dayjs from 'dayjs'
 import type { StrategyResult, Transaction } from '@/shared/types/backtest'
 

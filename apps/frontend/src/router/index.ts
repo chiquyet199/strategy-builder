@@ -46,6 +46,11 @@ const router = createRouter({
       name: 'backtest-results',
       component: () => import('@/modules/backtest/views/ResultsView.vue'),
     },
+    {
+      path: '/s/:shortCode',
+      name: 'shared-comparison',
+      component: () => import('@/modules/backtest/views/SharedComparisonView.vue'),
+    },
   ],
 })
 

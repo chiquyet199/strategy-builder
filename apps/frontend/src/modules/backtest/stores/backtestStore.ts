@@ -133,6 +133,78 @@ export const useBacktestStore = defineStore('backtest', () => {
     formMode.value = 'compare-strategies'
     formSelectedStrategyIds.value = []
     formSelectedVariants.value = []
+    initialPortfolio.value = undefined
+    fundingSchedule.value = {
+      frequency: 'weekly',
+      amount: 0,
+    }
+  }
+
+  /**
+   * Load comparison configuration from shared config
+   * This populates all store state including form state for navigation back
+   */
+  function loadFromSharedConfig(config: {
+    strategies: StrategyConfig[]
+    startDate: string
+    endDate: string
+    timeframe?: Timeframe
+    investmentAmount?: number
+    initialPortfolio?: InitialPortfolio
+    fundingSchedule?: FundingSchedule
+  }) {
+    // Set basic comparison parameters
+    setDateRange(config.startDate, config.endDate)
+    if (config.timeframe) {
+      setTimeframe(config.timeframe)
+    }
+
+    // Set investment configuration
+    if (config.initialPortfolio) {
+      setInitialPortfolio(config.initialPortfolio)
+      // Calculate investment amount from initial portfolio for backward compatibility
+      const totalUsdc = config.initialPortfolio.usdcAmount || 0
+      const totalAssets = (config.initialPortfolio.assets || []).reduce(
+        (sum, asset) => sum + (asset.usdcValue || 0),
+        0,
+      )
+      setInvestmentAmount(totalUsdc + totalAssets)
+    } else if (config.investmentAmount) {
+      setInvestmentAmount(config.investmentAmount)
+      setInitialPortfolio(undefined)
+    }
+
+    // Set funding schedule
+    if (config.fundingSchedule) {
+      setFundingSchedule(config.fundingSchedule)
+    } else {
+      setFundingSchedule({
+        frequency: 'weekly',
+        amount: 0,
+      })
+    }
+
+    // Set strategies
+    setSelectedStrategies(config.strategies)
+
+    // Determine form mode based on strategies
+    // If strategies have variantName, it's compare-variants mode
+    const hasVariants = config.strategies.some((s) => s.variantName)
+    if (hasVariants) {
+      setFormMode('compare-variants')
+      // Convert strategies to variants format
+      const variants: Variant[] = config.strategies.map((s) => ({
+        strategyId: s.strategyId,
+        variantName: s.variantName || s.strategyId,
+        parameters: s.parameters || {},
+      }))
+      setFormSelectedVariants(variants)
+      setFormSelectedStrategyIds([])
+    } else {
+      setFormMode('compare-strategies')
+      setFormSelectedStrategyIds(config.strategies)
+      setFormSelectedVariants([])
+    }
   }
 
   return {
@@ -166,6 +238,7 @@ export const useBacktestStore = defineStore('backtest', () => {
     compareStrategies,
     clearResults,
     reset,
+    loadFromSharedConfig,
   }
 })
 

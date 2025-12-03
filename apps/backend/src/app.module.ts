@@ -28,6 +28,7 @@ import { ScheduleModule } from '@nestjs/schedule';
 import { getDatabaseConfig } from './config/database.config';
 import { User, UserRole } from './modules/auth/entities/user.entity';
 import { Candlestick } from './modules/market-data/entities/candlestick.entity';
+import { SharedComparison } from './modules/backtest/entities/shared-comparison.entity';
 import * as bcrypt from 'bcrypt';
 
 // Database config is loaded lazily to ensure .env file is loaded first
@@ -40,7 +41,7 @@ const dbConfig = getDatabaseConfig();
     ScheduleModule.forRoot(),
     TypeOrmModule.forRoot({
       ...dbConfig,
-      entities: [User, Candlestick],
+      entities: [User, Candlestick, SharedComparison],
       synchronize: process.env.NODE_ENV !== 'production', // Auto-sync schema in dev, use migrations in prod
       logging: process.env.NODE_ENV === 'development',
     }),

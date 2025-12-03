@@ -1,14 +1,5 @@
 <template>
   <div class="home-view">
-    <!-- Hero Section -->
-    <HeroSection />
-
-    <!-- How It Works Section -->
-    <HowItWorks />
-
-    <!-- Trust Indicators Section -->
-    <TrustIndicators />
-
     <!-- Main Form Section -->
     <div id="strategy-form-section" class="form-section">
       <div class="container">
@@ -294,9 +285,6 @@ import { useI18n } from 'vue-i18n'
 import { BarChartOutlined, QuestionCircleOutlined } from '@ant-design/icons-vue'
 import { useBacktestStore } from '../stores/backtestStore'
 import { useBacktestForm } from '../composables/useBacktestForm'
-import HeroSection from '../components/HeroSection.vue'
-import HowItWorks from '../components/HowItWorks.vue'
-import TrustIndicators from '../components/TrustIndicators.vue'
 import DisclaimerSection from '../components/DisclaimerSection.vue'
 import DateRangeSlider from '../components/DateRangeSlider.vue'
 import StrategySelection from '../components/StrategySelection.vue'

@@ -3,6 +3,7 @@ import {
   UnauthorizedException,
   ConflictException,
   BadRequestException,
+  NotFoundException,
   Logger,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -14,7 +15,8 @@ import { LoginDto } from './dto/login.dto';
 import { RegisterDto } from './dto/register.dto';
 import { ForgotPasswordDto } from './dto/forgot-password.dto';
 import { ResetPasswordDto } from './dto/reset-password.dto';
-import { User } from './entities/user.entity';
+import { CreateUserDto, UpdateUserDto, UserListQueryDto } from './dto/user-management.dto';
+import { User, UserRole } from './entities/user.entity';
 import { EmailService } from '../email/email.service';
 
 @Injectable()
@@ -244,6 +246,166 @@ export class AuthService {
 
     return {
       message: 'Password has been reset successfully',
+    };
+  }
+
+  /**
+   * Get paginated list of users (admin only)
+   */
+  async getUsers(query: UserListQueryDto) {
+    const { page = 1, limit = 20, search } = query;
+    const skip = (page - 1) * limit;
+
+    const queryBuilder = this.userRepository.createQueryBuilder('user');
+
+    if (search) {
+      queryBuilder.where(
+        '(user.email ILIKE :search OR user.name ILIKE :search)',
+        { search: `%${search}%` },
+      );
+    }
+
+    const [users, total] = await queryBuilder
+      .orderBy('user.createdAt', 'DESC')
+      .skip(skip)
+      .take(limit)
+      .getManyAndCount();
+
+    return {
+      data: users.map((user) => ({
+        id: user.id,
+        email: user.email,
+        name: user.name,
+        role: user.role,
+        createdAt: user.createdAt.toISOString(),
+        updatedAt: user.updatedAt.toISOString(),
+      })),
+      total,
+      page,
+      limit,
+    };
+  }
+
+  /**
+   * Get user by ID (admin only)
+   */
+  async getUserById(userId: string) {
+    const user = await this.userRepository.findOne({
+      where: { id: userId },
+    });
+
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+
+    return {
+      id: user.id,
+      email: user.email,
+      name: user.name,
+      role: user.role,
+      createdAt: user.createdAt.toISOString(),
+      updatedAt: user.updatedAt.toISOString(),
+    };
+  }
+
+  /**
+   * Create a new user (admin only)
+   */
+  async createUser(createUserDto: CreateUserDto) {
+    const existingUser = await this.userRepository.findOne({
+      where: { email: createUserDto.email },
+    });
+
+    if (existingUser) {
+      throw new ConflictException('User with this email already exists');
+    }
+
+    const hashedPassword = await bcrypt.hash(createUserDto.password, 10);
+
+    const user = this.userRepository.create({
+      email: createUserDto.email,
+      name: createUserDto.name,
+      password: hashedPassword,
+      role: createUserDto.role || UserRole.USER,
+    });
+
+    const savedUser = await this.userRepository.save(user);
+
+    return {
+      id: savedUser.id,
+      email: savedUser.email,
+      name: savedUser.name,
+      role: savedUser.role,
+      createdAt: savedUser.createdAt.toISOString(),
+      updatedAt: savedUser.updatedAt.toISOString(),
+    };
+  }
+
+  /**
+   * Update user (admin only)
+   */
+  async updateUser(userId: string, updateUserDto: UpdateUserDto) {
+    const user = await this.userRepository.findOne({
+      where: { id: userId },
+    });
+
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+
+    // Check if email is being changed and if it conflicts
+    if (updateUserDto.email && updateUserDto.email !== user.email) {
+      const existingUser = await this.userRepository.findOne({
+        where: { email: updateUserDto.email },
+      });
+
+      if (existingUser) {
+        throw new ConflictException('User with this email already exists');
+      }
+    }
+
+    // Update fields
+    if (updateUserDto.email) {
+      user.email = updateUserDto.email;
+    }
+    if (updateUserDto.name) {
+      user.name = updateUserDto.name;
+    }
+    if (updateUserDto.password) {
+      user.password = await bcrypt.hash(updateUserDto.password, 10);
+    }
+    if (updateUserDto.role) {
+      user.role = updateUserDto.role;
+    }
+
+    const savedUser = await this.userRepository.save(user);
+
+    return {
+      id: savedUser.id,
+      email: savedUser.email,
+      name: savedUser.name,
+      role: savedUser.role,
+      createdAt: savedUser.createdAt.toISOString(),
+      updatedAt: savedUser.updatedAt.toISOString(),
+    };
+  }
+
+  /**
+   * Delete user (admin only)
+   */
+  async deleteUser(userId: string) {
+    const user = await this.userRepository.findOne({
+      where: { id: userId },
+    });
+
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+
+    await this.userRepository.remove(user);
+
+    return {
+      message: 'User deleted successfully',
     };
   }
 }

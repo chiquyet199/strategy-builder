@@ -47,6 +47,10 @@ const getRoleColor = (role: string) => {
   }
   return colorMap[role] || 'default'
 }
+
+const goToAdmin = () => {
+  router.push('/admin/analytics')
+}
 </script>
 
 <template>
@@ -85,6 +89,12 @@ const getRoleColor = (role: string) => {
 
           <a-empty v-else :description="t('auth.profile.loadFailed')" />
         </a-spin>
+
+        <div v-if="authStore.isAdmin" style="margin-top: 24px">
+          <a-button type="primary" @click="goToAdmin">
+            Go to Admin Dashboard
+          </a-button>
+        </div>
       </a-card>
     </div>
   </div>

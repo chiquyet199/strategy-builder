@@ -17,6 +17,7 @@ import { EmailModule } from './modules/email/email.module';
 import { MarketDataModule } from './modules/market-data/market-data.module';
 import { StrategyModule } from './modules/strategy/strategy.module';
 import { BacktestModule } from './modules/backtest/backtest.module';
+import { AdminModule } from './modules/admin/admin.module';
 import { LoggerModule } from './common/logger/logger.module';
 import { JwtAuthGuard } from './modules/auth/guards/jwt-auth.guard';
 import { CustomThrottlerGuard } from './common/guards/custom-throttler.guard';
@@ -29,6 +30,7 @@ import { getDatabaseConfig } from './config/database.config';
 import { User, UserRole } from './modules/auth/entities/user.entity';
 import { Candlestick } from './modules/market-data/entities/candlestick.entity';
 import { SharedComparison } from './modules/backtest/entities/shared-comparison.entity';
+import { ComparisonRun } from './modules/admin/entities/comparison-run.entity';
 import * as bcrypt from 'bcrypt';
 
 // Database config is loaded lazily to ensure .env file is loaded first
@@ -41,7 +43,7 @@ const dbConfig = getDatabaseConfig();
     ScheduleModule.forRoot(),
     TypeOrmModule.forRoot({
       ...dbConfig,
-      entities: [User, Candlestick, SharedComparison],
+      entities: [User, Candlestick, SharedComparison, ComparisonRun],
       synchronize: process.env.NODE_ENV !== 'production', // Auto-sync schema in dev, use migrations in prod
       logging: process.env.NODE_ENV === 'development',
     }),
@@ -76,6 +78,7 @@ const dbConfig = getDatabaseConfig();
     MarketDataModule,
     StrategyModule,
     BacktestModule,
+    AdminModule,
   ],
   controllers: [AppController],
   providers: [

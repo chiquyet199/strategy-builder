@@ -10,6 +10,8 @@ export const useAuthStore = defineStore('auth', () => {
   const initialized = ref(false)
 
   const isAuthenticated = computed(() => !!token.value && !!user.value)
+  const isAdmin = computed(() => user.value?.role === 'admin' || user.value?.role === 'master')
+  const isMaster = computed(() => user.value?.role === 'master')
 
   // Synchronous actions only - state updates
   function setToken(newToken: string | null): void {
@@ -46,6 +48,8 @@ export const useAuthStore = defineStore('auth', () => {
     initialized,
     // Computed
     isAuthenticated,
+    isAdmin,
+    isMaster,
     // Actions (synchronous only)
     setToken,
     setUser,

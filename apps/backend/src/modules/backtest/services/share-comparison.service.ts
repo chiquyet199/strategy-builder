@@ -1,8 +1,9 @@
-import { Injectable, NotFoundException, Logger } from '@nestjs/common';
+import { Injectable, NotFoundException, Logger, Inject, forwardRef } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { SharedComparison } from '../entities/shared-comparison.entity';
 import { randomBytes } from 'crypto';
+import { SharedComparisonAnalyticsService } from '../../admin/services/shared-comparison-analytics.service';
 
 @Injectable()
 export class ShareComparisonService {
@@ -12,6 +13,8 @@ export class ShareComparisonService {
   constructor(
     @InjectRepository(SharedComparison)
     private readonly sharedComparisonRepository: Repository<SharedComparison>,
+    @Inject(forwardRef(() => SharedComparisonAnalyticsService))
+    private readonly analyticsService?: SharedComparisonAnalyticsService,
   ) {}
 
   /**
@@ -98,6 +101,18 @@ export class ShareComparisonService {
       throw new NotFoundException(
         `Shared comparison has expired: ${shortCode}`,
       );
+    }
+
+    // Track view for analytics (non-blocking)
+    if (this.analyticsService) {
+      this.analyticsService
+        .trackShareView(shortCode)
+        .catch((error) => {
+          // Log but don't fail the request
+          this.logger.warn(
+            `Failed to track share view: ${error.message}`,
+          );
+        });
     }
 
     return sharedComparison.config;

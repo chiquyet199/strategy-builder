@@ -51,6 +51,12 @@ const router = createRouter({
       name: 'shared-comparison',
       component: () => import('@/modules/backtest/views/SharedComparisonView.vue'),
     },
+    {
+      path: '/admin/analytics',
+      name: 'admin-analytics',
+      component: () => import('@/modules/admin/views/AnalyticsDashboard.vue'),
+      meta: { requiresAuth: true, requiresAdmin: true },
+    },
   ],
 })
 
@@ -71,6 +77,9 @@ router.beforeEach(async (to, from, next) => {
   
   if (to.meta.requiresAuth && !authStore.isAuthenticated) {
     next({ name: 'login' })
+  } else if (to.meta.requiresAdmin && !authStore.isAdmin && !authStore.isMaster) {
+    // Redirect to home if not admin/master
+    next({ name: 'simple-home' })
   } else {
     next()
   }

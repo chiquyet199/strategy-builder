@@ -27,5 +27,11 @@ export class SharedComparison {
 
   @Column({ type: 'timestamp', nullable: true })
   expiresAt: Date | null;
+
+  @Column({ type: 'integer', default: 0 })
+  viewCount: number;
+
+  @Column({ type: 'timestamp', nullable: true })
+  lastViewedAt: Date | null;
 }
 

@@ -1,4 +1,4 @@
-import { Injectable, Logger, BadRequestException } from '@nestjs/common';
+import { Injectable, Logger, BadRequestException, Inject, forwardRef } from '@nestjs/common';
 import { MarketDataService } from '../market-data/market-data.service';
 import { StrategyService } from '../strategy/strategy.service';
 import { CompareStrategiesDto } from './dto/compare-strategies.dto';
@@ -9,6 +9,7 @@ import {
   normalizeFundingSchedule,
   calculateTotalInitialValue,
 } from './utils/dto-normalizer';
+import { ComparisonTrackingService } from '../admin/services/comparison-tracking.service';
 
 @Injectable()
 export class BacktestService {
@@ -17,6 +18,8 @@ export class BacktestService {
   constructor(
     private readonly marketDataService: MarketDataService,
     private readonly strategyService: StrategyService,
+    @Inject(forwardRef(() => ComparisonTrackingService))
+    private readonly comparisonTrackingService?: ComparisonTrackingService,
   ) {}
 
   /**
@@ -95,7 +98,7 @@ export class BacktestService {
       }),
     );
 
-    return {
+    const response: BacktestResponse = {
       results,
       metadata: {
         investmentAmount: totalInitialValue, // For backward compatibility
@@ -105,5 +108,21 @@ export class BacktestService {
         calculatedAt: new Date().toISOString(),
       },
     };
+
+    // Track comparison for analytics (non-blocking)
+    if (this.comparisonTrackingService) {
+      // Extract userId from request if available (would need to pass Request object)
+      // For now, track as anonymous (userId = null)
+      this.comparisonTrackingService
+        .trackComparison(dto, response, null)
+        .catch((error) => {
+          // Log but don't fail the request
+          this.logger.warn(
+            `Failed to track comparison for analytics: ${error.message}`,
+          );
+        });
+    }
+
+    return response;
   }
 }

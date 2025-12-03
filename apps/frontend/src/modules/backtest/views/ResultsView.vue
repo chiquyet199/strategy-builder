@@ -175,7 +175,12 @@
           >
             <template #bodyCell="{ column, record }">
               <template v-if="column.key === 'strategy'">
-                {{ record.variantName || record.strategyName }}
+                <div class="flex items-center gap-2">
+                  <span v-if="getWinnerRank(record) === 1" class="text-2xl">🥇</span>
+                  <span v-else-if="getWinnerRank(record) === 2" class="text-2xl">🥈</span>
+                  <span v-else-if="getWinnerRank(record) === 3" class="text-2xl">🥉</span>
+                  <span>{{ record.variantName || record.strategyName }}</span>
+                </div>
               </template>
               <template v-else-if="column.key === 'totalReturn'">
                 <span :class="getReturnClass(record.metrics?.totalReturn)">
@@ -485,6 +490,18 @@ const transactionColumns = computed(() => {
 
 const tableData = computed(() => backtestStore.strategyResults)
 
+// Get top 3 winners sorted by totalReturn
+const top3Winners = computed(() => {
+  const results = [...(backtestStore.strategyResults || [])]
+  return results
+    .sort((a, b) => {
+      const aReturn = a.metrics?.totalReturn ?? 0
+      const bReturn = b.metrics?.totalReturn ?? 0
+      return bReturn - aReturn // Sort descending
+    })
+    .slice(0, 3) // Get top 3
+})
+
 function formatDate(dateString?: string): string {
   if (!dateString) return ''
   return dayjs(dateString).format('DD-MM-YYYY')
@@ -525,6 +542,13 @@ function formatSharpeRatio(value: number | null | undefined): string {
 function getReturnClass(returnValue: number | null | undefined): string {
   if (returnValue == null || isNaN(returnValue)) return ''
   return returnValue >= 0 ? 'positive-value' : 'negative-value'
+}
+
+function getWinnerRank(record: StrategyResult): number | null {
+  const index = top3Winners.value.findIndex(
+    (winner) => winner.strategyId === record.strategyId
+  )
+  return index >= 0 ? index + 1 : null
 }
 
 function goBack() {
@@ -585,10 +609,21 @@ function showTransactions(strategy: StrategyResult) {
   font-weight: 600;
 }
 
+.top-winners-section {
+  background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+  border-radius: 12px;
+  padding: 24px;
+  margin-bottom: 24px;
+}
+
 @media (max-width: 768px) {
   .results-header {
     flex-direction: column;
     align-items: flex-start;
+  }
+  
+  .top-winners-section {
+    padding: 16px;
   }
 }
 </style>

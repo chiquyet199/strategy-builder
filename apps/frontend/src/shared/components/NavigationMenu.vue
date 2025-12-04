@@ -13,8 +13,8 @@
         class="nav-menu"
         @click="handleMenuClick"
       >
-        <a-menu-item key="backtest">
-          <router-link to="/backtest">Backtest</router-link>
+        <a-menu-item key="playground">
+          <router-link to="/playground">Playground</router-link>
         </a-menu-item>
         <a-menu-item v-if="authStore.isAdmin" key="admin-analytics">
           <router-link to="/admin/analytics">Analytics</router-link>
@@ -75,8 +75,8 @@ const selectedKeys = ref<string[]>([])
 // Update selected key based on current route
 const updateSelectedKey = () => {
   const path = route.path
-  if (path.startsWith('/backtest')) {
-    selectedKeys.value = ['backtest']
+  if (path.startsWith('/playground')) {
+    selectedKeys.value = ['playground']
   } else if (path === '/admin/analytics') {
     selectedKeys.value = ['admin-analytics']
   } else if (path === '/admin/users') {

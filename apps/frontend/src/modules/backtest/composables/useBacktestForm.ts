@@ -1,9 +1,8 @@
 import { reactive, onMounted } from 'vue'
-import { useRouter } from 'vue-router'
 import { useBacktestStore } from '../stores/backtestStore'
 import type { StrategyConfig, ComparisonMode, Variant, Timeframe, InitialPortfolio, FundingSchedule } from '@/shared/types/backtest'
 
-interface FormState {
+export interface FormState {
   investmentAmount: number // Simple mode: quick way to set initial portfolio with assets=[], usdcAmount=investmentAmount
   startDate: string
   endDate: string
@@ -18,7 +17,6 @@ interface FormState {
 }
 
 export function useBacktestForm() {
-  const router = useRouter()
   const backtestStore = useBacktestStore()
 
   const formState = reactive<FormState>({
@@ -79,13 +77,8 @@ export function useBacktestForm() {
     backtestStore.setInitialPortfolio(formState.initialPortfolio)
     backtestStore.setFundingSchedule(formState.fundingSchedule)
 
-    // Run comparison
+    // Run comparison (results will be displayed in the right panel)
     await backtestStore.compareStrategies()
-
-    // Navigate to results if successful
-    if (backtestStore.hasResults) {
-      router.push('/backtest/results')
-    }
   }
 
   onMounted(() => {

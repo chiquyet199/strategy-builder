@@ -66,6 +66,7 @@ const handleShare = async () => {
 
   try {
     const config = buildConfig()
+    // Tracking happens automatically on the backend when share is created
     const shareResponse = await shareService.generateShareUrl(config)
 
     // Copy to clipboard

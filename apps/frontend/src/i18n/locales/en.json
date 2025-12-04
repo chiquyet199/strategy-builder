@@ -156,6 +156,10 @@
           "tooltip": "The initial amount of money you want to invest at the start of this backtest. This is the starting capital that will be used across all selected strategies. You can also add periodic funding (daily/weekly/monthly) in addition to this initial amount.",
           "quickSelect": "Quick Select"
         },
+        "tabs": {
+          "simple": "Simple",
+          "complex": "Advanced"
+        },
         "advancedPortfolio": {
           "setup": "Advanced Portfolio Setup",
           "title": "Advanced Portfolio Setup",

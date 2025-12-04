@@ -143,6 +143,9 @@ function createChart() {
           ticks: {
             maxRotation: 45,
             minRotation: 45,
+            maxTicksLimit: 12, // Limit to 12 date labels maximum
+            autoSkip: true,
+            autoSkipPadding: 10,
           },
         },
         y: {

@@ -7,8 +7,13 @@ const router = createRouter({
   routes: [
     {
       path: '/',
-      name: 'simple-home',
-      component: () => import('@/modules/backtest/views/SimpleHomeView.vue'),
+      name: 'home',
+      component: () => import('@/modules/backtest/views/HomeView.vue'),
+    },
+    {
+      path: '/playground',
+      name: 'playground',
+      component: () => import('@/modules/backtest/views/PlaygroundView.vue'),
     },
     {
       path: '/login',
@@ -37,16 +42,6 @@ const router = createRouter({
       meta: { requiresAuth: true },
     },
     {
-      path: '/backtest',
-      name: 'backtest-home',
-      component: () => import('@/modules/backtest/views/HomeView.vue'),
-    },
-    {
-      path: '/backtest/results',
-      name: 'backtest-results',
-      component: () => import('@/modules/backtest/views/ResultsView.vue'),
-    },
-    {
       path: '/s/:shortCode',
       name: 'shared-comparison',
       component: () => import('@/modules/backtest/views/SharedComparisonView.vue'),
@@ -68,7 +63,7 @@ const router = createRouter({
 
 router.beforeEach(async (to, from, next) => {
   const authStore = useAuthStore()
-  
+
   // Initialize auth state if token exists but user hasn't been loaded yet
   if (authStore.token && !authStore.user && !authStore.initialized) {
     authStore.setInitialized(true)
@@ -80,12 +75,12 @@ router.beforeEach(async (to, from, next) => {
       authStore.setUser(null)
     }
   }
-  
+
   if (to.meta.requiresAuth && !authStore.isAuthenticated) {
     next({ name: 'login' })
   } else if (to.meta.requiresAdmin && !authStore.isAdmin && !authStore.isMaster) {
     // Redirect to home if not admin/master
-    next({ name: 'simple-home' })
+    next({ name: 'home' })
   } else {
     next()
   }

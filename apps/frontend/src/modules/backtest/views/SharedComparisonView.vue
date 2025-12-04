@@ -60,9 +60,9 @@ const loadSharedComparison = async () => {
     // Run the comparison automatically
     await backtestStore.compareStrategies()
 
-    // Navigate to results page
+    // Navigate to playground page (results will be displayed there)
     if (backtestStore.hasResults) {
-      router.push('/backtest/results')
+      router.push('/playground')
     } else {
       error.value = t('backtest.sharedComparison.comparisonFailed')
       isLoading.value = false
@@ -79,7 +79,7 @@ const loadSharedComparison = async () => {
 }
 
 const goHome = () => {
-  router.push('/backtest')
+      router.push('/playground')
 }
 
 onMounted(() => {

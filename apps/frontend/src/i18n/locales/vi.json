@@ -156,6 +156,10 @@
           "tooltip": "Số tiền ban đầu bạn muốn đầu tư khi bắt đầu bài kiểm tra này. Đây là vốn ban đầu sẽ được sử dụng cho tất cả các chiến lược đã chọn. Bạn cũng có thể thêm tài trợ định kỳ (hàng ngày/hàng tuần/hàng tháng) ngoài số tiền ban đầu này.",
           "quickSelect": "Chọn nhanh"
         },
+        "tabs": {
+          "simple": "Đơn giản",
+          "complex": "Nâng cao"
+        },
         "advancedPortfolio": {
           "setup": "Thiết lập Danh mục Nâng cao",
           "title": "Thiết lập Danh mục Nâng cao",

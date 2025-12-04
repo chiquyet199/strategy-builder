@@ -109,19 +109,8 @@ export class BacktestService {
       },
     };
 
-    // Track comparison for analytics (non-blocking)
-    if (this.comparisonTrackingService) {
-      // Extract userId from request if available (would need to pass Request object)
-      // For now, track as anonymous (userId = null)
-      this.comparisonTrackingService
-        .trackComparison(dto, response, null)
-        .catch((error) => {
-          // Log but don't fail the request
-          this.logger.warn(
-            `Failed to track comparison for analytics: ${error.message}`,
-          );
-        });
-    }
+    // Note: Comparison tracking is now only done when user clicks "Share" button
+    // This is handled in the ShareComparisonService
 
     return response;
   }

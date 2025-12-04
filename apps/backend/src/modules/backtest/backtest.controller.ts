@@ -1,4 +1,4 @@
-import { Controller, Post, Body, Get, Param } from '@nestjs/common';
+import { Controller, Post, Body, Get, Param, Inject, forwardRef } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { BacktestService } from './backtest.service';
 import { ShareComparisonService } from './services/share-comparison.service';
@@ -6,6 +6,7 @@ import { CompareStrategiesDto } from './dto/compare-strategies.dto';
 import { CreateShareDto, ShareResponseDto } from './dto/share-comparison.dto';
 import { BacktestResponse } from './interfaces/backtest-response.interface';
 import { Public } from '../../modules/auth/guards/public.decorator';
+import { ComparisonTrackingService } from '../admin/services/comparison-tracking.service';
 
 @ApiTags('backtest')
 @Controller('backtest')
@@ -13,6 +14,8 @@ export class BacktestController {
   constructor(
     private readonly backtestService: BacktestService,
     private readonly shareComparisonService: ShareComparisonService,
+    @Inject(forwardRef(() => ComparisonTrackingService))
+    private readonly comparisonTrackingService?: ComparisonTrackingService,
   ) {}
 
   @Public()
@@ -85,6 +88,22 @@ export class BacktestController {
       dto.config,
       dto.expiresInDays,
     );
+
+    // Track comparison for analytics when share is created (non-blocking)
+    if (this.comparisonTrackingService && dto.config) {
+      try {
+        // Run the comparison to get results for tracking
+        const response = await this.backtestService.compareStrategies(dto.config as CompareStrategiesDto);
+        // Track it (non-blocking)
+        this.comparisonTrackingService
+          .trackComparison(dto.config as CompareStrategiesDto, response, null)
+          .catch(() => {
+            // Silently fail - don't block sharing
+          });
+      } catch (error) {
+        // Silently fail - don't block sharing if comparison fails
+      }
+    }
 
     // Get base URL from environment or use default
     const baseUrl =

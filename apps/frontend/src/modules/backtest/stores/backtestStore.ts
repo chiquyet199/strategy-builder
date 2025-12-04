@@ -15,7 +15,7 @@ import { backtestService } from '../services/backtestService'
 export const useBacktestStore = defineStore('backtest', () => {
   // State
   const selectedStrategies = ref<StrategyConfig[]>([])
-  const investmentAmount = ref<number>(10000)
+  const investmentAmount = ref<number>(100)
   const startDate = ref<string>('2020-01-01')
   const endDate = ref<string>('2025-11-28')
   const timeframe = ref<Timeframe>('1d')
@@ -32,7 +32,7 @@ export const useBacktestStore = defineStore('backtest', () => {
   const initialPortfolio = ref<InitialPortfolio | undefined>(undefined)
   const fundingSchedule = ref<FundingSchedule>({
     frequency: 'weekly',
-    amount: 0, // 0 means no funding
+    amount: 100, // Default $100 weekly
   })
 
   // Getters
@@ -87,7 +87,7 @@ export const useBacktestStore = defineStore('backtest', () => {
     error.value = null
 
     try {
-      // Build request: use initialPortfolio if set, otherwise use investmentAmount (backward compatibility)
+      // Build request: initialPortfolio is required
       const request: any = {
         startDate: startDate.value,
         endDate: endDate.value,
@@ -95,10 +95,10 @@ export const useBacktestStore = defineStore('backtest', () => {
         timeframe: timeframe.value,
       }
 
-      if (initialPortfolio.value) {
-        request.initialPortfolio = initialPortfolio.value
-      } else {
-        request.investmentAmount = investmentAmount.value
+      // Always use initialPortfolio (default to $0 if not set)
+      request.initialPortfolio = initialPortfolio.value || {
+        assets: [],
+        usdcAmount: 0,
       }
 
       if (fundingSchedule.value.amount > 0) {

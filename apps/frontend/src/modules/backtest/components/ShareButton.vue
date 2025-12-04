@@ -42,11 +42,10 @@ const buildConfig = (): CompareStrategiesRequest => {
     timeframe: backtestStore.timeframe,
   }
 
-  // Add initial portfolio or investment amount
-  if (backtestStore.initialPortfolio) {
-    config.initialPortfolio = backtestStore.initialPortfolio
-  } else {
-    config.investmentAmount = backtestStore.investmentAmount
+  // Add initial portfolio (always required)
+  config.initialPortfolio = backtestStore.initialPortfolio || {
+    assets: [],
+    usdcAmount: 0,
   }
 
   // Add funding schedule if configured

@@ -264,12 +264,12 @@
     },
     "strategies": {
       "lump-sum": "Lump Sum",
-      "dca": "DCA (Dollar-Cost Averaging)",
+      "dca": "DCA",
       "rsi-dca": "RSI DCA",
       "dip-buyer-dca": "Dip Buyer DCA",
       "moving-average-dca": "Moving Average DCA",
       "combined-smart-dca": "Combined Smart DCA",
-      "rebalancing": "Portfolio Rebalancing"
+      "rebalancing": "Rebalancing"
     },
     "strategyDescriptions": {
       "lump-sum": "Invest the entire amount at the start date and hold. Simple buy-and-hold strategy.",

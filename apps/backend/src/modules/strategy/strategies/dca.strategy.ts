@@ -111,7 +111,12 @@ export class DcaStrategy extends BaseStrategy {
     }
 
     // DCA period amount is calculated from initial USDC (not including funding)
-    const periodAmount = initialUsdc / totalPeriods;
+    // If no initial USDC but funding is available, use funding amount as period amount
+    let periodAmount = initialUsdc / totalPeriods;
+    if (periodAmount === 0 && fundingSchedule && fundingSchedule.amount > 0) {
+      // Use funding amount as the period amount when starting with $0
+      periodAmount = fundingSchedule.amount;
+    }
 
     let currentQuantityHeld = initialAssetQuantity;
     let currentUsdcBalance = initialUsdc;

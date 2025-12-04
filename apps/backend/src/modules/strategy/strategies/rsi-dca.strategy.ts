@@ -130,7 +130,18 @@ export class RsiDcaStrategy extends BaseStrategy {
       (end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24),
     );
     const totalWeeks = Math.ceil(totalDays / 7);
-    const baseWeeklyAmount = initialUsdc / totalWeeks;
+    let baseWeeklyAmount = initialUsdc / totalWeeks;
+    // If no initial USDC but funding is available, use funding amount as base weekly amount
+    if (baseWeeklyAmount === 0 && fundingSchedule && fundingSchedule.amount > 0) {
+      // Convert funding amount to weekly equivalent
+      const fundingWeeklyAmount =
+        fundingSchedule.frequency === 'daily'
+          ? fundingSchedule.amount * 7
+          : fundingSchedule.frequency === 'weekly'
+            ? fundingSchedule.amount
+            : fundingSchedule.amount / 4; // monthly to weekly
+      baseWeeklyAmount = fundingWeeklyAmount;
+    }
 
     const transactions: Transaction[] = [];
     let lastPurchaseDate = new Date(start);

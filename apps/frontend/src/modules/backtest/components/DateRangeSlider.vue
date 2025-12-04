@@ -7,23 +7,16 @@
       :max="totalMonths"
       :step="1"
       :marks="sliderMarks"
-      :tooltip="{ formatter: (value) => formatMonthTooltip(value as number) }"
+      :tooltip="{ formatter: tooltipFormatter }"
       @change="handleDateRangeChange"
     />
-    <div class="date-range-display">
-      <span><strong>{{ t('backtest.dateRangeStart') }}:</strong> {{ formatDateDisplay(dateRange.startDate, false) }}</span>
-      <span><strong>{{ t('backtest.dateRangeEnd') }}:</strong> {{ formatDateDisplay(dateRange.endDate, true) }}</span>
-    </div>
   </div>
 </template>
 
 <script setup lang="ts">
 import { watch } from 'vue'
-import { useI18n } from 'vue-i18n'
 import dayjs from 'dayjs'
 import { useDateRange } from '../composables/useDateRange'
-
-const { t } = useI18n()
 
 interface Props {
   initialStartDate?: string
@@ -42,10 +35,14 @@ const {
   dateRange,
   sliderMarks,
   formatMonthTooltip,
-  formatDateDisplay,
   handleDateRangeChange: handleChange,
   getDateRangeISO,
 } = useDateRange(props.initialStartDate, props.initialEndDate)
+
+// Tooltip formatter function
+const tooltipFormatter = (value?: number | string): string => {
+  return formatMonthTooltip(Number(value) || 0)
+}
 
 // Watch for prop changes and update the slider
 watch(
@@ -82,39 +79,5 @@ function handleDateRangeChange(values: [number, number]) {
   padding: 8px 0;
 }
 
-.date-range-display {
-  display: flex;
-  justify-content: space-between;
-  margin-top: 12px;
-  padding: 8px 12px;
-  background-color: #f5f5f5;
-  border-radius: 4px;
-}
-
-.date-range-display span {
-  font-size: 12px;
-}
-
-.date-range-display strong {
-  margin-right: 6px;
-  font-weight: 600;
-}
-
-@media (max-width: 768px) {
-  .date-range-slider {
-    padding: 6px 0;
-  }
-
-  .date-range-display {
-    flex-direction: column;
-    gap: 4px;
-    margin-top: 10px;
-    padding: 8px;
-  }
-
-  .date-range-display span {
-    font-size: 11px;
-  }
-}
 </style>
 

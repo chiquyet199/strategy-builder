@@ -5,26 +5,13 @@
     </div>
 
     <div class="form-content">
-      <a-tabs v-model:activeKey="activeTab" class="form-tabs">
-        <a-tab-pane key="basic" :tab="t('backtest.form.tabs.simple')">
-          <BasicForm
-            :form-state="formState"
-            :show-advanced-portfolio-modal="showAdvancedPortfolioModal"
-            @update:show-advanced-portfolio-modal="showAdvancedPortfolioModal = $event"
-            @date-range-change="handleDateRangeChange"
-            @apply-date-preset="applyDatePreset"
-          />
-        </a-tab-pane>
-        <a-tab-pane key="advanced" :tab="t('backtest.form.tabs.complex')">
-          <AdvancedForm
-            :form-state="formState"
-            :show-advanced-portfolio-modal="showAdvancedPortfolioModal"
-            @update:show-advanced-portfolio-modal="showAdvancedPortfolioModal = $event"
-            @date-range-change="handleDateRangeChange"
-            @apply-date-preset="applyDatePreset"
-          />
-        </a-tab-pane>
-      </a-tabs>
+      <ComparisonInputForm
+        :form-state="formState"
+        :show-advanced-portfolio-modal="showAdvancedPortfolioModal"
+        @update:show-advanced-portfolio-modal="showAdvancedPortfolioModal = $event"
+        @date-range-change="handleDateRangeChange"
+        @apply-date-preset="applyDatePreset"
+      />
     </div>
 
     <!-- Sticky Submit Button Footer -->
@@ -77,15 +64,13 @@ import { BarChartOutlined } from '@ant-design/icons-vue'
 import { useBacktestStore } from '../stores/backtestStore'
 import { useBacktestForm } from '../composables/useBacktestForm'
 import AdvancedPortfolioSetup from './AdvancedPortfolioSetup.vue'
-import BasicForm from './BasicForm.vue'
-import AdvancedForm from './AdvancedForm.vue'
+import ComparisonInputForm from './ComparisonInputForm.vue'
 import dayjs from 'dayjs'
 
 const { t } = useI18n()
 const backtestStore = useBacktestStore()
 const { formState, handleDateRangeChange, handleCompare } = useBacktestForm()
 
-const activeTab = ref('basic')
 const showAdvancedPortfolioModal = ref(false)
 
 function applyDatePreset(preset: { getStartDate: () => dayjs.Dayjs; getEndDate: () => dayjs.Dayjs }) {
@@ -127,10 +112,6 @@ function applyDatePreset(preset: { getStartDate: () => dayjs.Dayjs; getEndDate: 
   overflow-y: auto;
   padding: 24px;
   padding-bottom: 0;
-}
-
-.form-tabs {
-  margin-bottom: 24px;
 }
 
 .form-footer {

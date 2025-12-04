@@ -3,15 +3,14 @@ import { useBacktestStore } from '../stores/backtestStore'
 import type { StrategyConfig, ComparisonMode, Variant, Timeframe, InitialPortfolio, FundingSchedule } from '@/shared/types/backtest'
 
 export interface FormState {
-  investmentAmount: number // Simple mode: quick way to set initial portfolio with assets=[], usdcAmount=investmentAmount
   startDate: string
   endDate: string
   timeframe: Timeframe
   mode: ComparisonMode
   selectedStrategyIds: StrategyConfig[]
   selectedVariants: Variant[]
-  // Advanced mode: initial portfolio
-  initialPortfolio?: InitialPortfolio // If set, overrides investmentAmount
+  // Initial portfolio (required - must be configured)
+  initialPortfolio?: InitialPortfolio
   // Periodic funding
   fundingSchedule: FundingSchedule
 }
@@ -20,7 +19,6 @@ export function useBacktestForm() {
   const backtestStore = useBacktestStore()
 
   const formState = reactive<FormState>({
-    investmentAmount: backtestStore.investmentAmount,
     startDate: backtestStore.startDate,
     endDate: backtestStore.endDate,
     timeframe: backtestStore.timeframe,
@@ -61,7 +59,6 @@ export function useBacktestForm() {
     }
 
     // Update store with form values
-    backtestStore.setInvestmentAmount(formState.investmentAmount)
     backtestStore.setDateRange(formState.startDate, formState.endDate)
     backtestStore.setTimeframe(formState.timeframe)
 
@@ -76,6 +73,15 @@ export function useBacktestForm() {
     // Set initial portfolio and funding schedule
     backtestStore.setInitialPortfolio(formState.initialPortfolio)
     backtestStore.setFundingSchedule(formState.fundingSchedule)
+    
+    // If no initial portfolio is set, create a default one with $0 USDC
+    // This allows strategies to work with periodic funding only
+    if (!formState.initialPortfolio) {
+      backtestStore.setInitialPortfolio({
+        assets: [],
+        usdcAmount: 0,
+      })
+    }
 
     // Run comparison (results will be displayed in the right panel)
     await backtestStore.compareStrategies()
@@ -83,7 +89,6 @@ export function useBacktestForm() {
 
   onMounted(() => {
     // Initialize form with store values (preserves state when navigating back)
-    formState.investmentAmount = backtestStore.investmentAmount
     formState.startDate = backtestStore.startDate
     formState.endDate = backtestStore.endDate
     formState.timeframe = backtestStore.timeframe

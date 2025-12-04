@@ -221,20 +221,22 @@
               style="width: 100%"
             />
           </a-form-item>
-          <a-form-item :help="t('backtest.parameters.dip.buyMultiplierHelp')">
+          <a-form-item :help="t('backtest.parameters.dip.buyPercentageHelp')">
             <template #label>
               <span>
-                {{ t('backtest.parameters.dip.buyMultiplier') }}
-                <a-tooltip :title="t('backtest.parameters.dip.buyMultiplierTooltip')">
+                {{ t('backtest.parameters.dip.buyPercentage') }}
+                <a-tooltip :title="t('backtest.parameters.dip.buyPercentageTooltip')">
                   <QuestionCircleOutlined style="margin-left: 4px; color: #8c8c8c; cursor: help;" />
                 </a-tooltip>
               </span>
             </template>
             <a-input-number
-              v-model:value="variantForm.parameters.buyMultiplier"
-              :min="0.1"
-              :max="10"
-              :step="0.1"
+              v-model:value="variantForm.parameters.buyPercentage"
+              :min="0"
+              :max="1"
+              :step="0.05"
+              :formatter="(value) => `${(value * 100).toFixed(0)}%`"
+              :parser="(value) => parseFloat(value.replace('%', '')) / 100"
               style="width: 100%"
             />
           </a-form-item>
@@ -488,7 +490,7 @@ const availableStrategies = [
   {
     id: 'dip-buyer-dca',
     hasParameters: true,
-    defaultParameters: { lookbackDays: 30, dropThreshold: 0.1, buyMultiplier: 2.0 },
+    defaultParameters: { lookbackDays: 30, dropThreshold: 0.1, buyPercentage: 0.5 },
   },
   { id: 'moving-average-dca', hasParameters: true, defaultParameters: { maPeriod: 50, buyMultiplier: 2.0 } },
   {

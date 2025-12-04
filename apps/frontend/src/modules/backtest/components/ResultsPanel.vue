@@ -134,15 +134,20 @@
                   <span v-if="getWinnerRank(record) === 1" class="text-2xl">🥇</span>
                   <span v-else-if="getWinnerRank(record) === 2" class="text-2xl">🥈</span>
                   <span v-else-if="getWinnerRank(record) === 3" class="text-2xl">🥉</span>
-                  <a-button
-                    type="link"
-                    class="p-0 h-auto font-medium hover:underline disabled:no-underline"
-                    :disabled="!record.transactions || record.transactions.length === 0"
-                    @click="showTransactions(record)"
-                  >
-                    {{ record.variantName || record.strategyName }}
-                  </a-button>
+                  <span class="font-medium">
+                    {{ getStrategyDisplayName(record) }}
+                  </span>
                 </div>
+              </template>
+              <template v-else-if="column.key === 'transactions'">
+                <a-button
+                  type="link"
+                  class="p-0 h-auto font-medium hover:underline"
+                  :disabled="!record.transactions || record.transactions.length === 0"
+                  @click="showTransactions(record)"
+                >
+                  {{ record.transactions?.length || 0 }}
+                </a-button>
               </template>
               <template v-else-if="column.key === 'totalReturn'">
                 <span :class="getReturnClass(record.metrics?.totalReturn)">
@@ -189,7 +194,8 @@ import { useBacktestStore } from '../stores/backtestStore'
 import PortfolioChart from './PortfolioChart.vue'
 import ShareButton from './ShareButton.vue'
 import dayjs from 'dayjs'
-import type { StrategyResult, Transaction } from '@/shared/types/backtest'
+import type { StrategyResult, Transaction, StrategyConfig } from '@/shared/types/backtest'
+import { isSameStrategyConfig } from '../../../shared/utils/strategy-identifier'
 
 const backtestStore = useBacktestStore()
 const { t } = useI18n()
@@ -225,6 +231,26 @@ const columns = computed(() => {
         ]),
       key: 'strategy',
       fixed: 'left' as const,
+    },
+    {
+      title: () =>
+        h('span', [
+          t('backtest.results.metrics.transactions'),
+          ' ',
+          h(
+            ATooltip,
+            { title: t('backtest.results.metrics.transactionsTooltip') },
+            {
+              default: () =>
+                h(QuestionCircleOutlined, {
+                  style: 'margin-left: 4px; color: #8c8c8c; cursor: help;',
+                }),
+            },
+          ),
+        ]),
+      key: 'transactions',
+      width: 120,
+      align: 'center' as const,
     },
     {
       title: () =>
@@ -621,8 +647,83 @@ function getReturnClass(returnValue: number | null | undefined): string {
   return returnValue >= 0 ? 'text-green-600 font-semibold' : 'text-red-500 font-semibold'
 }
 
+// Get display name for a strategy result by matching it to selected configs
+function getStrategyDisplayName(record: StrategyResult): string {
+  // Try to match the result to a selected strategy config
+  const selectedStrategies = backtestStore.selectedStrategies || []
+  
+  // Find matching config by strategyId and parameters
+  const matchingIndex = selectedStrategies.findIndex((config: StrategyConfig) => {
+    if (config.strategyId !== record.strategyId) return false
+    
+    // Compare parameters
+    const recordParams = record.parameters || {}
+    const configParams = config.parameters || {}
+    
+    return isSameStrategyConfig(
+      { strategyId: record.strategyId, parameters: recordParams },
+      { strategyId: config.strategyId, parameters: configParams }
+    )
+  })
+  
+  if (matchingIndex >= 0) {
+    const matchingConfig = selectedStrategies[matchingIndex]
+    // Use the same display name logic as in ComparisonInputForm
+    return getVariantDisplayName(matchingConfig, matchingIndex)
+  }
+  
+  // Fallback to variantName or strategyName if no match found
+  return ('variantName' in record && record.variantName && typeof record.variantName === 'string') ? record.variantName : record.strategyName
+}
+
+// Get display name for a variant (same logic as ComparisonInputForm)
+function getVariantDisplayName(config: StrategyConfig, index?: number): string {
+  // If variantName is set, use it
+  if (config.variantName) {
+    return config.variantName
+  }
+  
+  const strategyNames: Record<string, string> = {
+    'lump-sum': t('backtest.strategies.lump-sum'),
+    'dca': t('backtest.strategies.dca'),
+    'rsi-dca': t('backtest.strategies.rsi-dca'),
+    'dip-buyer-dca': t('backtest.strategies.dip-buyer-dca'),
+    'moving-average-dca': t('backtest.strategies.moving-average-dca'),
+    'combined-smart-dca': t('backtest.strategies.combined-smart-dca'),
+    'rebalancing': t('backtest.strategies.rebalancing'),
+  }
+  
+  const baseName = strategyNames[config.strategyId] || config.strategyId
+  
+  // Auto-generate name with index for same strategy variants
+  if (index !== undefined) {
+    const selectedStrategies = backtestStore.selectedStrategies || []
+    const sameStrategyVariants = selectedStrategies.filter(
+      (s, idx) => s.strategyId === config.strategyId && idx <= index
+    )
+    const variantIndex = sameStrategyVariants.length
+    
+    const totalVariants = selectedStrategies.filter(
+      (s) => s.strategyId === config.strategyId
+    ).length
+    
+    if (totalVariants > 1) {
+      return `${baseName} (${variantIndex})`
+    }
+  }
+  
+  return baseName
+}
+
 function getWinnerRank(record: StrategyResult): number | null {
-  const index = top3Winners.value.findIndex((winner) => winner.strategyId === record.strategyId)
+  // Match by strategyId and parameters to find the exact variant
+  const index = top3Winners.value.findIndex((winner) => {
+    if (winner.strategyId !== record.strategyId) return false
+    // Compare parameters to match exact variant
+    const winnerParams = winner.parameters || {}
+    const recordParams = record.parameters || {}
+    return JSON.stringify(winnerParams) === JSON.stringify(recordParams)
+  })
   return index >= 0 ? index + 1 : null
 }
 
@@ -633,7 +734,7 @@ function downloadChart() {
 
 function showTransactions(strategy: StrategyResult) {
   selectedTransactions.value = strategy.transactions || []
-  selectedStrategyName.value = strategy.variantName || strategy.strategyName
+  selectedStrategyName.value = getStrategyDisplayName(strategy)
   transactionsModalVisible.value = true
 }
 </script>

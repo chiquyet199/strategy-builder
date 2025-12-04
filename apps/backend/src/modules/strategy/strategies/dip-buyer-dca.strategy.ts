@@ -11,7 +11,8 @@ import { DipBuyerDcaParameters } from '../interfaces/strategy-parameters.interfa
 
 /**
  * Dip Buyer DCA Strategy
- * Double purchase on 10%+ drops from recent high
+ * Purchases a configurable percentage of available cash when price drops significantly from recent high
+ * No scheduled purchases - only buys on dips
  */
 export class DipBuyerDcaStrategy extends BaseStrategy {
   getStrategyId(): string {
@@ -26,7 +27,7 @@ export class DipBuyerDcaStrategy extends BaseStrategy {
     return {
       lookbackDays: 30,
       dropThreshold: 0.1, // 10%
-      buyMultiplier: 2.0,
+      buyPercentage: 0.5, // 50% of available cash
     };
   }
 
@@ -47,9 +48,9 @@ export class DipBuyerDcaStrategy extends BaseStrategy {
       }
     }
 
-    if (params.buyMultiplier !== undefined) {
-      if (params.buyMultiplier < 0.1 || params.buyMultiplier > 10) {
-        throw new Error('Buy multiplier must be between 0.1 and 10');
+    if (params.buyPercentage !== undefined) {
+      if (params.buyPercentage < 0 || params.buyPercentage > 1) {
+        throw new Error('Buy percentage must be between 0 and 1 (0% to 100%)');
       }
     }
   }
@@ -72,7 +73,7 @@ export class DipBuyerDcaStrategy extends BaseStrategy {
     const params = parameters as DipBuyerDcaParameters;
     const lookbackDays = params.lookbackDays || 30;
     const dropThreshold = params.dropThreshold || 0.1;
-    const buyMultiplier = params.buyMultiplier || 2.0;
+    const buyPercentage = params.buyPercentage ?? 0.5; // Default 50% of available cash
     const allowNegativeUsdc = parameters.allowNegativeUsdc ?? false;
 
     const firstCandlePrice = candles[0].close;
@@ -93,30 +94,8 @@ export class DipBuyerDcaStrategy extends BaseStrategy {
       totalInitialValue = initialState.totalInitialValue;
     }
 
-    // Calculate base DCA amount (weekly) from initial USDC
-    const start = new Date(startDate);
-    const end = new Date(endDate);
-    const totalDays = Math.ceil(
-      (end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24),
-    );
-    const totalWeeks = Math.ceil(totalDays / 7);
-    let baseWeeklyAmount = initialUsdc / totalWeeks;
-    // If no initial USDC but funding is available, use funding amount as base weekly amount
-    if (baseWeeklyAmount === 0 && fundingSchedule && fundingSchedule.amount > 0) {
-      // Convert funding amount to weekly equivalent
-      const fundingWeeklyAmount =
-        fundingSchedule.frequency === 'daily'
-          ? fundingSchedule.amount * 7
-          : fundingSchedule.frequency === 'weekly'
-            ? fundingSchedule.amount
-            : fundingSchedule.amount / 4; // monthly to weekly
-      baseWeeklyAmount = fundingWeeklyAmount;
-    }
-
     const transactions: Transaction[] = [];
-    let lastPurchaseDate = new Date(start);
-    lastPurchaseDate.setDate(lastPurchaseDate.getDate() - 7);
-    let lastFundingDate = new Date(start);
+    let lastFundingDate = new Date(startDate);
     lastFundingDate.setDate(lastFundingDate.getDate() - 1);
     let totalQuantityHeld = initialAssetQuantity;
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -128,12 +107,8 @@ export class DipBuyerDcaStrategy extends BaseStrategy {
     for (let i = 0; i < candles.length; i++) {
       const candle = candles[i];
       const candleDate = new Date(candle.timestamp);
-      const daysSinceLastPurchase = Math.floor(
-        (candleDate.getTime() - lastPurchaseDate.getTime()) /
-          (1000 * 60 * 60 * 24),
-      );
 
-      // Handle periodic funding (separate from DCA purchases)
+      // Handle periodic funding (separate from dip purchases)
       if (fundingSchedule && fundingSchedule.amount > 0) {
         const fundingPeriodDays =
           fundingSchedule.frequency === 'daily'
@@ -183,16 +158,10 @@ export class DipBuyerDcaStrategy extends BaseStrategy {
       // Calculate drop percentage
       const dropPercent = (recentHigh - currentPrice) / recentHigh;
 
-      // Buy every 7 days (weekly base)
-      if (daysSinceLastPurchase >= 7) {
-        let desiredBuyAmount = baseWeeklyAmount;
-        let reason = 'Weekly DCA purchase';
-
-        // Check if we're in a dip
-        if (dropPercent >= dropThreshold) {
-          desiredBuyAmount = baseWeeklyAmount * buyMultiplier;
-          reason = `Dip detected: ${(dropPercent * 100).toFixed(2)}% drop from recent high - ${buyMultiplier}x purchase`;
-        }
+      // Only buy when dip is detected (no scheduled purchases)
+      if (dropPercent >= dropThreshold && availableCash > 0) {
+        // Calculate purchase amount as percentage of available cash
+        const desiredBuyAmount = availableCash * buyPercentage;
 
         // Calculate actual purchase amount (capped to available cash if negative USDC not allowed)
         const actualBuyAmount = this.calculatePurchaseAmount(
@@ -215,9 +184,7 @@ export class DipBuyerDcaStrategy extends BaseStrategy {
         const usdcValue = availableCash;
         const totalValue = coinValue + usdcValue;
 
-        if (actualBuyAmount < desiredBuyAmount) {
-          reason += ' (capped to available cash)';
-        }
+        const reason = `Dip detected: ${(dropPercent * 100).toFixed(2)}% drop from recent high - buying ${(buyPercentage * 100).toFixed(0)}% of available cash ($${actualBuyAmount.toFixed(2)})`;
 
         transactions.push({
           date: candle.timestamp,
@@ -232,8 +199,6 @@ export class DipBuyerDcaStrategy extends BaseStrategy {
             quantityHeld: totalQuantityHeld,
           },
         });
-
-        lastPurchaseDate = new Date(candleDate);
       }
     }
 

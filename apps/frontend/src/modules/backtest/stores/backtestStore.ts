@@ -62,11 +62,13 @@ export const useBacktestStore = defineStore('backtest', () => {
   }
 
   function setFormSelectedStrategyIds(strategyIds: StrategyConfig[]) {
-    formSelectedStrategyIds.value = strategyIds
+    // Create a new array to ensure reactivity
+    formSelectedStrategyIds.value = strategyIds.map(s => ({ ...s }))
   }
 
   function setFormSelectedVariants(variants: Variant[]) {
-    formSelectedVariants.value = variants
+    // Create a new array to ensure reactivity
+    formSelectedVariants.value = variants.map(v => ({ ...v }))
   }
 
   function setInitialPortfolio(portfolio: InitialPortfolio | undefined) {
@@ -83,6 +85,8 @@ export const useBacktestStore = defineStore('backtest', () => {
       return
     }
 
+    // Clear previous results before starting new comparison
+    results.value = null
     isLoading.value = true
     error.value = null
 
@@ -187,24 +191,16 @@ export const useBacktestStore = defineStore('backtest', () => {
     // Set strategies
     setSelectedStrategies(config.strategies)
 
-    // Determine form mode based on strategies
-    // If strategies have variantName, it's compare-variants mode
-    const hasVariants = config.strategies.some((s) => s.variantName)
-    if (hasVariants) {
-      setFormMode('compare-variants')
-      // Convert strategies to variants format
-      const variants: Variant[] = config.strategies.map((s) => ({
-        strategyId: s.strategyId,
-        variantName: s.variantName || s.strategyId,
-        parameters: s.parameters || {},
-      }))
-      setFormSelectedVariants(variants)
-      setFormSelectedStrategyIds([])
-    } else {
-      setFormMode('compare-strategies')
-      setFormSelectedStrategyIds(config.strategies)
-      setFormSelectedVariants([])
-    }
+    // Always use compare-strategies mode (the form uses this mode)
+    // Convert all strategies to StrategyConfig format, preserving variantName
+    setFormMode('compare-strategies')
+    const strategyConfigs: StrategyConfig[] = config.strategies.map((s) => ({
+      strategyId: s.strategyId,
+      variantName: s.variantName, // Preserve variantName if it exists
+      parameters: s.parameters || {},
+    }))
+    setFormSelectedStrategyIds(strategyConfigs)
+    setFormSelectedVariants([])
   }
 
   return {

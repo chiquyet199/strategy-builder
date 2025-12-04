@@ -275,7 +275,7 @@
       "lump-sum": "Invest the entire amount at the start date and hold. Simple buy-and-hold strategy.",
       "dca": "Invest a fixed amount at regular intervals (daily, weekly, or monthly), regardless of price. Reduces the impact of volatility.",
       "rsi-dca": "Weekly DCA with increased purchases when RSI indicates oversold conditions. Skips buying when overbought.",
-      "dip-buyer-dca": "Weekly DCA with increased purchases when price drops significantly from recent highs. Buy the dip strategy.",
+      "dip-buyer-dca": "Buy the dip strategy. Only purchases when price drops significantly from recent highs, using a configurable percentage of available cash.",
       "moving-average-dca": "Weekly DCA with increased purchases when price is below the moving average. Trend-following strategy.",
       "combined-smart-dca": "Combines RSI, Moving Average, and Dip Buyer signals to adjust weekly DCA purchases. Most sophisticated strategy.",
       "rebalancing": "Maintains a target asset allocation (e.g., 80% BTC / 20% USDC) by automatically buying or selling when the allocation drifts beyond configurable thresholds. Automatically rebalances to keep your portfolio at the target allocation."
@@ -317,9 +317,9 @@
         "dropThreshold": "Drop Threshold",
         "dropThresholdHelp": "Percentage drop from recent high to trigger buy (default: 10%)",
         "dropThresholdTooltip": "The percentage drop from the recent high price that triggers increased buying. For example, 10% means if the price drops 10% from the recent high, the strategy will buy more. Lower values (e.g., 5%) trigger more often, higher values (e.g., 20%) trigger less often.",
-        "buyMultiplier": "Buy Multiplier",
-        "buyMultiplierHelp": "Multiplier for purchase amount when dip detected (default: 2.0x)",
-        "buyMultiplierTooltip": "When a dip is detected, the strategy multiplies the normal purchase amount by this value. For example, 2.0x means buying twice the normal amount during dips. Higher multipliers mean buying more aggressively when prices drop significantly."
+        "buyPercentage": "Buy Percentage",
+        "buyPercentageHelp": "Percentage of available cash to buy when dip detected (default: 50%)",
+        "buyPercentageTooltip": "When a dip is detected, the strategy will buy this percentage of available cash. For example, 50% means buying half of available cash during dips. Higher percentages mean buying more aggressively when prices drop significantly. The strategy only buys when dips are detected, not on a schedule."
       },
       "ma": {
         "maPeriod": "MA Period",
@@ -405,6 +405,8 @@
         "totalQuantityTooltip": "The total amount of cryptocurrency (e.g., BTC) you accumulated by the end of the test period.",
         "sharpeRatio": "Sharpe Ratio",
         "sharpeRatioTooltip": "A measure of risk-adjusted returns. Higher is better - it means you got better returns relative to the risk taken. A Sharpe ratio above 1 is considered good, above 2 is very good.",
+        "transactions": "Transactions",
+        "transactionsTooltip": "Number of transactions executed by this strategy. Click to view detailed transaction history.",
         "actions": "Actions",
         "actionsTooltip": "View detailed transaction history for this strategy.",
         "viewTransactions": "View Transactions ({count})"

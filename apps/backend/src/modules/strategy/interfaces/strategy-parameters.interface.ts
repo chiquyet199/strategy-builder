@@ -13,7 +13,7 @@ export interface RsiDcaParameters {
 export interface DipBuyerDcaParameters {
   lookbackDays?: number; // Default: 30
   dropThreshold?: number; // Default: 0.10 (10%)
-  buyMultiplier?: number; // Default: 2.0
+  buyPercentage?: number; // Default: 0.5 (50% of available cash)
 }
 
 export interface MovingAverageDcaParameters {

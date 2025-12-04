@@ -1,4 +1,4 @@
-import { reactive, onMounted } from 'vue'
+import { reactive, onMounted, onUnmounted, watch } from 'vue'
 import { useBacktestStore } from '../stores/backtestStore'
 import type { StrategyConfig, ComparisonMode, Variant, Timeframe, InitialPortfolio, FundingSchedule } from '@/shared/types/backtest'
 
@@ -87,14 +87,23 @@ export function useBacktestForm() {
     await backtestStore.compareStrategies()
   }
 
-  onMounted(() => {
-    // Initialize form with store values (preserves state when navigating back)
+  function syncFormFromStore() {
+    // Sync form with store values (preserves state when navigating back or loading shared config)
     formState.startDate = backtestStore.startDate
     formState.endDate = backtestStore.endDate
     formState.timeframe = backtestStore.timeframe
     formState.mode = backtestStore.formMode
-    formState.selectedStrategyIds = [...backtestStore.formSelectedStrategyIds]
-    formState.selectedVariants = [...backtestStore.formSelectedVariants]
+    // Deep copy to ensure reactivity and preserve all properties
+    formState.selectedStrategyIds = backtestStore.formSelectedStrategyIds.map(s => ({
+      strategyId: s.strategyId,
+      variantName: s.variantName,
+      parameters: s.parameters ? { ...s.parameters } : undefined,
+    }))
+    formState.selectedVariants = backtestStore.formSelectedVariants.map(v => ({
+      strategyId: v.strategyId,
+      variantName: v.variantName,
+      parameters: v.parameters ? { ...v.parameters } : {},
+    }))
     // Restore initial portfolio and funding schedule
     formState.initialPortfolio = backtestStore.initialPortfolio
       ? {
@@ -106,6 +115,33 @@ export function useBacktestForm() {
       frequency: backtestStore.fundingSchedule.frequency,
       amount: backtestStore.fundingSchedule.amount,
     }
+  }
+
+  onMounted(() => {
+    syncFormFromStore()
+    
+    // Watch for store changes (e.g., when shared config is loaded)
+    const unwatch = watch(
+      () => [
+        backtestStore.formSelectedStrategyIds,
+        backtestStore.formSelectedVariants,
+        backtestStore.startDate,
+        backtestStore.endDate,
+        backtestStore.timeframe,
+        backtestStore.formMode,
+        backtestStore.initialPortfolio,
+        backtestStore.fundingSchedule,
+      ],
+      () => {
+        syncFormFromStore()
+      },
+      { deep: true }
+    )
+    
+    // Cleanup watcher on unmount
+    onUnmounted(() => {
+      unwatch()
+    })
   })
 
   return {

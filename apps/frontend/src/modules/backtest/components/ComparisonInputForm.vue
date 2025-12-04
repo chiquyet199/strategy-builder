@@ -210,6 +210,68 @@
                 <a-select-option value="monthly">{{ t('backtest.parameters.dca.frequencyOptions.monthly') }}</a-select-option>
               </a-select>
             </a-form-item>
+
+            <a-form-item>
+              <template #label>
+                <span>
+                  {{ t('backtest.parameters.dca.spendType') }}
+                  <a-tooltip :title="t('backtest.parameters.dca.spendTypeTooltip')">
+                    <QuestionCircleOutlined style="margin-left: 4px; color: #8c8c8c; cursor: help;" />
+                  </a-tooltip>
+                </span>
+              </template>
+              <a-radio-group v-model:value="parameterForm.spendType" @change="handleDcaSpendTypeChange">
+                <a-radio value="percentage">{{ t('backtest.parameters.dca.spendTypeOptions.percentage') }}</a-radio>
+                <a-radio value="fixed">{{ t('backtest.parameters.dca.spendTypeOptions.fixed') }}</a-radio>
+              </a-radio-group>
+            </a-form-item>
+
+            <a-form-item v-if="parameterForm.spendType === 'percentage'">
+              <template #label>
+                <span>
+                  {{ t('backtest.parameters.dca.spendPercentage') }}
+                  <a-tooltip :title="t('backtest.parameters.dca.spendPercentageTooltip')">
+                    <QuestionCircleOutlined style="margin-left: 4px; color: #8c8c8c; cursor: help;" />
+                  </a-tooltip>
+                </span>
+              </template>
+              <a-input-number
+                v-model:value="parameterForm.spendPercentage"
+                :min="0"
+                :max="100"
+                :precision="0"
+                style="width: 100%"
+                :addon-after="'%'"
+              />
+              <template #extra>
+                <span class="text-xs text-gray-500">
+                  {{ t('backtest.parameters.dca.spendPercentageHelp') }}
+                </span>
+              </template>
+            </a-form-item>
+
+            <a-form-item v-if="parameterForm.spendType === 'fixed'">
+              <template #label>
+                <span>
+                  {{ t('backtest.parameters.dca.spendAmount') }}
+                  <a-tooltip :title="t('backtest.parameters.dca.spendAmountTooltip')">
+                    <QuestionCircleOutlined style="margin-left: 4px; color: #8c8c8c; cursor: help;" />
+                  </a-tooltip>
+                </span>
+              </template>
+              <a-input-number
+                v-model:value="parameterForm.spendAmount"
+                :min="0"
+                :precision="2"
+                style="width: 100%"
+                :addon-before="'$'"
+              />
+              <template #extra>
+                <span class="text-xs text-gray-500">
+                  {{ t('backtest.parameters.dca.spendAmountHelp') }}
+                </span>
+              </template>
+            </a-form-item>
           </template>
 
           <template v-else-if="selectedStrategyForParams.id === 'rsi-dca'">
@@ -689,6 +751,68 @@
                 <a-select-option value="monthly">{{ t('backtest.parameters.dca.frequencyOptions.monthly') }}</a-select-option>
               </a-select>
             </a-form-item>
+
+            <a-form-item>
+              <template #label>
+                <span>
+                  {{ t('backtest.parameters.dca.spendType') }}
+                  <a-tooltip :title="t('backtest.parameters.dca.spendTypeTooltip')">
+                    <QuestionCircleOutlined style="margin-left: 4px; color: #8c8c8c; cursor: help;" />
+                  </a-tooltip>
+                </span>
+              </template>
+              <a-radio-group v-model:value="variantParameterForm.spendType" @change="handleVariantDcaSpendTypeChange">
+                <a-radio value="percentage">{{ t('backtest.parameters.dca.spendTypeOptions.percentage') }}</a-radio>
+                <a-radio value="fixed">{{ t('backtest.parameters.dca.spendTypeOptions.fixed') }}</a-radio>
+              </a-radio-group>
+            </a-form-item>
+
+            <a-form-item v-if="variantParameterForm.spendType === 'percentage'">
+              <template #label>
+                <span>
+                  {{ t('backtest.parameters.dca.spendPercentage') }}
+                  <a-tooltip :title="t('backtest.parameters.dca.spendPercentageTooltip')">
+                    <QuestionCircleOutlined style="margin-left: 4px; color: #8c8c8c; cursor: help;" />
+                  </a-tooltip>
+                </span>
+              </template>
+              <a-input-number
+                v-model:value="variantParameterForm.spendPercentage"
+                :min="0"
+                :max="100"
+                :precision="0"
+                style="width: 100%"
+                :addon-after="'%'"
+              />
+              <template #extra>
+                <span class="text-xs text-gray-500">
+                  {{ t('backtest.parameters.dca.spendPercentageHelp') }}
+                </span>
+              </template>
+            </a-form-item>
+
+            <a-form-item v-if="variantParameterForm.spendType === 'fixed'">
+              <template #label>
+                <span>
+                  {{ t('backtest.parameters.dca.spendAmount') }}
+                  <a-tooltip :title="t('backtest.parameters.dca.spendAmountTooltip')">
+                    <QuestionCircleOutlined style="margin-left: 4px; color: #8c8c8c; cursor: help;" />
+                  </a-tooltip>
+                </span>
+              </template>
+              <a-input-number
+                v-model:value="variantParameterForm.spendAmount"
+                :min="0"
+                :precision="2"
+                style="width: 100%"
+                :addon-before="'$'"
+              />
+              <template #extra>
+                <span class="text-xs text-gray-500">
+                  {{ t('backtest.parameters.dca.spendAmountHelp') }}
+                </span>
+              </template>
+            </a-form-item>
           </template>
 
           <!-- RSI DCA Parameters -->
@@ -1092,7 +1216,7 @@ const strategyInfo: Record<
   { hasParameters: boolean; defaultParameters?: Record<string, any> }
 > = {
   'lump-sum': { hasParameters: false },
-  dca: { hasParameters: true, defaultParameters: { frequency: 'weekly' } },
+  dca: { hasParameters: true, defaultParameters: { frequency: 'weekly', spendType: 'percentage', spendPercentage: 100 } },
   'rsi-dca': {
     hasParameters: true,
     defaultParameters: {
@@ -1560,6 +1684,16 @@ const resetVariantParameters = () => {
   Object.assign(variantParameterForm, strategyInfo[selectedStrategyForVariant.value].defaultParameters!)
 }
 
+// Handle variant DCA spend type change
+function handleVariantDcaSpendTypeChange() {
+  // Clear the opposite field when switching types
+  if (variantParameterForm.spendType === 'percentage') {
+    variantParameterForm.spendAmount = undefined
+  } else if (variantParameterForm.spendType === 'fixed') {
+    variantParameterForm.spendPercentage = undefined
+  }
+}
+
 function handleDateRangeChange(dates: { startDate: string; endDate: string }) {
   emit('date-range-change', dates)
 }
@@ -1633,6 +1767,16 @@ function resetParameters() {
   if (!selectedStrategyForParams.value?.id || !strategyInfo[selectedStrategyForParams.value.id]?.defaultParameters)
     return
   Object.assign(parameterForm, strategyInfo[selectedStrategyForParams.value.id].defaultParameters!)
+}
+
+// Handle DCA spend type change
+function handleDcaSpendTypeChange() {
+  // Clear the opposite field when switching types
+  if (parameterForm.spendType === 'percentage') {
+    parameterForm.spendAmount = undefined
+  } else if (parameterForm.spendType === 'fixed') {
+    parameterForm.spendPercentage = undefined
+  }
 }
 
 // Watch formState to sync selectedStrategyIds and ensure mode is compare-strategies

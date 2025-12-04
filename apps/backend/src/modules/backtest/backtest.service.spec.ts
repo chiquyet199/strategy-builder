@@ -5,6 +5,7 @@ import { MarketDataService } from '../market-data/market-data.service';
 import { StrategyService } from '../strategy/strategy.service';
 import { CompareStrategiesDto } from './dto/compare-strategies.dto';
 import { StrategyResult } from '../strategy/interfaces/strategy-result.interface';
+import { ComparisonTrackingService } from '../admin/services/comparison-tracking.service';
 
 describe('BacktestService', () => {
   let service: BacktestService;
@@ -58,6 +59,10 @@ describe('BacktestService', () => {
       calculateStrategy: jest.fn(),
     };
 
+    const mockComparisonTrackingService = {
+      trackComparison: jest.fn(),
+    };
+
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         BacktestService,
@@ -68,6 +73,10 @@ describe('BacktestService', () => {
         {
           provide: StrategyService,
           useValue: mockStrategyService,
+        },
+        {
+          provide: ComparisonTrackingService,
+          useValue: mockComparisonTrackingService,
         },
       ],
     }).compile();

@@ -7,6 +7,7 @@ import {
 } from '../interfaces/strategy-result.interface';
 import { Candlestick } from '../../market-data/interfaces/candlestick.interface';
 import { MetricsCalculator } from '../utils/metrics-calculator';
+import { DcaParameters } from '../interfaces/strategy-parameters.interface';
 
 /**
  * DCA Strategy
@@ -24,6 +25,9 @@ export class DcaStrategy extends BaseStrategy {
   getDefaultParameters(): Record<string, any> {
     return {
       frequency: 'weekly', // 'daily', 'weekly', 'monthly'
+      spendType: 'percentage', // 'percentage' or 'fixed'
+      spendPercentage: 100, // 100% of remaining USDC (default)
+      spendAmount: undefined, // Optional fixed amount
     };
   }
 
@@ -34,6 +38,24 @@ export class DcaStrategy extends BaseStrategy {
         throw new Error(
           `Frequency must be one of: ${validFrequencies.join(', ')}`,
         );
+      }
+    }
+    if (parameters?.spendType) {
+      const validSpendTypes = ['percentage', 'fixed'];
+      if (!validSpendTypes.includes(parameters.spendType)) {
+        throw new Error(
+          `Spend type must be one of: ${validSpendTypes.join(', ')}`,
+        );
+      }
+    }
+    if (parameters?.spendPercentage !== undefined) {
+      if (parameters.spendPercentage < 0 || parameters.spendPercentage > 100) {
+        throw new Error('Spend percentage must be between 0 and 100');
+      }
+    }
+    if (parameters?.spendAmount !== undefined) {
+      if (parameters.spendAmount < 0) {
+        throw new Error('Spend amount must be greater than or equal to 0');
       }
     }
   }
@@ -53,7 +75,11 @@ export class DcaStrategy extends BaseStrategy {
       parameters._initialPortfolio;
     const fundingSchedule: FundingSchedule | undefined =
       parameters._fundingSchedule;
-    const frequency = parameters.frequency || 'weekly';
+    const params = parameters as DcaParameters;
+    const frequency = params.frequency || 'weekly';
+    const spendType = params.spendType || 'percentage';
+    const spendPercentage = params.spendPercentage ?? 100;
+    const spendAmount = params.spendAmount;
     const allowNegativeUsdc = parameters.allowNegativeUsdc ?? false;
 
     const firstCandlePrice = candles[0].close;
@@ -202,9 +228,19 @@ export class DcaStrategy extends BaseStrategy {
       if (shouldPurchase) {
         const price = candle.close;
 
+        // Calculate purchase amount based on spendType
+        let targetPurchaseAmount: number;
+        if (spendType === 'fixed' && spendAmount !== undefined) {
+          // Fixed amount spending
+          targetPurchaseAmount = spendAmount;
+        } else {
+          // Percentage spending (default: 100% of remaining USDC)
+          targetPurchaseAmount = (currentUsdcBalance * spendPercentage) / 100;
+        }
+
         // Calculate actual purchase amount (capped to available cash if negative USDC not allowed)
         const actualPurchaseAmount = this.calculatePurchaseAmount(
-          periodAmount,
+          targetPurchaseAmount,
           currentUsdcBalance,
           allowNegativeUsdc,
         );
@@ -223,12 +259,23 @@ export class DcaStrategy extends BaseStrategy {
         const coinValue = currentQuantityHeld * price;
         const totalValue = coinValue + currentUsdcBalance;
 
+        // Build reason message
+        let reason = `${frequency.charAt(0).toUpperCase() + frequency.slice(1)} DCA purchase`;
+        if (spendType === 'fixed' && spendAmount !== undefined) {
+          reason += ` ($${spendAmount.toFixed(2)})`;
+        } else {
+          reason += ` (${spendPercentage}% of USDC)`;
+        }
+        if (actualPurchaseAmount < targetPurchaseAmount) {
+          reason += ' (capped to available cash)';
+        }
+
         transactions.push({
           date: candle.timestamp,
           price,
           amount: actualPurchaseAmount,
           quantityPurchased,
-          reason: `${frequency.charAt(0).toUpperCase() + frequency.slice(1)} DCA purchase${actualPurchaseAmount < periodAmount ? ' (capped to available cash)' : ''}`,
+          reason,
           portfolioValue: {
             coinValue,
             usdcValue: currentUsdcBalance,

@@ -3,6 +3,13 @@
  * Define parameter types for each strategy for type safety
  */
 
+export interface DcaParameters {
+  frequency?: 'daily' | 'weekly' | 'monthly'; // Default: 'weekly'
+  spendType?: 'percentage' | 'fixed'; // Default: 'percentage'
+  spendPercentage?: number; // Default: 100 (100% of remaining USDC)
+  spendAmount?: number; // Optional, for fixed amount spending
+}
+
 export interface RsiDcaParameters {
   rsiPeriod?: number; // Default: 14
   oversoldThreshold?: number; // Default: 30

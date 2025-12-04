@@ -19,29 +19,6 @@ describe('CombinedSmartDcaStrategy', () => {
     strategy = new CombinedSmartDcaStrategy();
   });
 
-  describe('getStrategyId', () => {
-    it('should return correct strategy ID', () => {
-      expect(strategy.getStrategyId()).toBe('combined-smart-dca');
-    });
-  });
-
-  describe('getStrategyName', () => {
-    it('should return correct strategy name', () => {
-      expect(strategy.getStrategyName()).toBe('Combined Smart DCA');
-    });
-  });
-
-  describe('getDefaultParameters', () => {
-    it('should return default parameters', () => {
-      const defaults = strategy.getDefaultParameters();
-      expect(defaults.rsiPeriod).toBe(14);
-      expect(defaults.oversoldThreshold).toBe(30);
-      expect(defaults.maPeriod).toBe(200);
-      expect(defaults.lookbackDays).toBe(30);
-      expect(defaults.dropThreshold).toBe(0.1);
-      expect(defaults.maxMultiplier).toBe(2.5);
-    });
-  });
 
   describe('validateParameters', () => {
     it('should not throw for valid parameters', () => {

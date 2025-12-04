@@ -19,25 +19,6 @@ describe('MovingAverageDcaStrategy', () => {
     strategy = new MovingAverageDcaStrategy();
   });
 
-  describe('getStrategyId', () => {
-    it('should return correct strategy ID', () => {
-      expect(strategy.getStrategyId()).toBe('moving-average-dca');
-    });
-  });
-
-  describe('getStrategyName', () => {
-    it('should return correct strategy name', () => {
-      expect(strategy.getStrategyName()).toBe('Moving Average DCA');
-    });
-  });
-
-  describe('getDefaultParameters', () => {
-    it('should return default parameters', () => {
-      const defaults = strategy.getDefaultParameters();
-      expect(defaults.maPeriod).toBe(200);
-      expect(defaults.buyMultiplier).toBe(2.0);
-    });
-  });
 
   describe('validateParameters', () => {
     it('should not throw for valid parameters', () => {

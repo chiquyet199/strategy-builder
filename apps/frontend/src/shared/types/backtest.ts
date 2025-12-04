@@ -109,6 +109,13 @@ export interface BacktestResponse {
 /**
  * Strategy parameter interfaces (for future customization UI)
  */
+export interface DcaParameters {
+  frequency?: 'daily' | 'weekly' | 'monthly';
+  spendType?: 'percentage' | 'fixed';
+  spendPercentage?: number; // 0-100, default 100
+  spendAmount?: number; // For fixed amount spending
+}
+
 export interface RsiDcaParameters {
   rsiPeriod?: number;
   oversoldThreshold?: number;

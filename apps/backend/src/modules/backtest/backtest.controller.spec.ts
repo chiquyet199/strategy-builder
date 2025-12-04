@@ -2,6 +2,8 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { BacktestController } from './backtest.controller';
 import { BacktestService } from './backtest.service';
 import { CompareStrategiesDto } from './dto/compare-strategies.dto';
+import { ShareComparisonService } from './services/share-comparison.service';
+import { ComparisonTrackingService } from '../admin/services/comparison-tracking.service';
 
 describe('BacktestController', () => {
   let controller: BacktestController;
@@ -40,12 +42,29 @@ describe('BacktestController', () => {
       compareStrategies: jest.fn(),
     };
 
+    const mockShareComparisonService = {
+      createShare: jest.fn(),
+      getSharedConfig: jest.fn(),
+    };
+
+    const mockComparisonTrackingService = {
+      trackComparison: jest.fn(),
+    };
+
     const module: TestingModule = await Test.createTestingModule({
       controllers: [BacktestController],
       providers: [
         {
           provide: BacktestService,
           useValue: mockBacktestService,
+        },
+        {
+          provide: ShareComparisonService,
+          useValue: mockShareComparisonService,
+        },
+        {
+          provide: ComparisonTrackingService,
+          useValue: mockComparisonTrackingService,
         },
       ],
     }).compile();

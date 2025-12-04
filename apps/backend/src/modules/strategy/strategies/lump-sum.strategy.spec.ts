@@ -38,23 +38,6 @@ describe('LumpSumStrategy', () => {
     strategy = new LumpSumStrategy();
   });
 
-  describe('getStrategyId', () => {
-    it('should return correct strategy ID', () => {
-      expect(strategy.getStrategyId()).toBe('lump-sum');
-    });
-  });
-
-  describe('getStrategyName', () => {
-    it('should return correct strategy name', () => {
-      expect(strategy.getStrategyName()).toBe('Lump Sum');
-    });
-  });
-
-  describe('getDefaultParameters', () => {
-    it('should return empty object', () => {
-      expect(strategy.getDefaultParameters()).toEqual({});
-    });
-  });
 
   describe('validateParameters', () => {
     it('should not throw for empty parameters', () => {

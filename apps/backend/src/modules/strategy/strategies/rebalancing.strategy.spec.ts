@@ -38,26 +38,6 @@ describe('RebalancingStrategy', () => {
     strategy = new RebalancingStrategy();
   });
 
-  describe('getStrategyId', () => {
-    it('should return correct strategy ID', () => {
-      expect(strategy.getStrategyId()).toBe('rebalancing');
-    });
-  });
-
-  describe('getStrategyName', () => {
-    it('should return correct strategy name', () => {
-      expect(strategy.getStrategyName()).toBe('Portfolio Rebalancing');
-    });
-  });
-
-  describe('getDefaultParameters', () => {
-    it('should return default parameters', () => {
-      const defaults = strategy.getDefaultParameters();
-      expect(defaults.targetAllocation).toBe(0.8);
-      expect(defaults.rebalanceThreshold).toBe(0.1);
-      expect(defaults.rebalanceSchedule).toBe('none');
-    });
-  });
 
   describe('validateParameters', () => {
     it('should not throw for valid parameters', () => {

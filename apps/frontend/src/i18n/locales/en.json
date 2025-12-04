@@ -294,7 +294,19 @@
           "daily": "Daily",
           "weekly": "Weekly",
           "monthly": "Monthly"
-        }
+        },
+        "spendType": "Spending Method",
+        "spendTypeTooltip": "Choose how much to spend on each DCA purchase. Percentage uses a percentage of remaining USDC, while fixed uses a specific dollar amount. This is separate from your funding schedule - you can fund $100/week but only spend $300/month or 50% of USDC.",
+        "spendTypeOptions": {
+          "percentage": "Percentage of USDC",
+          "fixed": "Fixed Amount"
+        },
+        "spendPercentage": "Spend Percentage",
+        "spendPercentageTooltip": "Percentage of remaining USDC to spend on each DCA purchase. Default is 100% (spend all available USDC).",
+        "spendPercentageHelp": "Enter a value between 0 and 100. For example, 50 means spend 50% of available USDC on each purchase.",
+        "spendAmount": "Fixed Spend Amount",
+        "spendAmountTooltip": "Fixed dollar amount to spend on each DCA purchase, regardless of available USDC balance.",
+        "spendAmountHelp": "Enter the dollar amount to spend on each scheduled DCA purchase. This is separate from your funding schedule."
       },
       "rsi": {
         "rsiPeriod": "RSI Period",

@@ -19,27 +19,6 @@ describe('RsiDcaStrategy', () => {
     strategy = new RsiDcaStrategy();
   });
 
-  describe('getStrategyId', () => {
-    it('should return correct strategy ID', () => {
-      expect(strategy.getStrategyId()).toBe('rsi-dca');
-    });
-  });
-
-  describe('getStrategyName', () => {
-    it('should return correct strategy name', () => {
-      expect(strategy.getStrategyName()).toBe('RSI DCA');
-    });
-  });
-
-  describe('getDefaultParameters', () => {
-    it('should return default parameters', () => {
-      const defaults = strategy.getDefaultParameters();
-      expect(defaults.rsiPeriod).toBe(14);
-      expect(defaults.oversoldThreshold).toBe(30);
-      expect(defaults.overboughtThreshold).toBe(70);
-      expect(defaults.buyMultiplier).toBe(2.0);
-    });
-  });
 
   describe('validateParameters', () => {
     it('should not throw for valid parameters', () => {

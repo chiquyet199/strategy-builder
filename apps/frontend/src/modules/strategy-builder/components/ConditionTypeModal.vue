@@ -32,6 +32,13 @@
         </div>
         
         <div class="condition-option mb-3">
+          <a-radio value="price_streak">
+            <strong>📊 Price Streak</strong>
+            <div class="text-sm text-gray-500">Price drops/rises N times in a row</div>
+          </a-radio>
+        </div>
+        
+        <div class="condition-option mb-3">
           <a-radio value="volume_change">
             <strong>📊 Volume Change</strong>
             <div class="text-sm text-gray-500">Volume above/below average</div>

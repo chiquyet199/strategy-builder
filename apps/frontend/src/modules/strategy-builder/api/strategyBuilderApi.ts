@@ -25,6 +25,7 @@ export type WhenCondition =
   | ScheduleCondition
   | PriceChangeCondition
   | PriceLevelCondition
+  | PriceStreakCondition
   | VolumeChangeCondition
   | IndicatorCondition
   | AndCondition
@@ -49,6 +50,13 @@ export interface PriceLevelCondition {
   type: 'price_level'
   operator: 'above' | 'below' | 'equals'
   price: number
+}
+
+export interface PriceStreakCondition {
+  type: 'price_streak'
+  direction: 'drop' | 'rise'
+  streakCount: number
+  minChangePercent?: number
 }
 
 export interface VolumeChangeCondition {

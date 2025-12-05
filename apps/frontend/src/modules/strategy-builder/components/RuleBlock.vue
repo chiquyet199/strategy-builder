@@ -123,6 +123,7 @@ import type {
   ScheduleCondition,
   PriceChangeCondition,
   PriceLevelCondition,
+  PriceStreakCondition,
   VolumeChangeCondition,
   IndicatorCondition,
   BuyFixedAction,
@@ -259,6 +260,13 @@ const handleConditionTypeSelected = (type: string) => {
         operator: 'below',
         price: 50000,
       } as PriceLevelCondition
+      break
+    case 'price_streak':
+      newCondition = {
+        type: 'price_streak',
+        direction: 'drop',
+        streakCount: 3,
+      } as PriceStreakCondition
       break
     case 'volume_change':
       newCondition = {

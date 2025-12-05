@@ -29,6 +29,7 @@ export type WhenCondition =
   | ScheduleCondition
   | PriceChangeCondition
   | PriceLevelCondition
+  | PriceStreakCondition
   | VolumeChangeCondition
   | IndicatorCondition
   | AndCondition
@@ -40,7 +41,14 @@ export type WhenCondition =
 export interface ScheduleCondition {
   type: 'schedule';
   frequency: 'daily' | 'weekly' | 'monthly';
-  dayOfWeek?: 'monday' | 'tuesday' | 'wednesday' | 'thursday' | 'friday' | 'saturday' | 'sunday';
+  dayOfWeek?:
+    | 'monday'
+    | 'tuesday'
+    | 'wednesday'
+    | 'thursday'
+    | 'friday'
+    | 'saturday'
+    | 'sunday';
   dayOfMonth?: number; // 1-28
   time?: string; // HH:MM format (optional, not used in Phase 1)
 }
@@ -61,6 +69,16 @@ export interface PriceLevelCondition {
   price: number; // Absolute price in USD
 }
 
+/**
+ * Price Streak Condition - Detects consecutive price movements
+ */
+export interface PriceStreakCondition {
+  type: 'price_streak';
+  direction: 'drop' | 'rise'; // Direction of the streak
+  streakCount: number; // Number of consecutive periods (e.g., 3 = 3 times in a row)
+  minChangePercent?: number; // Optional minimum change percentage per period (0-1, e.g., 0.01 = 1%)
+}
+
 export interface VolumeChangeCondition {
   type: 'volume_change';
   operator: 'above' | 'below';
@@ -76,7 +94,12 @@ export interface IndicatorCondition {
   type: 'indicator';
   indicator: 'rsi' | 'ma' | 'macd' | 'bollinger';
   params: Record<string, any>; // Indicator-specific parameters
-  operator: 'less_than' | 'greater_than' | 'equals' | 'crosses_above' | 'crosses_below';
+  operator:
+    | 'less_than'
+    | 'greater_than'
+    | 'equals'
+    | 'crosses_above'
+    | 'crosses_below';
   value: number;
 }
 
@@ -174,4 +197,3 @@ export interface EvaluationContext {
   }>; // Historical data up to current date
   conditionSeverity?: number; // For scaled actions: 0-1 indicating how severe the condition is (e.g., 0.5 = 50% drop)
 }
-

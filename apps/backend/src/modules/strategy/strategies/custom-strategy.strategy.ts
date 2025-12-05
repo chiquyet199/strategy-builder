@@ -16,6 +16,7 @@ import {
   ScheduleCondition,
   PriceChangeCondition,
   PriceLevelCondition,
+  PriceStreakCondition,
   VolumeChangeCondition,
   IndicatorCondition,
   AndCondition,
@@ -132,6 +133,22 @@ export class CustomStrategy extends BaseStrategy {
         }
         if (condition.price <= 0) {
           throw new Error(`${context}: Price level must be greater than 0`);
+        }
+        break;
+
+      case 'price_streak':
+        if (condition.streakCount < 2 || condition.streakCount > 30) {
+          throw new Error(
+            `${context}: Price streak count must be between 2 and 30`,
+          );
+        }
+        if (
+          condition.minChangePercent !== undefined &&
+          (condition.minChangePercent < 0 || condition.minChangePercent > 1)
+        ) {
+          throw new Error(
+            `${context}: Minimum change percentage must be between 0 and 1`,
+          );
         }
         break;
 
@@ -599,6 +616,9 @@ export class CustomStrategy extends BaseStrategy {
       case 'price_level':
         return this.evaluatePriceLevel(condition, context);
 
+      case 'price_streak':
+        return this.evaluatePriceStreak(condition, context);
+
       case 'volume_change':
         return this.evaluateVolumeChange(condition, context);
 
@@ -763,6 +783,57 @@ export class CustomStrategy extends BaseStrategy {
       default:
         return false;
     }
+  }
+
+  /**
+   * Evaluate price streak condition
+   * Checks if price has dropped or risen N times in a row
+   */
+  private evaluatePriceStreak(
+    condition: PriceStreakCondition,
+    context: EvaluationContext,
+  ): boolean {
+    const { marketData } = context;
+    const streakCount = condition.streakCount;
+    const minChangePercent = condition.minChangePercent || 0;
+
+    // Need at least streakCount + 1 candles to check streakCount consecutive changes
+    if (marketData.length < streakCount + 1) {
+      return false;
+    }
+
+    // Get the last streakCount + 1 candles
+    const recentCandles = marketData.slice(-(streakCount + 1));
+
+    let consecutiveCount = 0;
+
+    // Check each consecutive pair
+    for (let i = 1; i < recentCandles.length; i++) {
+      const prevClose = recentCandles[i - 1].close;
+      const currentClose = recentCandles[i].close;
+      const change = (currentClose - prevClose) / prevClose;
+
+      if (condition.direction === 'drop') {
+        // Check if price dropped
+        if (change < 0 && Math.abs(change) >= minChangePercent) {
+          consecutiveCount++;
+        } else {
+          // Streak broken, reset
+          consecutiveCount = 0;
+        }
+      } else {
+        // Check if price rose
+        if (change > 0 && change >= minChangePercent) {
+          consecutiveCount++;
+        } else {
+          // Streak broken, reset
+          consecutiveCount = 0;
+        }
+      }
+    }
+
+    // Check if we have the required consecutive streak
+    return consecutiveCount >= streakCount;
   }
 
   /**
@@ -1309,6 +1380,15 @@ export class CustomStrategy extends BaseStrategy {
 
       case 'price_level':
         return `Price ${condition.operator} $${condition.price.toLocaleString()}`;
+
+      case 'price_streak':
+        const directionText =
+          condition.direction === 'drop' ? 'dropped' : 'rose';
+        const minChangeText =
+          condition.minChangePercent && condition.minChangePercent > 0
+            ? ` (min ${(condition.minChangePercent * 100).toFixed(1)}% per period)`
+            : '';
+        return `Price ${directionText} ${condition.streakCount} times in a row${minChangeText}`;
 
       case 'volume_change':
         return `Volume ${condition.operator} ${condition.threshold}x average (${condition.lookbackDays} day lookback)`;

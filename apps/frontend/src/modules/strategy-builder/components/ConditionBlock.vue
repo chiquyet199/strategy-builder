@@ -102,6 +102,43 @@
       </span>
     </div>
 
+    <!-- Price Streak Condition -->
+    <div v-else-if="condition.type === 'price_streak'" class="condition-display">
+      <span class="condition-text">
+        Price
+        <a-select
+          v-model:value="priceStreakDirection"
+          style="width: 100px"
+          @change="handlePriceStreakUpdate"
+        >
+          <a-select-option value="drop">drops</a-select-option>
+          <a-select-option value="rise">rises</a-select-option>
+        </a-select>
+        <a-input-number
+          v-model:value="priceStreakCount"
+          :min="2"
+          :max="30"
+          :step="1"
+          style="width: 80px"
+          @change="handlePriceStreakUpdate"
+        />
+        times in a row
+        <span class="text-gray-500 ml-2">(optional min change:</span>
+        <a-input-number
+          v-model:value="priceStreakMinChange"
+          :min="0"
+          :max="100"
+          :step="0.1"
+          :formatter="(value) => value ? `${value}%` : ''"
+          :parser="(value) => value.replace('%', '')"
+          style="width: 80px"
+          placeholder="0%"
+          @change="handlePriceStreakUpdate"
+        />
+        <span class="text-gray-500">)</span>
+      </span>
+    </div>
+
     <!-- Volume Change Condition -->
     <div v-else-if="condition.type === 'volume_change'" class="condition-display">
       <span class="condition-text">
@@ -197,6 +234,7 @@ import type {
   ScheduleCondition,
   PriceChangeCondition,
   PriceLevelCondition,
+  PriceStreakCondition,
   VolumeChangeCondition,
   IndicatorCondition,
 } from '../api/strategyBuilderApi'
@@ -225,6 +263,11 @@ const referencePoint = ref<'24h_high' | '7d_high' | '30d_high' | 'ath'>('7d_high
 const priceLevelOperator = ref<'above' | 'below' | 'equals'>('below')
 const priceLevel = ref<number>(50000)
 
+// Price streak condition state
+const priceStreakDirection = ref<'drop' | 'rise'>('drop')
+const priceStreakCount = ref<number>(3)
+const priceStreakMinChange = ref<number | undefined>(undefined)
+
 // Volume change condition state
 const volumeOperator = ref<'above' | 'below'>('above')
 const volumeThreshold = ref<number>(1.5)
@@ -250,6 +293,12 @@ onMounted(() => {
   } else if (props.condition.type === 'price_level') {
     priceLevelOperator.value = props.condition.operator
     priceLevel.value = props.condition.price
+  } else if (props.condition.type === 'price_streak') {
+    priceStreakDirection.value = props.condition.direction
+    priceStreakCount.value = props.condition.streakCount
+    priceStreakMinChange.value = props.condition.minChangePercent
+      ? props.condition.minChangePercent * 100
+      : undefined
   } else if (props.condition.type === 'volume_change') {
     volumeOperator.value = props.condition.operator
     volumeThreshold.value = props.condition.threshold
@@ -294,6 +343,18 @@ const handlePriceLevelUpdate = () => {
     type: 'price_level',
     operator: priceLevelOperator.value,
     price: priceLevel.value,
+  }
+  emit('update', updated)
+}
+
+const handlePriceStreakUpdate = () => {
+  const updated: PriceStreakCondition = {
+    type: 'price_streak',
+    direction: priceStreakDirection.value,
+    streakCount: priceStreakCount.value,
+    minChangePercent: priceStreakMinChange.value
+      ? priceStreakMinChange.value / 100
+      : undefined,
   }
   emit('update', updated)
 }

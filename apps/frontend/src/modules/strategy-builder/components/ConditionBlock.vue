@@ -139,6 +139,65 @@
       </span>
     </div>
 
+    <!-- Portfolio Value Condition -->
+    <div v-else-if="condition.type === 'portfolio_value'" class="condition-display">
+      <span class="condition-text">
+        Portfolio value
+        <a-select
+          v-model:value="portfolioValueMode"
+          style="width: 120px"
+          @change="handlePortfolioValueUpdate"
+        >
+          <a-select-option value="absolute">is</a-select-option>
+          <a-select-option value="percentage">return is</a-select-option>
+        </a-select>
+        <a-select
+          v-model:value="portfolioValueOperator"
+          style="width: 100px"
+          @change="handlePortfolioValueUpdate"
+        >
+          <a-select-option value="above">above</a-select-option>
+          <a-select-option value="below">below</a-select-option>
+          <a-select-option value="equals">equals</a-select-option>
+          <a-select-option value="reaches">reaches</a-select-option>
+        </a-select>
+        <template v-if="portfolioValueMode === 'absolute'">
+          <a-input-number
+            v-model:value="portfolioValueTarget"
+            :min="0.01"
+            :step="100"
+            :formatter="(value) => `$${value}`"
+            :parser="(value) => value.replace('$', '')"
+            style="width: 150px"
+            @change="handlePortfolioValueUpdate"
+          />
+        </template>
+        <template v-else>
+          <a-input-number
+            v-model:value="portfolioValueTargetPercent"
+            :min="0"
+            :max="1000"
+            :step="1"
+            :formatter="(value) => `${value}%`"
+            :parser="(value) => value.replace('%', '')"
+            style="width: 100px"
+            @change="handlePortfolioValueUpdate"
+          />
+          <span class="text-gray-500 ml-2">(from</span>
+          <a-select
+            v-model:value="portfolioValueReference"
+            style="width: 140px"
+            @change="handlePortfolioValueUpdate"
+          >
+            <a-select-option value="initial_investment">initial investment</a-select-option>
+            <a-select-option value="total_invested">total invested</a-select-option>
+            <a-select-option value="peak_value">peak value</a-select-option>
+          </a-select>
+          <span class="text-gray-500">)</span>
+        </template>
+      </span>
+    </div>
+
     <!-- Volume Change Condition -->
     <div v-else-if="condition.type === 'volume_change'" class="condition-display">
       <span class="condition-text">
@@ -235,6 +294,7 @@ import type {
   PriceChangeCondition,
   PriceLevelCondition,
   PriceStreakCondition,
+  PortfolioValueCondition,
   VolumeChangeCondition,
   IndicatorCondition,
 } from '../api/strategyBuilderApi'
@@ -268,6 +328,13 @@ const priceStreakDirection = ref<'drop' | 'rise'>('drop')
 const priceStreakCount = ref<number>(3)
 const priceStreakMinChange = ref<number | undefined>(undefined)
 
+// Portfolio value condition state
+const portfolioValueMode = ref<'absolute' | 'percentage'>('percentage')
+const portfolioValueOperator = ref<'above' | 'below' | 'equals' | 'reaches'>('reaches')
+const portfolioValueTarget = ref<number>(10000)
+const portfolioValueTargetPercent = ref<number>(50)
+const portfolioValueReference = ref<'initial_investment' | 'total_invested' | 'peak_value'>('initial_investment')
+
 // Volume change condition state
 const volumeOperator = ref<'above' | 'below'>('above')
 const volumeThreshold = ref<number>(1.5)
@@ -299,6 +366,15 @@ onMounted(() => {
     priceStreakMinChange.value = props.condition.minChangePercent
       ? props.condition.minChangePercent * 100
       : undefined
+  } else if (props.condition.type === 'portfolio_value') {
+    portfolioValueMode.value = props.condition.mode
+    portfolioValueOperator.value = props.condition.operator
+    if (props.condition.mode === 'absolute') {
+      portfolioValueTarget.value = props.condition.target
+    } else {
+      portfolioValueTargetPercent.value = props.condition.target * 100 // Convert to percentage
+      portfolioValueReference.value = props.condition.referencePoint || 'initial_investment'
+    }
   } else if (props.condition.type === 'volume_change') {
     volumeOperator.value = props.condition.operator
     volumeThreshold.value = props.condition.threshold
@@ -354,6 +430,21 @@ const handlePriceStreakUpdate = () => {
     streakCount: priceStreakCount.value,
     minChangePercent: priceStreakMinChange.value
       ? priceStreakMinChange.value / 100
+      : undefined,
+  }
+  emit('update', updated)
+}
+
+const handlePortfolioValueUpdate = () => {
+  const updated: PortfolioValueCondition = {
+    type: 'portfolio_value',
+    mode: portfolioValueMode.value,
+    operator: portfolioValueOperator.value,
+    target: portfolioValueMode.value === 'absolute'
+      ? portfolioValueTarget.value
+      : portfolioValueTargetPercent.value / 100, // Convert from percentage to 0-1
+    referencePoint: portfolioValueMode.value === 'percentage'
+      ? portfolioValueReference.value
       : undefined,
   }
   emit('update', updated)

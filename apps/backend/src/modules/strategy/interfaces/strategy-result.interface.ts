@@ -29,15 +29,16 @@ export interface FundingSchedule {
  */
 export interface Transaction {
   date: string; // ISO 8601
-  type?: 'buy' | 'sell' | 'funding'; // Transaction type (optional for backward compatibility, defaults to 'buy')
+  type?: 'buy' | 'sell' | 'funding' | 'take_profit'; // Transaction type (optional for backward compatibility, defaults to 'buy')
   price: number; // Price at which the asset was bought or sold (for funding, this is the current price for portfolio value calculation)
   amount: number; // USD value of the transaction (always positive)
   quantityPurchased: number; // Amount of asset: positive for buys, negative for sells, 0 for funding
   reason?: string; // Optional reason for the transaction (e.g., "RSI < 30", "Rebalancing: BTC allocation 90% > 90% threshold")
+  profitAmount?: number; // Profit amount for take_profit transactions: (sell price - avg buy price) × quantity sold
   portfolioValue: {
     coinValue: number; // Value of coin holdings (quantityHeld * price)
     usdcValue: number; // Value of USDC holdings (remaining cash)
-    totalValue: number; // Total portfolio value (coinValue + usdcValue)
+    totalValue: number; // Total portfolio value (coinValue + usdcValue) - does NOT include profit taken
     quantityHeld: number; // Total quantity of coin held after this transaction
   };
 }
@@ -59,10 +60,11 @@ export interface StrategyMetrics {
   totalReturn: number; // Percentage return
   avgBuyPrice: number; // Average purchase price
   maxDrawdown: number; // Maximum drawdown percentage
-  finalValue: number; // Final portfolio value in USD
+  finalValue: number; // Final portfolio value in USD (does NOT include profit taken)
   sharpeRatio: number; // Sharpe ratio (risk-adjusted return)
   totalInvestment: number; // Total USD invested
   totalQuantity: number; // Total asset quantity accumulated
+  totalProfitTaken: number; // Total profit taken from take_profit actions (separate from portfolio value)
 }
 
 /**

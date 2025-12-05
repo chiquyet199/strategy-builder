@@ -19,6 +19,7 @@
           <a-radio-button value="all">All</a-radio-button>
           <a-radio-button value="buy">Buy</a-radio-button>
           <a-radio-button value="sell">Sell</a-radio-button>
+          <a-radio-button value="take_profit">Take Profit</a-radio-button>
           <a-radio-button value="funding">Funding</a-radio-button>
         </a-radio-group>
         <span class="text-sm text-gray-500 ml-2">
@@ -45,7 +46,9 @@
                   ? 'green'
                   : (record.type || 'buy') === 'sell'
                     ? 'red'
-                    : 'blue'
+                    : (record.type || 'buy') === 'take_profit'
+                      ? 'orange'
+                      : 'blue'
               "
             >
               {{
@@ -53,7 +56,9 @@
                   ? t('backtest.results.transactions.buy')
                   : (record.type || 'buy') === 'sell'
                     ? t('backtest.results.transactions.sell')
-                    : t('backtest.results.transactions.funding')
+                    : (record.type || 'buy') === 'take_profit'
+                      ? 'Take Profit'
+                      : t('backtest.results.transactions.funding')
               }}
             </a-tag>
           </template>
@@ -127,6 +132,13 @@
         </a-space>
       </div>
 
+      <!-- Strategy Summary Cards -->
+      <StrategySummaryCards 
+        v-if="backtestStore.strategyResults && backtestStore.strategyResults.length > 0"
+        :results="backtestStore.strategyResults"
+        @show-transactions="showTransactions"
+      />
+
       <!-- Chart -->
       <a-card :title="t('backtest.results.metadata.portfolioValue')" class="mt-6">
         <PortfolioChart :results="backtestStore.strategyResults" />
@@ -188,6 +200,11 @@
               <template v-else-if="column.key === 'sharpeRatio'">
                 {{ formatSharpeRatio(record.metrics?.sharpeRatio) }}
               </template>
+              <template v-else-if="column.key === 'totalProfitTaken'">
+                <span class="text-green-600 font-semibold">
+                  ${{ formatNumber(record.metrics?.totalProfitTaken) }}
+                </span>
+              </template>
             </template>
           </a-table>
         </a-card>
@@ -208,6 +225,7 @@ import { RadioGroup as ARadioGroup, RadioButton as ARadioButton } from 'ant-desi
 import { useBacktestStore } from '../stores/backtestStore'
 import PortfolioChart from './PortfolioChart.vue'
 import ShareButton from './ShareButton.vue'
+import StrategySummaryCards from './StrategySummaryCards.vue'
 import dayjs from 'dayjs'
 import type { StrategyResult, Transaction, StrategyConfig } from '@/shared/types/backtest'
 import { isSameStrategyConfig } from '../../../shared/utils/strategy-identifier'
@@ -234,6 +252,9 @@ const filteredTransactions = computed(() => {
   }
   return allTransactions.value.filter((tx) => {
     const txType = tx.type || 'buy'
+    if (transactionTypeFilter.value === 'take_profit') {
+      return txType === 'take_profit'
+    }
     return txType === transactionTypeFilter.value
   })
 })
@@ -616,6 +637,12 @@ const transactionColumns = computed(() => {
           ),
         ]),
       key: 'reason',
+    },
+    {
+      title: 'Profit Amount',
+      key: 'profitAmount',
+      width: 120,
+      align: 'right' as const,
     },
   ]
 })

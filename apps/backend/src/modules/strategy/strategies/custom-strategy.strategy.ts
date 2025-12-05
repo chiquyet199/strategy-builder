@@ -17,6 +17,7 @@ import {
   PriceChangeCondition,
   PriceLevelCondition,
   PriceStreakCondition,
+  PortfolioValueCondition,
   VolumeChangeCondition,
   IndicatorCondition,
   AndCondition,
@@ -148,6 +149,39 @@ export class CustomStrategy extends BaseStrategy {
         ) {
           throw new Error(
             `${context}: Minimum change percentage must be between 0 and 1`,
+          );
+        }
+        break;
+
+      case 'portfolio_value':
+        if (condition.target <= 0) {
+          throw new Error(
+            `${context}: Portfolio value target must be greater than 0`,
+          );
+        }
+        if (condition.mode === 'percentage') {
+          if (condition.target > 10) {
+            // Allow up to 1000% return (10.0 = 1000%)
+            throw new Error(
+              `${context}: Portfolio value percentage target must be between 0 and 10 (0-1000%)`,
+            );
+          }
+          if (
+            condition.referencePoint &&
+            !['initial_investment', 'total_invested', 'peak_value'].includes(
+              condition.referencePoint,
+            )
+          ) {
+            throw new Error(
+              `${context}: Portfolio value reference point must be initial_investment, total_invested, or peak_value`,
+            );
+          }
+        }
+        if (
+          !['above', 'below', 'equals', 'reaches'].includes(condition.operator)
+        ) {
+          throw new Error(
+            `${context}: Portfolio value operator must be above, below, equals, or reaches`,
           );
         }
         break;
@@ -330,6 +364,14 @@ export class CustomStrategy extends BaseStrategy {
         }
         break;
 
+      case 'take_profit':
+        if (action.percentage < 0 || action.percentage > 1) {
+          throw new Error(
+            `${context}: Take profit percentage must be between 0 and 1`,
+          );
+        }
+        break;
+
       case 'limit_order':
         if (action.price <= 0) {
           throw new Error(
@@ -394,6 +436,15 @@ export class CustomStrategy extends BaseStrategy {
     let currentUsdcBalance = initialUsdc;
     let totalFunding = 0;
 
+    // Track average buy price for profit calculation
+    let totalAmountSpentOnBuys = initialAssetQuantity * firstCandlePrice; // Initial holdings count as bought at first price
+    let totalQuantityFromBuys = initialAssetQuantity;
+    let averageBuyPrice = initialAssetQuantity > 0 ? firstCandlePrice : 0;
+
+    // Track portfolio value for portfolio_value conditions
+    let peakPortfolioValue = totalInitialValue; // Track peak value
+    let previousPortfolioValue: number | undefined = undefined; // Track previous value for "reaches" operator (will be updated in loop)
+
     // Track last funding date
     let lastFundingDate = new Date(start);
     lastFundingDate.setDate(lastFundingDate.getDate() - 1);
@@ -449,6 +500,12 @@ export class CustomStrategy extends BaseStrategy {
         }
       }
 
+      // Calculate current portfolio value for tracking
+      const currentPortfolioValue = currentQuantityHeld * candle.close + currentUsdcBalance;
+      if (currentPortfolioValue > peakPortfolioValue) {
+        peakPortfolioValue = currentPortfolioValue;
+      }
+
       // Evaluate each rule (multiple rules can trigger on the same day)
       for (const rule of sortedRules) {
         const context: EvaluationContext = {
@@ -466,6 +523,10 @@ export class CustomStrategy extends BaseStrategy {
             close: c.close,
             volume: c.volume,
           })),
+          initialInvestment: totalInitialValue,
+          totalInvested: totalInitialValue + totalFunding,
+          peakValue: peakPortfolioValue,
+          previousPortfolioValue: previousPortfolioValue,
         };
 
         // Evaluate WHEN conditions and get severity if applicable
@@ -487,9 +548,20 @@ export class CustomStrategy extends BaseStrategy {
               candle.close,
               allowNegativeUsdc,
               actionContext,
+              averageBuyPrice, // Pass average buy price for profit calculation
             );
 
             if (result.quantityChanged !== 0 || result.amountChanged !== 0) {
+              // Update average buy price for buy transactions
+              if (result.transactionType === 'buy' && result.quantityChanged > 0) {
+                totalAmountSpentOnBuys += Math.abs(result.amountChanged);
+                totalQuantityFromBuys += result.quantityChanged;
+                averageBuyPrice =
+                  totalQuantityFromBuys > 0
+                    ? totalAmountSpentOnBuys / totalQuantityFromBuys
+                    : 0;
+              }
+
               currentQuantityHeld += result.quantityChanged;
               currentUsdcBalance += result.amountChanged; // Positive for sells, negative for buys
 
@@ -499,13 +571,13 @@ export class CustomStrategy extends BaseStrategy {
               // For sells, quantityPurchased should be negative or we use absolute value
               const quantityForTransaction = Math.abs(result.quantityChanged);
 
-              transactions.push({
+              const transaction: Transaction = {
                 date: candle.timestamp,
                 type: result.transactionType,
                 price: candle.close,
                 amount: Math.abs(result.amountChanged),
                 quantityPurchased:
-                  result.transactionType === 'sell'
+                  result.transactionType === 'sell' || result.transactionType === 'take_profit'
                     ? -quantityForTransaction
                     : quantityForTransaction,
                 reason: result.reason,
@@ -515,11 +587,21 @@ export class CustomStrategy extends BaseStrategy {
                   totalValue,
                   quantityHeld: currentQuantityHeld,
                 },
-              } as Transaction);
+              };
+
+              // Add profit amount for take_profit transactions
+              if (result.transactionType === 'take_profit' && result.profitAmount !== undefined) {
+                transaction.profitAmount = result.profitAmount;
+              }
+
+              transactions.push(transaction);
             }
           }
         }
       }
+
+      // Update previous portfolio value for next iteration (for "reaches" operator)
+      previousPortfolioValue = currentPortfolioValue;
     }
 
     // Build portfolio history
@@ -618,6 +700,9 @@ export class CustomStrategy extends BaseStrategy {
 
       case 'price_streak':
         return this.evaluatePriceStreak(condition, context);
+
+      case 'portfolio_value':
+        return this.evaluatePortfolioValue(condition, context);
 
       case 'volume_change':
         return this.evaluateVolumeChange(condition, context);
@@ -837,6 +922,91 @@ export class CustomStrategy extends BaseStrategy {
   }
 
   /**
+   * Evaluate portfolio value condition
+   */
+  private evaluatePortfolioValue(
+    condition: PortfolioValueCondition,
+    context: EvaluationContext,
+  ): boolean {
+    // Calculate current portfolio value
+    const currentValue =
+      context.portfolio.btcQuantity * context.price + context.portfolio.usdcAmount;
+
+    if (condition.mode === 'absolute') {
+      // Absolute mode: Compare against target USD amount
+      const targetValue = condition.target;
+
+      switch (condition.operator) {
+        case 'above':
+          return currentValue > targetValue;
+        case 'below':
+          return currentValue < targetValue;
+        case 'equals':
+          // Use small epsilon for floating point comparison
+          return Math.abs(currentValue - targetValue) < 0.01;
+        case 'reaches':
+          // Trigger when crossing the threshold (was below/equal, now above)
+          if (context.previousPortfolioValue === undefined) {
+            return currentValue >= targetValue;
+          }
+          return (
+            context.previousPortfolioValue < targetValue && currentValue >= targetValue
+          );
+        default:
+          return false;
+      }
+    } else {
+      // Percentage mode: Calculate return based on reference point
+      let referenceValue: number | undefined;
+
+      switch (condition.referencePoint) {
+        case 'initial_investment':
+          referenceValue = context.initialInvestment;
+          break;
+        case 'total_invested':
+          referenceValue = context.totalInvested;
+          break;
+        case 'peak_value':
+          referenceValue = context.peakValue;
+          break;
+        default:
+          // Default to initial_investment if not specified
+          referenceValue = context.initialInvestment;
+      }
+
+      if (!referenceValue || referenceValue === 0) {
+        return false; // Cannot calculate percentage if reference is 0
+      }
+
+      // Calculate return percentage (0-1, e.g., 0.5 = 50% return)
+      const returnPercentage = (currentValue - referenceValue) / referenceValue;
+      const targetPercentage = condition.target; // Already in 0-1 format
+
+      switch (condition.operator) {
+        case 'above':
+          return returnPercentage > targetPercentage;
+        case 'below':
+          return returnPercentage < targetPercentage;
+        case 'equals':
+          // Use small epsilon for floating point comparison
+          return Math.abs(returnPercentage - targetPercentage) < 0.001;
+        case 'reaches':
+          // Trigger when crossing the threshold
+          if (context.previousPortfolioValue === undefined) {
+            return returnPercentage >= targetPercentage;
+          }
+          const previousReturn =
+            (context.previousPortfolioValue - referenceValue) / referenceValue;
+          return (
+            previousReturn < targetPercentage && returnPercentage >= targetPercentage
+          );
+        default:
+          return false;
+      }
+    }
+  }
+
+  /**
    * Evaluate volume change condition
    */
   private evaluateVolumeChange(
@@ -1027,11 +1197,13 @@ export class CustomStrategy extends BaseStrategy {
     currentPrice: number,
     allowNegativeUsdc: boolean,
     context?: EvaluationContext,
+    averageBuyPrice?: number, // Average buy price for profit calculation
   ): {
     quantityChanged: number;
     amountChanged: number;
-    transactionType: 'buy' | 'sell';
+    transactionType: 'buy' | 'sell' | 'take_profit';
     reason: string;
+    profitAmount?: number; // Profit amount for take_profit actions
   } {
     switch (action.type) {
       case 'buy_fixed':
@@ -1104,6 +1276,25 @@ export class CustomStrategy extends BaseStrategy {
           amountChanged: sellAmountPercent, // Positive because we're receiving cash
           transactionType: 'sell',
           reason: `Custom rule: Sell ${(action.percentage * 100).toFixed(0)}% of BTC holdings ($${sellAmountPercent.toFixed(2)})`,
+        };
+
+      case 'take_profit':
+        // Take profit: Sell X% of holdings and calculate profit
+        const profitQuantity = currentQuantityHeld * action.percentage;
+        const profitSellAmount = profitQuantity * currentPrice;
+        
+        // Calculate profit: (sell price - average buy price) × quantity sold
+        let profitAmount = 0;
+        if (averageBuyPrice && averageBuyPrice > 0) {
+          profitAmount = (currentPrice - averageBuyPrice) * profitQuantity;
+        }
+        
+        return {
+          quantityChanged: -profitQuantity, // Negative because we're selling
+          amountChanged: profitSellAmount, // Positive because we're receiving cash
+          transactionType: 'take_profit',
+          reason: `Custom rule: Take profit - Sell ${(action.percentage * 100).toFixed(0)}% of holdings ($${profitSellAmount.toFixed(2)}, profit: $${profitAmount.toFixed(2)})`,
+          profitAmount: Math.max(0, profitAmount), // Profit can't be negative
         };
 
       case 'rebalance':
@@ -1390,6 +1581,35 @@ export class CustomStrategy extends BaseStrategy {
             : '';
         return `Price ${directionText} ${condition.streakCount} times in a row${minChangeText}`;
 
+      case 'portfolio_value':
+        if (condition.mode === 'absolute') {
+          const operatorText =
+            condition.operator === 'reaches'
+              ? 'reaches'
+              : condition.operator === 'above'
+                ? 'is above'
+                : condition.operator === 'below'
+                  ? 'is below'
+                  : 'equals';
+          return `Portfolio value ${operatorText} $${condition.target.toLocaleString()}`;
+        } else {
+          const operatorText =
+            condition.operator === 'reaches'
+              ? 'reaches'
+              : condition.operator === 'above'
+                ? 'is above'
+                : condition.operator === 'below'
+                  ? 'is below'
+                  : 'equals';
+          const referenceText =
+            condition.referencePoint === 'total_invested'
+              ? 'total invested'
+              : condition.referencePoint === 'peak_value'
+                ? 'peak value'
+                : 'initial investment';
+          return `Portfolio value ${operatorText} ${(condition.target * 100).toFixed(0)}% return (from ${referenceText})`;
+        }
+
       case 'volume_change':
         return `Volume ${condition.operator} ${condition.threshold}x average (${condition.lookbackDays} day lookback)`;
 
@@ -1497,6 +1717,10 @@ export class CustomStrategy extends BaseStrategy {
       case 'sell_percentage':
         const sellAmount = currentQuantity * currentPrice * action.percentage;
         return `Sell ${(action.percentage * 100).toFixed(0)}% of BTC holdings ($${sellAmount.toFixed(2)})`;
+
+      case 'take_profit':
+        const takeProfitAmount = currentQuantity * currentPrice * action.percentage;
+        return `Take profit - Sell ${(action.percentage * 100).toFixed(0)}% of holdings ($${takeProfitAmount.toFixed(2)})`;
 
       case 'rebalance':
         return `Rebalance to ${(action.targetAllocation * 100).toFixed(0)}% BTC allocation`;

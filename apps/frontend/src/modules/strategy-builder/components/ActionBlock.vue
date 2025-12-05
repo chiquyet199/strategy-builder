@@ -129,6 +129,23 @@
       </span>
     </div>
 
+    <!-- Take Profit -->
+    <div v-else-if="action.type === 'take_profit'" class="action-display">
+      <span class="action-text">
+        Take profit: Sell
+        <a-input-number
+          v-model:value="takeProfitPercentage"
+          :min="1"
+          :max="100"
+          :formatter="(value) => `${value}%`"
+          :parser="(value) => value.replace('%', '')"
+          style="width: 100px"
+          @change="handleTakeProfitUpdate"
+        />
+        of holdings (profit tracked separately)
+      </span>
+    </div>
+
     <!-- Limit Order -->
     <div v-else-if="action.type === 'limit_order'" class="action-display">
       <span class="action-text">
@@ -174,6 +191,7 @@ import type {
   BuyScaledAction,
   SellFixedAction,
   SellPercentageAction,
+  TakeProfitAction,
   RebalanceAction,
   LimitOrderAction,
 } from '../api/strategyBuilderApi'
@@ -195,6 +213,7 @@ const scaledFactor = ref<number>(2.0)
 const scaledMaxAmount = ref<number | undefined>(undefined)
 const sellAmount = ref<number>(100)
 const sellPercentage = ref<number>(50)
+const takeProfitPercentage = ref<number>(50)
 const rebalanceTarget = ref<number>(80)
 const rebalanceThreshold = ref<number | undefined>(5)
 const limitAmount = ref<number>(100)
@@ -214,6 +233,8 @@ onMounted(() => {
     sellAmount.value = props.action.amount
   } else if (props.action.type === 'sell_percentage') {
     sellPercentage.value = props.action.percentage * 100 // Convert to percentage
+  } else if (props.action.type === 'take_profit') {
+    takeProfitPercentage.value = props.action.percentage * 100 // Convert to percentage
   } else if (props.action.type === 'rebalance') {
     rebalanceTarget.value = props.action.targetAllocation * 100 // Convert to percentage
     rebalanceThreshold.value = props.action.threshold
@@ -264,6 +285,14 @@ const handleSellPercentageUpdate = () => {
   const updated: SellPercentageAction = {
     type: 'sell_percentage',
     percentage: sellPercentage.value / 100, // Convert from percentage
+  }
+  emit('update', updated)
+}
+
+const handleTakeProfitUpdate = () => {
+  const updated: TakeProfitAction = {
+    type: 'take_profit',
+    percentage: takeProfitPercentage.value / 100, // Convert from percentage
   }
   emit('update', updated)
 }

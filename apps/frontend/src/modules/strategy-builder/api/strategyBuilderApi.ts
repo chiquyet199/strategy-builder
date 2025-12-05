@@ -26,6 +26,7 @@ export type WhenCondition =
   | PriceChangeCondition
   | PriceLevelCondition
   | PriceStreakCondition
+  | PortfolioValueCondition
   | VolumeChangeCondition
   | IndicatorCondition
   | AndCondition
@@ -59,6 +60,14 @@ export interface PriceStreakCondition {
   minChangePercent?: number
 }
 
+export interface PortfolioValueCondition {
+  type: 'portfolio_value'
+  mode: 'absolute' | 'percentage'
+  target: number
+  operator: 'above' | 'below' | 'equals' | 'reaches'
+  referencePoint?: 'initial_investment' | 'total_invested' | 'peak_value'
+}
+
 export interface VolumeChangeCondition {
   type: 'volume_change'
   operator: 'above' | 'below'
@@ -90,6 +99,7 @@ export type ThenAction =
   | BuyScaledAction
   | SellFixedAction
   | SellPercentageAction
+  | TakeProfitAction
   | RebalanceAction
   | LimitOrderAction
 
@@ -123,6 +133,11 @@ export interface SellFixedAction {
 
 export interface SellPercentageAction {
   type: 'sell_percentage'
+  percentage: number
+}
+
+export interface TakeProfitAction {
+  type: 'take_profit'
   percentage: number
 }
 

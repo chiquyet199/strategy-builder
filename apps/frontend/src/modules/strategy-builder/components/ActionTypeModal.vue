@@ -46,6 +46,13 @@
         </div>
         
         <div class="action-option mb-3">
+          <a-radio value="take_profit">
+            <strong>💰 Take Profit</strong>
+            <div class="text-sm text-gray-500">Sell X% of holdings and track profit separately</div>
+          </a-radio>
+        </div>
+        
+        <div class="action-option mb-3">
           <a-radio value="rebalance">
             <strong>🔄 Rebalance Portfolio</strong>
             <div class="text-sm text-gray-500">Maintain target allocation</div>

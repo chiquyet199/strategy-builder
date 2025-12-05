@@ -124,6 +124,7 @@ import type {
   PriceChangeCondition,
   PriceLevelCondition,
   PriceStreakCondition,
+  PortfolioValueCondition,
   VolumeChangeCondition,
   IndicatorCondition,
   BuyFixedAction,
@@ -131,6 +132,7 @@ import type {
   BuyScaledAction,
   SellFixedAction,
   SellPercentageAction,
+  TakeProfitAction,
   RebalanceAction,
   LimitOrderAction,
 } from '../api/strategyBuilderApi'
@@ -268,6 +270,15 @@ const handleConditionTypeSelected = (type: string) => {
         streakCount: 3,
       } as PriceStreakCondition
       break
+    case 'portfolio_value':
+      newCondition = {
+        type: 'portfolio_value',
+        mode: 'percentage',
+        target: 0.5, // 50% return
+        operator: 'reaches',
+        referencePoint: 'initial_investment',
+      } as PortfolioValueCondition
+      break
     case 'volume_change':
       newCondition = {
         type: 'volume_change',
@@ -351,6 +362,12 @@ const handleActionTypeSelected = (type: string) => {
         type: 'sell_percentage',
         percentage: 0.5,
       } as SellPercentageAction
+      break
+    case 'take_profit':
+      newAction = {
+        type: 'take_profit',
+        percentage: 0.5,
+      } as TakeProfitAction
       break
     case 'rebalance':
       newAction = {

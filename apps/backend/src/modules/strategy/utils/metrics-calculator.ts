@@ -61,6 +61,15 @@ export class MetricsCalculator {
     // Sharpe ratio
     const sharpeRatio = this.calculateSharpeRatio(portfolioHistory);
 
+    // Calculate total profit taken from take_profit transactions
+    const takeProfitTransactions = transactions.filter(
+      (tx) => tx.type === 'take_profit',
+    );
+    const totalProfitTaken = takeProfitTransactions.reduce(
+      (sum, tx) => sum + (tx.profitAmount || 0),
+      0,
+    );
+
     return {
       totalReturn,
       avgBuyPrice,
@@ -69,6 +78,7 @@ export class MetricsCalculator {
       sharpeRatio,
       totalInvestment,
       totalQuantity,
+      totalProfitTaken,
     };
   }
 
@@ -175,8 +185,8 @@ export class MetricsCalculator {
         const txType = tx.type || 'buy'; // Default to 'buy' for backward compatibility
         totalQuantity += tx.quantityPurchased; // Positive for buys, negative for sells
 
-        if (txType === 'sell') {
-          // Sells add USDC back
+        if (txType === 'sell' || txType === 'take_profit') {
+          // Sells and take_profit add USDC back (profit is tracked separately, not added to portfolio value)
           availableCash += tx.amount;
         } else if (txType === 'funding') {
           // Funding transaction: adds to cash, doesn't count as invested (doesn't affect average buy price)

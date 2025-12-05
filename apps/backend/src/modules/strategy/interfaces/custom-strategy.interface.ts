@@ -30,6 +30,7 @@ export type WhenCondition =
   | PriceChangeCondition
   | PriceLevelCondition
   | PriceStreakCondition
+  | PortfolioValueCondition
   | VolumeChangeCondition
   | IndicatorCondition
   | AndCondition
@@ -77,6 +78,14 @@ export interface PriceStreakCondition {
   direction: 'drop' | 'rise'; // Direction of the streak
   streakCount: number; // Number of consecutive periods (e.g., 3 = 3 times in a row)
   minChangePercent?: number; // Optional minimum change percentage per period (0-1, e.g., 0.01 = 1%)
+}
+
+export interface PortfolioValueCondition {
+  type: 'portfolio_value';
+  mode: 'absolute' | 'percentage'; // Absolute USD amount or percentage return
+  target: number; // Target value (USD amount or percentage 0-1, e.g., 0.5 = 50%)
+  operator: 'above' | 'below' | 'equals' | 'reaches'; // How to compare
+  referencePoint?: 'initial_investment' | 'total_invested' | 'peak_value'; // For percentage mode
 }
 
 export interface VolumeChangeCondition {
@@ -128,6 +137,7 @@ export type ThenAction =
   | BuyScaledAction
   | SellFixedAction
   | SellPercentageAction
+  | TakeProfitAction
   | RebalanceAction
   | LimitOrderAction;
 
@@ -170,6 +180,11 @@ export interface SellPercentageAction {
   percentage: number; // 0-1 (e.g., 0.5 = 50% of BTC holdings)
 }
 
+export interface TakeProfitAction {
+  type: 'take_profit';
+  percentage: number; // 0-1 (e.g., 0.5 = 50% of current holdings to sell for profit)
+}
+
 export interface LimitOrderAction {
   type: 'limit_order';
   price: number; // Target price in USD
@@ -196,4 +211,8 @@ export interface EvaluationContext {
     volume?: number; // Volume for volume-based conditions
   }>; // Historical data up to current date
   conditionSeverity?: number; // For scaled actions: 0-1 indicating how severe the condition is (e.g., 0.5 = 50% drop)
+  initialInvestment?: number; // Initial investment amount (for percentage calculations)
+  totalInvested?: number; // Total amount invested including funding (for percentage calculations)
+  peakValue?: number; // Peak portfolio value seen so far (for percentage calculations)
+  previousPortfolioValue?: number; // Previous portfolio value (for "reaches" operator)
 }

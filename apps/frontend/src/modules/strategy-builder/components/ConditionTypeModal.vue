@@ -39,6 +39,13 @@
         </div>
         
         <div class="condition-option mb-3">
+          <a-radio value="portfolio_value">
+            <strong>💼 Portfolio Value</strong>
+            <div class="text-sm text-gray-500">Portfolio reaches target amount or % return</div>
+          </a-radio>
+        </div>
+        
+        <div class="condition-option mb-3">
           <a-radio value="volume_change">
             <strong>📊 Volume Change</strong>
             <div class="text-sm text-gray-500">Volume above/below average</div>

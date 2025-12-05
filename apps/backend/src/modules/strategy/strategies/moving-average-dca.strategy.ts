@@ -219,6 +219,7 @@ export class MovingAverageDcaStrategy extends BaseStrategy {
 
         transactions.push({
           date: candle.timestamp,
+          type: 'buy',
           price: currentPrice,
           amount: actualBuyAmount,
           quantityPurchased,

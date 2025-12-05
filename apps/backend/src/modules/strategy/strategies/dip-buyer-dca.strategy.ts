@@ -188,6 +188,7 @@ export class DipBuyerDcaStrategy extends BaseStrategy {
 
         transactions.push({
           date: candle.timestamp,
+          type: 'buy',
           price: currentPrice,
           amount: actualBuyAmount,
           quantityPurchased,

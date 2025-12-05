@@ -69,7 +69,9 @@ export class CustomStrategy extends BaseStrategy {
       }
 
       if (!rule.then || !Array.isArray(rule.then) || rule.then.length === 0) {
-        throw new Error(`Rule ${rule.id} must have at least one action in then`);
+        throw new Error(
+          `Rule ${rule.id} must have at least one action in then`,
+        );
       }
 
       // Validate conditions
@@ -106,7 +108,9 @@ export class CustomStrategy extends BaseStrategy {
           throw new Error(`${context}: Invalid price change direction`);
         }
         if (condition.threshold < 0 || condition.threshold > 1) {
-          throw new Error(`${context}: Price change threshold must be between 0 and 1`);
+          throw new Error(
+            `${context}: Price change threshold must be between 0 and 1`,
+          );
         }
         if (
           !['24h_high', '7d_high', '30d_high', 'ath'].includes(
@@ -131,26 +135,107 @@ export class CustomStrategy extends BaseStrategy {
           throw new Error(`${context}: Invalid volume change operator`);
         }
         if (condition.threshold <= 0) {
-          throw new Error(`${context}: Volume change threshold must be greater than 0`);
+          throw new Error(
+            `${context}: Volume change threshold must be greater than 0`,
+          );
         }
         if (condition.lookbackDays < 1 || condition.lookbackDays > 365) {
-          throw new Error(`${context}: Lookback days must be between 1 and 365`);
+          throw new Error(
+            `${context}: Lookback days must be between 1 and 365`,
+          );
         }
         break;
 
       case 'and':
       case 'or':
         if (!condition.conditions || condition.conditions.length === 0) {
-          throw new Error(`${context}: ${condition.type} condition must have at least one sub-condition`);
+          throw new Error(
+            `${context}: ${condition.type} condition must have at least one sub-condition`,
+          );
         }
         condition.conditions.forEach((subCondition, index) => {
-          this.validateCondition(subCondition, `${context}, ${condition.type}[${index}]`);
+          this.validateCondition(
+            subCondition,
+            `${context}, ${condition.type}[${index}]`,
+          );
         });
         break;
 
       case 'indicator':
-        // Phase 2: Will validate indicator conditions
-        throw new Error(`${context}: Indicator conditions not yet supported (Phase 2)`);
+        // Validate indicator type
+        if (!['rsi', 'ma', 'macd', 'bollinger'].includes(condition.indicator)) {
+          throw new Error(
+            `${context}: Invalid indicator type: ${condition.indicator}`,
+          );
+        }
+
+        // Validate operator
+        if (
+          ![
+            'less_than',
+            'greater_than',
+            'equals',
+            'crosses_above',
+            'crosses_below',
+          ].includes(condition.operator)
+        ) {
+          throw new Error(
+            `${context}: Invalid indicator operator: ${condition.operator}`,
+          );
+        }
+
+        // Validate params based on indicator type
+        if (condition.indicator === 'rsi' || condition.indicator === 'ma') {
+          if (
+            !condition.params ||
+            typeof condition.params.period !== 'number'
+          ) {
+            throw new Error(
+              `${context}: ${condition.indicator.toUpperCase()} indicator requires 'period' parameter`,
+            );
+          }
+          if (condition.params.period < 2 || condition.params.period > 500) {
+            throw new Error(
+              `${context}: ${condition.indicator.toUpperCase()} period must be between 2 and 500`,
+            );
+          }
+        }
+
+        // Validate value
+        if (typeof condition.value !== 'number') {
+          throw new Error(
+            `${context}: Indicator condition value must be a number`,
+          );
+        }
+
+        // Validate operator-value combinations
+        if (condition.indicator === 'rsi') {
+          if (condition.value < 0 || condition.value > 100) {
+            throw new Error(`${context}: RSI value must be between 0 and 100`);
+          }
+        }
+
+        // Note: MACD and Bollinger Bands are not yet fully implemented
+        if (
+          condition.indicator === 'macd' ||
+          condition.indicator === 'bollinger'
+        ) {
+          throw new Error(
+            `${context}: ${condition.indicator.toUpperCase()} indicator is not yet implemented (Phase 2)`,
+          );
+        }
+
+        // Validate crosses operators only work with MA
+        if (
+          (condition.operator === 'crosses_above' ||
+            condition.operator === 'crosses_below') &&
+          condition.indicator !== 'ma'
+        ) {
+          throw new Error(
+            `${context}: Cross operators (crosses_above/crosses_below) only work with MA indicator`,
+          );
+        }
+        break;
     }
   }
 
@@ -158,7 +243,9 @@ export class CustomStrategy extends BaseStrategy {
     switch (action.type) {
       case 'buy_fixed':
         if (action.amount <= 0) {
-          throw new Error(`${context}: Buy fixed amount must be greater than 0`);
+          throw new Error(
+            `${context}: Buy fixed amount must be greater than 0`,
+          );
         }
         break;
 
@@ -170,46 +257,72 @@ export class CustomStrategy extends BaseStrategy {
 
       case 'buy_scaled':
         if (action.baseAmount <= 0) {
-          throw new Error(`${context}: Buy scaled base amount must be greater than 0`);
+          throw new Error(
+            `${context}: Buy scaled base amount must be greater than 0`,
+          );
         }
         if (action.scaleFactor <= 0) {
-          throw new Error(`${context}: Buy scaled scale factor must be greater than 0`);
+          throw new Error(
+            `${context}: Buy scaled scale factor must be greater than 0`,
+          );
         }
-        if (action.maxAmount !== undefined && action.maxAmount < action.baseAmount) {
-          throw new Error(`${context}: Buy scaled max amount must be >= base amount`);
+        if (
+          action.maxAmount !== undefined &&
+          action.maxAmount < action.baseAmount
+        ) {
+          throw new Error(
+            `${context}: Buy scaled max amount must be >= base amount`,
+          );
         }
         break;
 
       case 'rebalance':
         if (action.targetAllocation < 0 || action.targetAllocation > 1) {
-          throw new Error(`${context}: Rebalance target allocation must be between 0 and 1`);
+          throw new Error(
+            `${context}: Rebalance target allocation must be between 0 and 1`,
+          );
         }
-        if (action.threshold !== undefined && (action.threshold < 0 || action.threshold > 1)) {
-          throw new Error(`${context}: Rebalance threshold must be between 0 and 1`);
+        if (
+          action.threshold !== undefined &&
+          (action.threshold < 0 || action.threshold > 1)
+        ) {
+          throw new Error(
+            `${context}: Rebalance threshold must be between 0 and 1`,
+          );
         }
         break;
 
       case 'sell_fixed':
         if (action.amount <= 0) {
-          throw new Error(`${context}: Sell fixed amount must be greater than 0`);
+          throw new Error(
+            `${context}: Sell fixed amount must be greater than 0`,
+          );
         }
         break;
 
       case 'sell_percentage':
         if (action.percentage < 0 || action.percentage > 1) {
-          throw new Error(`${context}: Sell percentage must be between 0 and 1`);
+          throw new Error(
+            `${context}: Sell percentage must be between 0 and 1`,
+          );
         }
         break;
 
       case 'limit_order':
         if (action.price <= 0) {
-          throw new Error(`${context}: Limit order price must be greater than 0`);
+          throw new Error(
+            `${context}: Limit order price must be greater than 0`,
+          );
         }
         if (action.amount <= 0) {
-          throw new Error(`${context}: Limit order amount must be greater than 0`);
+          throw new Error(
+            `${context}: Limit order amount must be greater than 0`,
+          );
         }
         if (action.expiresInDays !== undefined && action.expiresInDays < 1) {
-          throw new Error(`${context}: Limit order expires in days must be >= 1`);
+          throw new Error(
+            `${context}: Limit order expires in days must be >= 1`,
+          );
         }
         break;
     }
@@ -334,7 +447,10 @@ export class CustomStrategy extends BaseStrategy {
         };
 
         // Evaluate WHEN conditions and get severity if applicable
-        const evaluationResult = this.evaluateConditionWithSeverity(rule.when, context);
+        const evaluationResult = this.evaluateConditionWithSeverity(
+          rule.when,
+          context,
+        );
         const shouldExecute = evaluationResult.shouldExecute;
         const conditionSeverity = evaluationResult.severity;
 
@@ -360,13 +476,16 @@ export class CustomStrategy extends BaseStrategy {
 
               // For sells, quantityPurchased should be negative or we use absolute value
               const quantityForTransaction = Math.abs(result.quantityChanged);
-              
+
               transactions.push({
                 date: candle.timestamp,
                 type: result.transactionType,
                 price: candle.close,
                 amount: Math.abs(result.amountChanged),
-                quantityPurchased: result.transactionType === 'sell' ? -quantityForTransaction : quantityForTransaction,
+                quantityPurchased:
+                  result.transactionType === 'sell'
+                    ? -quantityForTransaction
+                    : quantityForTransaction,
                 reason: result.reason,
                 portfolioValue: {
                   coinValue,
@@ -450,7 +569,12 @@ export class CustomStrategy extends BaseStrategy {
       }
     }
 
-    return { shouldExecute, severity };
+    // For indicator conditions, calculate severity
+    if (condition.type === 'indicator') {
+      return this.evaluateIndicatorWithSeverity(condition, context);
+    }
+
+    return { shouldExecute, severity: severity || 1.0 };
   }
 
   /**
@@ -524,7 +648,14 @@ export class CustomStrategy extends BaseStrategy {
    * Convert day name to number (0 = Sunday, 1 = Monday, etc.)
    */
   private dayNameToNumber(
-    dayName: 'monday' | 'tuesday' | 'wednesday' | 'thursday' | 'friday' | 'saturday' | 'sunday',
+    dayName:
+      | 'monday'
+      | 'tuesday'
+      | 'wednesday'
+      | 'thursday'
+      | 'friday'
+      | 'saturday'
+      | 'sunday',
   ): number {
     const map: Record<string, number> = {
       sunday: 0,
@@ -665,14 +796,25 @@ export class CustomStrategy extends BaseStrategy {
   }
 
   /**
-   * Evaluate indicator condition
+   * Evaluate indicator condition (returns boolean)
    */
   private evaluateIndicator(
     condition: IndicatorCondition,
     context: EvaluationContext,
   ): boolean {
+    const result = this.evaluateIndicatorWithSeverity(condition, context);
+    return result.shouldExecute;
+  }
+
+  /**
+   * Evaluate indicator condition with severity calculation
+   */
+  private evaluateIndicatorWithSeverity(
+    condition: IndicatorCondition,
+    context: EvaluationContext,
+  ): { shouldExecute: boolean; severity: number } {
     const { marketData } = context;
-    if (marketData.length === 0) return false;
+    if (marketData.length === 0) return { shouldExecute: false, severity: 1.0 };
 
     // Convert marketData to Candlestick format for calculators
     const candles = marketData.map((c) => ({
@@ -687,48 +829,114 @@ export class CustomStrategy extends BaseStrategy {
 
     try {
       let indicatorValue: number;
+      let maValues: number[] = [];
 
       switch (condition.indicator) {
         case 'rsi':
           const rsiPeriod = condition.params?.period || 14;
           const rsiValues = RsiCalculator.calculate(candles, rsiPeriod);
           indicatorValue = rsiValues[rsiValues.length - 1];
-          if (isNaN(indicatorValue)) return false;
+          if (isNaN(indicatorValue))
+            return { shouldExecute: false, severity: 1.0 };
           break;
 
         case 'ma':
           const maPeriod = condition.params?.period || 50;
-          const maValues = MaCalculator.calculate(candles, maPeriod);
+          maValues = MaCalculator.calculate(candles, maPeriod);
           indicatorValue = maValues[maValues.length - 1];
-          if (isNaN(indicatorValue)) return false;
+          if (isNaN(indicatorValue))
+            return { shouldExecute: false, severity: 1.0 };
           break;
 
         case 'macd':
         case 'bollinger':
           // Phase 2: Implement MACD and Bollinger Bands
-          return false;
+          return { shouldExecute: false, severity: 1.0 };
 
         default:
-          return false;
+          return { shouldExecute: false, severity: 1.0 };
       }
+
+      let shouldExecute = false;
+      let severity = 1.0;
 
       // Apply operator
       switch (condition.operator) {
         case 'less_than':
-          return indicatorValue < condition.value;
+          shouldExecute = indicatorValue < condition.value;
+          if (shouldExecute && condition.indicator === 'rsi') {
+            // Severity: how far below threshold (0-1)
+            severity = Math.min(
+              1.0,
+              (condition.value - indicatorValue) / condition.value,
+            );
+          }
+          break;
         case 'greater_than':
-          return indicatorValue > condition.value;
+          shouldExecute = indicatorValue > condition.value;
+          if (shouldExecute && condition.indicator === 'rsi') {
+            // Severity: how far above threshold (0-1)
+            severity = Math.min(
+              1.0,
+              (indicatorValue - condition.value) / (100 - condition.value),
+            );
+          }
+          break;
         case 'equals':
-          return Math.abs(indicatorValue - condition.value) < 0.01;
+          shouldExecute = Math.abs(indicatorValue - condition.value) < 0.01;
+          break;
         case 'crosses_above':
+          // Check if price crosses above the MA
+          if (condition.indicator !== 'ma') {
+            shouldExecute = false;
+            break;
+          }
+          if (marketData.length < 2 || maValues.length < 2) {
+            shouldExecute = false;
+            break;
+          }
+          const prevPrice = marketData[marketData.length - 2]?.close || 0;
+          const currentPrice = context.price;
+          const prevMa = maValues[maValues.length - 2];
+          shouldExecute = prevPrice <= prevMa && currentPrice > indicatorValue;
+          if (shouldExecute) {
+            // Severity based on how much price is above MA
+            severity = Math.min(
+              1.0,
+              (currentPrice - indicatorValue) / indicatorValue,
+            );
+          }
+          break;
         case 'crosses_below':
-          // Phase 2: Implement cross detection
-          return false;
+          // Check if price crosses below the MA
+          if (condition.indicator !== 'ma') {
+            shouldExecute = false;
+            break;
+          }
+          if (marketData.length < 2 || maValues.length < 2) {
+            shouldExecute = false;
+            break;
+          }
+          const prevPrice2 = marketData[marketData.length - 2]?.close || 0;
+          const currentPrice2 = context.price;
+          const prevMa2 = maValues[maValues.length - 2];
+          shouldExecute =
+            prevPrice2 >= prevMa2 && currentPrice2 < indicatorValue;
+          if (shouldExecute) {
+            // Severity based on how much price is below MA
+            severity = Math.min(
+              1.0,
+              (indicatorValue - currentPrice2) / indicatorValue,
+            );
+          }
+          break;
         default:
-          return false;
+          shouldExecute = false;
       }
+
+      return { shouldExecute, severity };
     } catch (error) {
-      return false;
+      return { shouldExecute: false, severity: 1.0 };
     }
   }
 
@@ -743,7 +951,12 @@ export class CustomStrategy extends BaseStrategy {
     currentPrice: number,
     allowNegativeUsdc: boolean,
     context?: EvaluationContext,
-  ): { quantityChanged: number; amountChanged: number; transactionType: 'buy' | 'sell'; reason: string } {
+  ): {
+    quantityChanged: number;
+    amountChanged: number;
+    transactionType: 'buy' | 'sell';
+    reason: string;
+  } {
     switch (action.type) {
       case 'buy_fixed':
         const fixedAmount = this.calculatePurchaseAmount(
@@ -865,4 +1078,3 @@ export class CustomStrategy extends BaseStrategy {
     }
   }
 }
-

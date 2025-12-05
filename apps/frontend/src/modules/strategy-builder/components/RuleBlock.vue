@@ -65,6 +65,9 @@
       <a-button type="dashed" size="small" class="mt-2" @click="showConditionModal = true">
         + Add Condition
       </a-button>
+      <div v-if="!rule.when" class="text-sm text-gray-500 mt-2 italic">
+        No condition set. Please add a condition above.
+      </div>
     </div>
 
     <!-- THEN Section -->
@@ -220,14 +223,15 @@ const removeCondition = (index: number) => {
 }
 
 const removeSingleCondition = () => {
-  // When removing the single condition, create a default one
-  // This allows the user to delete and replace it (same behavior as actions)
+  // Replace with a default condition (rule needs at least one condition)
+  // This allows the user to easily change it to a different type
   const defaultCondition: ScheduleCondition = {
     type: 'schedule',
     frequency: 'weekly',
     dayOfWeek: 'monday',
   }
-  emit('update', props.rule.id, { when: defaultCondition })
+  // Force update by creating a new object reference
+  emit('update', props.rule.id, { when: { ...defaultCondition } })
 }
 
 const handleConditionTypeSelected = (type: string) => {

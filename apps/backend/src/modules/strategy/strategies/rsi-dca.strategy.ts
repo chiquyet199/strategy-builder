@@ -251,6 +251,7 @@ export class RsiDcaStrategy extends BaseStrategy {
 
         transactions.push({
           date: candle.timestamp,
+          type: 'buy',
           price,
           amount: actualBuyAmount,
           quantityPurchased,

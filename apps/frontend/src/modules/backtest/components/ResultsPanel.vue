@@ -12,10 +12,24 @@
       width="95%"
       :style="{ maxWidth: '1400px' }"
     >
+      <!-- Transaction Type Filter -->
+      <div class="mb-4 flex items-center gap-2">
+        <span class="text-sm font-medium">Filter by type:</span>
+        <a-radio-group v-model:value="transactionTypeFilter" @change="handleTransactionTypeFilterChange">
+          <a-radio-button value="all">All</a-radio-button>
+          <a-radio-button value="buy">Buy</a-radio-button>
+          <a-radio-button value="sell">Sell</a-radio-button>
+          <a-radio-button value="funding">Funding</a-radio-button>
+        </a-radio-group>
+        <span class="text-sm text-gray-500 ml-2">
+          ({{ filteredTransactions.length }} of {{ allTransactions.length }} transactions)
+        </span>
+      </div>
+
       <a-table
         v-if="selectedTransactions"
         :columns="transactionColumns"
-        :data-source="selectedTransactions"
+        :data-source="filteredTransactions"
         :pagination="{ pageSize: 10 }"
         :scroll="{ x: 'max-content', y: '60vh' }"
         row-key="date"
@@ -190,6 +204,7 @@
 import { computed, ref, h, resolveComponent } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { QuestionCircleOutlined } from '@ant-design/icons-vue'
+import { RadioGroup as ARadioGroup, RadioButton as ARadioButton } from 'ant-design-vue'
 import { useBacktestStore } from '../stores/backtestStore'
 import PortfolioChart from './PortfolioChart.vue'
 import ShareButton from './ShareButton.vue'
@@ -209,6 +224,23 @@ const coinSymbol = computed(() => {
 const transactionsModalVisible = ref(false)
 const selectedTransactions = ref<Transaction[] | null>(null)
 const selectedStrategyName = ref<string>('')
+const transactionTypeFilter = ref<string>('all')
+
+// Computed filtered transactions
+const allTransactions = computed(() => selectedTransactions.value || [])
+const filteredTransactions = computed(() => {
+  if (transactionTypeFilter.value === 'all') {
+    return allTransactions.value
+  }
+  return allTransactions.value.filter((tx) => {
+    const txType = tx.type || 'buy'
+    return txType === transactionTypeFilter.value
+  })
+})
+
+const handleTransactionTypeFilterChange = () => {
+  // Filter is reactive, no action needed
+}
 
 const columns = computed(() => {
   const ATooltip = resolveComponent('a-tooltip')
@@ -735,7 +767,25 @@ function downloadChart() {
 function showTransactions(strategy: StrategyResult) {
   selectedTransactions.value = strategy.transactions || []
   selectedStrategyName.value = getStrategyDisplayName(strategy)
+  transactionTypeFilter.value = 'all' // Reset filter when opening modal
   transactionsModalVisible.value = true
+  
+  // Debug: Log transaction types to help identify issues
+  console.log('Transactions for strategy:', selectedStrategyName.value)
+  console.log('Transaction types breakdown:', {
+    total: selectedTransactions.value.length,
+    buy: selectedTransactions.value.filter(tx => (tx.type || 'buy') === 'buy').length,
+    sell: selectedTransactions.value.filter(tx => (tx.type || 'buy') === 'sell').length,
+    funding: selectedTransactions.value.filter(tx => (tx.type || 'buy') === 'funding').length,
+    undefined: selectedTransactions.value.filter(tx => !tx.type).length,
+  })
+  console.log('Sample transactions:', selectedTransactions.value.slice(0, 5).map(tx => ({
+    date: tx.date,
+    type: tx.type || 'buy (defaulted)',
+    amount: tx.amount,
+    quantityPurchased: tx.quantityPurchased,
+    reason: tx.reason,
+  })))
 }
 </script>
 

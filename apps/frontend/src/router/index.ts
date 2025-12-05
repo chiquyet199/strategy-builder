@@ -16,6 +16,11 @@ const router = createRouter({
       component: () => import('@/modules/backtest/views/PlaygroundView.vue'),
     },
     {
+      path: '/strategy-builder',
+      name: 'strategy-builder',
+      component: () => import('@/modules/strategy-builder/views/StrategyBuilderView.vue'),
+    },
+    {
       path: '/login',
       name: 'login',
       component: () => import('@/modules/auth/views/LoginView.vue'),

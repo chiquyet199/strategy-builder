@@ -56,7 +56,7 @@ describe('StrategyService', () => {
     it('should return all registered strategies', () => {
       const strategies = service.getAllStrategies();
       expect(Array.isArray(strategies)).toBe(true);
-      expect(strategies.length).toBe(7); // All 7 strategies
+      expect(strategies.length).toBe(8); // All 8 strategies (7 existing + 1 custom)
       strategies.forEach((strategy) => {
         expect(strategy).toHaveProperty('getStrategyId');
         expect(strategy).toHaveProperty('getStrategyName');
@@ -69,7 +69,7 @@ describe('StrategyService', () => {
     it('should return metadata for all strategies', () => {
       const metadata = service.getStrategyMetadata();
       expect(Array.isArray(metadata)).toBe(true);
-      expect(metadata.length).toBe(7);
+      expect(metadata.length).toBe(8); // All 8 strategies (7 existing + 1 custom)
       metadata.forEach((meta) => {
         expect(meta).toHaveProperty('id');
         expect(meta).toHaveProperty('name');

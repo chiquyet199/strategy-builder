@@ -84,14 +84,14 @@
         <!-- Add Custom Strategy Card -->
         <div
           :class="[
-            'strategy-card relative p-3 rounded-lg border-2 transition-all duration-200',
-            'border-gray-200 bg-gray-50 border-dashed',
+            'strategy-card relative p-3 rounded-lg border-2 cursor-pointer transition-all duration-200',
+            'border-gray-200 bg-white hover:border-indigo-300 hover:shadow-sm',
             'flex items-center justify-center min-h-[60px]',
-            'opacity-50 cursor-not-allowed',
           ]"
+          @click="handleAddCustomStrategy"
         >
           <!-- Add Custom Button -->
-          <div class="text-sm font-semibold text-gray-400">
+          <div class="text-sm font-semibold text-indigo-600">
             Add Custom
           </div>
         </div>
@@ -136,7 +136,7 @@
 
           <!-- Config Params Button -->
           <a-button
-            v-if="strategyHasParameters(variant.strategyId)"
+            v-if="strategyHasParameters(variant.strategyId) || variant.strategyId === 'custom-strategy'"
             type="link"
             size="small"
             class="p-0 h-auto text-xs"
@@ -1160,12 +1160,21 @@
         </a-form>
       </div>
     </a-modal>
+
+    <!-- Strategy Builder Modal -->
+    <StrategyBuilderModal
+      v-model:open="showStrategyBuilderModal"
+      :edit-strategy="editingCustomStrategy"
+      :edit-index="editingCustomStrategyIndex"
+      @save="handleSaveCustomStrategy"
+    />
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, watch, reactive, computed } from 'vue'
 import { useI18n } from 'vue-i18n'
+import { useRouter } from 'vue-router'
 import {
   QuestionCircleOutlined,
   SettingOutlined,
@@ -1176,6 +1185,7 @@ import {
 import dayjs from 'dayjs'
 import DateRangeSlider from './DateRangeSlider.vue'
 import TimeframeSelection from './TimeframeSelection.vue'
+import StrategyBuilderModal from '@/modules/strategy-builder/components/StrategyBuilderModal.vue'
 import type { FormState } from '../composables/useBacktestForm'
 import {
   isSameStrategyConfig,
@@ -1197,6 +1207,7 @@ interface Emits {
 const props = defineProps<Props>()
 const emit = defineEmits<Emits>()
 const { t } = useI18n()
+const router = useRouter()
 
 const showAddVariantModal = ref(false)
 const showVariantParameterModal = ref(false)
@@ -1478,12 +1489,26 @@ const handleAddBaseStrategy = (strategy: { id: string; key: string; params?: Rec
   }
 }
 
-// Handle adding custom strategy (placeholder for now)
+// Handle adding custom strategy
+const showStrategyBuilderModal = ref(false)
+const editingCustomStrategy = ref<StrategyConfig | null>(null)
+const editingCustomStrategyIndex = ref<number | null>(null)
+
 const handleAddCustomStrategy = () => {
-  // TODO: Implement custom strategy builder
-  // For now, just show a message or open a placeholder modal
-  console.log('Custom strategy builder - coming soon')
-  // You can add a modal or notification here
+  editingCustomStrategy.value = null
+  editingCustomStrategyIndex.value = null
+  showStrategyBuilderModal.value = true
+}
+
+const handleSaveCustomStrategy = (strategyConfig: StrategyConfig, index?: number) => {
+  if (index !== undefined && index !== null) {
+    // Update existing strategy
+    props.formState.selectedStrategyIds[index] = strategyConfig
+  } else {
+    // Add new strategy
+    props.formState.selectedStrategyIds.push(strategyConfig)
+  }
+  showStrategyBuilderModal.value = false
 }
 
 // Handle clicking on a variant card
@@ -1494,6 +1519,14 @@ const handleVariantClick = (variant: StrategyConfig, index: number) => {
 
 // Open parameter modal for editing an existing variant
 const openVariantParameterModalForEdit = (variant: StrategyConfig, index: number) => {
+  // Check if it's a custom strategy - open builder modal instead
+  if (variant.strategyId === 'custom-strategy') {
+    editingCustomStrategy.value = variant
+    editingCustomStrategyIndex.value = index
+    showStrategyBuilderModal.value = true
+    return
+  }
+  
   selectedStrategyForVariant.value = variant.strategyId
   selectedVariantIndex.value = index
   

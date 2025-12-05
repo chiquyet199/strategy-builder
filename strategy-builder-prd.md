@@ -179,7 +179,7 @@ Response: { valid: boolean, errors: [...], warnings: [...] }
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│                    Frontend (Frontend framework + TypeScript)            │
+│                    Frontend (Vue.js + TypeScript)                        │
 │                                                             │
 │  ┌──────────────────────┐    ┌──────────────────────────┐ │
 │  │  Playground Page     │    │  Strategy Builder Page    │ │
@@ -372,25 +372,24 @@ interface RuleBlockProps {
   onDelete: () => void;
 }
 
+// Pseudocode - implement using your framework's component syntax
 Component RuleBlock(props) {
-  return (
-    <Card>
-      <CardHeader>
-        <h3>Rule #{props.ruleNumber}</h3>
-        <Button onClick={props.onDelete}>Delete</Button>
-      </CardHeader>
-      
-      <WhenSection
-        conditions={props.rule.when}
-        onChange={(when) => props.onUpdate({ ...props.rule, when })}
-      />
-      
-      <ThenSection
-        actions={rule.then}
-        onChange={(then) => onUpdate({ ...rule, then })}
-      />
-    </Card>
-  );
+  // Render structure:
+  // - Card container
+  // - Header with rule number and delete button
+  // - WhenSection component (conditions)
+  // - ThenSection component (actions)
+  
+  // Props:
+  // - rule: CustomRule object
+  // - ruleNumber: number
+  // - onUpdate: callback function
+  // - onDelete: callback function
+  
+  // Implementation:
+  // Use your framework's component structure (Vue SFC, React component, etc.)
+  // Handle events using your framework's event system
+  // Use your framework's props/state management
 };
 ```
 
@@ -554,12 +553,15 @@ Real-time calculation as user builds (pseudocode):
 // Component: PreviewStats
 // Props: { rules: CustomRule[] }
 
+// Pseudocode - implement using your framework's reactivity system
 Component PreviewStats(props) {
   // Reactive state for stats
-  stats = ref(null);
+  // Use your framework's reactivity: Vue's ref(), React's useState(), etc.
+  stats = reactiveState(null);
   
   // Watch for rule changes and debounce calculation
-  watch(props.rules, debounce(async () => {
+  // Use your framework's watcher: Vue's watch(), React's useEffect(), etc.
+  watchEffect(props.rules, debounce(async () => {
     // 1. Fetch historical candles
     const candles = await api.getCandles({
       symbol: 'BTC/USD',
@@ -574,19 +576,15 @@ Component PreviewStats(props) {
     // 3. Estimate investment
     const estimatedInvestment = calculateEstimatedInvestment(props.rules, triggers);
     
-    stats.value = { triggers, estimatedInvestment };
+    // Update reactive state using your framework's pattern
+    updateStats({ triggers, estimatedInvestment });
   }, 500));
   
-  return (
-    <Card>
-      <h3>Preview Stats</h3>
-      <p>📊 This strategy would trigger:</p>
-      <p>• {stats?.triggers.total} times from 2020-2025</p>
-      <p>• Average {stats?.triggers.perYear} times per year</p>
-      <p>💰 Estimated investment:</p>
-      <p>• ${stats?.estimatedInvestment} over 5 years</p>
-    </Card>
-  );
+  // Render preview stats card
+  // Display:
+  // - Trigger count (total and per year)
+  // - Estimated investment amount
+  // Use your framework's template syntax
 }
 ```
 
@@ -1596,28 +1594,36 @@ interface StrategyBuilderActions {
 }
 
 // Example logic for addRule (pseudocode):
-addRule() {
-  const strategy = this.currentStrategy;
+// Implement using your framework's state management pattern
+// (Vuex mutations, Pinia actions, Redux reducers, etc.)
+
+function addRule() {
+  // Get current strategy from state
+  const strategy = getCurrentStrategy();
   if (!strategy) return;
   
+  // Create new rule with default values
   const newRule: CustomRule = {
-    id: `rule_${Date.now()}`,
+    id: generateUniqueId(), // Use your ID generation method
     when: { type: 'schedule', frequency: 'weekly', dayOfWeek: 'monday' },
     then: [{ type: 'buy_fixed', amount: 100 }],
     enabled: true,
   };
   
-  this.currentStrategy = {
+  // Update state using your framework's pattern
+  // Vuex: commit('ADD_RULE', newRule)
+  // Pinia: this.rules.push(newRule)
+  // Redux: dispatch({ type: 'ADD_RULE', payload: newRule })
+  updateStrategy({
     ...strategy,
     rules: [...strategy.rules, newRule],
-  };
+  });
 }
 
 // Implement other actions following your framework's patterns
 ```
 
-**Note:** Implement using your project's state management conventions.
-```
+**Note:** Implement using your project's state management conventions (Vuex, Pinia, Composition API, Redux, etc.).
 
 ### 10.2 Client-Side Indicator Calculation
 

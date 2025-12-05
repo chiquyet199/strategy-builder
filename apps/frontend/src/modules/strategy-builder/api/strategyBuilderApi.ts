@@ -184,5 +184,81 @@ export const strategyBuilderApi = {
     }
     return jsonResponse as ValidationResult
   },
+
+  /**
+   * Preview custom strategy execution
+   */
+  async preview(
+    config: CustomStrategyConfig,
+    options: {
+      startDate: string
+      endDate: string
+      timeframe?: '1h' | '4h' | '1d' | '1w' | '1m'
+      investmentAmount?: number
+      initialPortfolio?: {
+        assets: Array<{ symbol: string; quantity: number }>
+        usdcAmount: number
+      }
+      fundingSchedule?: {
+        frequency: 'daily' | 'weekly' | 'monthly'
+        amount: number
+      }
+    },
+  ): Promise<StrategyPreviewResult> {
+    const response = await fetch(`${API_BASE_URL}/preview`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        config,
+        ...options,
+      }),
+    })
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({ message: 'Failed to preview strategy' }))
+      throw new Error(errorData.message || 'Failed to preview strategy')
+    }
+
+    const jsonResponse = await response.json()
+    if (jsonResponse.data) {
+      return jsonResponse.data as StrategyPreviewResult
+    }
+    return jsonResponse as StrategyPreviewResult
+  },
+}
+
+/**
+ * Preview Result Types
+ */
+export interface TriggerPoint {
+  date: string
+  price: number
+  ruleId: string
+  ruleName?: string
+  conditionMet: string
+  actionsExecuted: string[]
+  severity?: number
+}
+
+export interface RuleTriggerSummary {
+  ruleId: string
+  ruleName?: string
+  triggerCount: number
+  triggerPoints: TriggerPoint[]
+}
+
+export interface StrategyPreviewResult {
+  totalTriggers: number
+  ruleSummaries: RuleTriggerSummary[]
+  candles: Array<{
+    timestamp: string
+    open: number
+    high: number
+    low: number
+    close: number
+    volume: number
+  }>
 }
 

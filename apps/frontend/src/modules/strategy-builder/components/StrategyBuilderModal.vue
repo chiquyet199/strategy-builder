@@ -45,6 +45,14 @@
         </a-button>
       </div>
 
+      <!-- Preview Section -->
+      <div
+        v-if="currentStrategy && currentStrategy.rules && currentStrategy.rules.length > 0"
+        class="mb-6 border-t pt-6"
+      >
+        <StrategyPreview :strategy-config="currentStrategy" :investment-amount="10000" />
+      </div>
+
       <!-- Validation Errors/Warnings -->
       <div v-if="validationResult" class="mb-6">
         <a-alert
@@ -90,12 +98,19 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch, onMounted } from 'vue'
-import { Modal as AModal, FormItem as AFormItem, Input as AInput, Alert as AAlert, Button as AButton } from 'ant-design-vue'
+import { ref, computed, watch } from 'vue'
+import {
+  Modal as AModal,
+  FormItem as AFormItem,
+  Input as AInput,
+  Alert as AAlert,
+  Button as AButton,
+} from 'ant-design-vue'
 import { PlusOutlined } from '@ant-design/icons-vue'
 import { useStrategyBuilderStore } from '../stores/strategyBuilderStore'
 import { strategyBuilderService } from '../services/strategyBuilderService'
 import RuleBlock from './RuleBlock.vue'
+import StrategyPreview from './StrategyPreview.vue'
 import type { CustomRule, CustomStrategyConfig } from '../api/strategyBuilderApi'
 
 interface StrategyConfig {
@@ -230,7 +245,7 @@ const handleSave = async () => {
     }
 
     // Emit save event with strategy and optional index for editing
-    emit('save', strategyConfig, isEditMode.value ? props.editIndex ?? undefined : undefined)
+    emit('save', strategyConfig, isEditMode.value ? (props.editIndex ?? undefined) : undefined)
 
     // Close modal
     visible.value = false
@@ -243,7 +258,8 @@ const handleSave = async () => {
         {
           level: 'error',
           field: 'save',
-          message: error instanceof Error ? error.message : 'Failed to save strategy. Please try again.',
+          message:
+            error instanceof Error ? error.message : 'Failed to save strategy. Please try again.',
         },
       ],
       warnings: [],
@@ -266,4 +282,3 @@ const handleSave = async () => {
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 </style>
-

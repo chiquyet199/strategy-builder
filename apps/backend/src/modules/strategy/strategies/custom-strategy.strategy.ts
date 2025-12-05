@@ -23,6 +23,11 @@ import {
 } from '../interfaces/custom-strategy.interface';
 import { RsiCalculator } from '../utils/rsi-calculator';
 import { MaCalculator } from '../utils/ma-calculator';
+import {
+  StrategyPreviewResult,
+  RuleTriggerSummary,
+  TriggerPoint,
+} from '../interfaces/preview-result.interface';
 
 /**
  * Custom Strategy
@@ -1075,6 +1080,352 @@ export class CustomStrategy extends BaseStrategy {
           transactionType: 'buy',
           reason: 'Unknown action type',
         };
+    }
+  }
+
+  /**
+   * Preview strategy execution - returns trigger information without full execution
+   */
+  async previewStrategy(
+    candles: Candlestick[],
+    startDate: string,
+    endDate: string,
+    parameters: Record<string, any>,
+  ): Promise<StrategyPreviewResult> {
+    if (candles.length === 0) {
+      throw new Error('No candles provided for preview');
+    }
+
+    const config = parameters as CustomStrategyConfig;
+    const initialPortfolio: InitialPortfolio | undefined =
+      parameters._initialPortfolio;
+    const fundingSchedule: FundingSchedule | undefined =
+      parameters._fundingSchedule;
+
+    const firstCandlePrice = candles[0].close;
+
+    // Get initial state
+    let initialAssetQuantity = 0;
+    let initialUsdc = parameters.investmentAmount || 10000;
+    let totalInitialValue = initialUsdc;
+
+    if (initialPortfolio) {
+      const initialState = this.getInitialState(
+        initialPortfolio,
+        firstCandlePrice,
+        'BTC',
+      );
+      initialAssetQuantity = initialState.initialAssetQuantity;
+      initialUsdc = initialState.initialUsdc;
+      totalInitialValue = initialState.totalInitialValue;
+    }
+
+    const triggerPoints: TriggerPoint[] = [];
+    const start = new Date(startDate);
+
+    let currentQuantityHeld = initialAssetQuantity;
+    let currentUsdcBalance = initialUsdc;
+    let totalFunding = 0;
+
+    // Track last funding date
+    let lastFundingDate = new Date(start);
+    lastFundingDate.setDate(lastFundingDate.getDate() - 1);
+
+    // Sort rules by priority
+    const sortedRules = [...config.rules]
+      .filter((rule) => rule.enabled !== false)
+      .sort((a, b) => (a.priority ?? 0) - (b.priority ?? 0));
+
+    // Process each candle
+    for (let i = 0; i < candles.length; i++) {
+      const candle = candles[i];
+      const candleDate = new Date(candle.timestamp);
+
+      // Handle periodic funding
+      if (fundingSchedule && fundingSchedule.amount > 0) {
+        const fundingPeriodDays =
+          fundingSchedule.frequency === 'daily'
+            ? 1
+            : fundingSchedule.frequency === 'weekly'
+              ? 7
+              : 30;
+
+        const daysSinceLastFunding = Math.floor(
+          (candleDate.getTime() - lastFundingDate.getTime()) /
+            (1000 * 60 * 60 * 24),
+        );
+
+        if (daysSinceLastFunding >= fundingPeriodDays) {
+          currentUsdcBalance += fundingSchedule.amount;
+          totalFunding += fundingSchedule.amount;
+          lastFundingDate = new Date(candleDate);
+        }
+      }
+
+      // Evaluate each rule
+      for (const rule of sortedRules) {
+        const context: EvaluationContext = {
+          date: candle.timestamp,
+          price: candle.close,
+          portfolio: {
+            btcQuantity: currentQuantityHeld,
+            usdcAmount: currentUsdcBalance,
+          },
+          marketData: candles.slice(0, i + 1).map((c) => ({
+            timestamp: c.timestamp,
+            open: c.open,
+            high: c.high,
+            low: c.low,
+            close: c.close,
+            volume: c.volume,
+          })),
+        };
+
+        // Evaluate WHEN conditions
+        const evaluationResult = this.evaluateConditionWithSeverity(
+          rule.when,
+          context,
+        );
+        const shouldExecute = evaluationResult.shouldExecute;
+        const conditionSeverity = evaluationResult.severity;
+
+        if (shouldExecute) {
+          // Build condition description
+          const conditionDescription = this.describeCondition(
+            rule.when,
+            context,
+          );
+
+          // Build action descriptions
+          const actionDescriptions = rule.then.map((action) =>
+            this.describeAction(
+              action,
+              currentUsdcBalance,
+              currentQuantityHeld,
+              candle.close,
+              conditionSeverity,
+            ),
+          );
+
+          triggerPoints.push({
+            date: candle.timestamp,
+            price: candle.close,
+            ruleId: rule.id,
+            ruleName: config.name
+              ? `${config.name} - Rule ${rule.id}`
+              : `Rule ${rule.id}`,
+            conditionMet: conditionDescription,
+            actionsExecuted: actionDescriptions,
+            severity: conditionSeverity,
+          });
+
+          // Simulate action execution for preview (update state for next rule evaluation)
+          // This is a simplified simulation - we don't need exact amounts, just approximate
+          for (const action of rule.then) {
+            if (
+              action.type === 'buy_fixed' ||
+              action.type === 'buy_percentage' ||
+              action.type === 'buy_scaled'
+            ) {
+              const amount =
+                action.type === 'buy_fixed'
+                  ? action.amount
+                  : action.type === 'buy_percentage'
+                    ? currentUsdcBalance * action.percentage
+                    : action.baseAmount *
+                      (action.scaleFactor || 1) *
+                      (conditionSeverity || 1);
+              const quantity = amount / candle.close;
+              currentQuantityHeld += quantity;
+              currentUsdcBalance -= amount;
+            } else if (
+              action.type === 'sell_fixed' ||
+              action.type === 'sell_percentage'
+            ) {
+              const amount =
+                action.type === 'sell_fixed'
+                  ? action.amount
+                  : currentQuantityHeld * candle.close * action.percentage;
+              const quantity = amount / candle.close;
+              currentQuantityHeld = Math.max(0, currentQuantityHeld - quantity);
+              currentUsdcBalance += amount;
+            }
+          }
+        }
+      }
+    }
+
+    // Group triggers by rule
+    const ruleMap = new Map<string, RuleTriggerSummary>();
+    for (const trigger of triggerPoints) {
+      if (!ruleMap.has(trigger.ruleId)) {
+        ruleMap.set(trigger.ruleId, {
+          ruleId: trigger.ruleId,
+          ruleName: trigger.ruleName,
+          triggerCount: 0,
+          triggerPoints: [],
+        });
+      }
+      const summary = ruleMap.get(trigger.ruleId)!;
+      summary.triggerCount++;
+      summary.triggerPoints.push(trigger);
+    }
+
+    return {
+      totalTriggers: triggerPoints.length,
+      ruleSummaries: Array.from(ruleMap.values()),
+      candles: candles.map((c) => ({
+        timestamp: c.timestamp,
+        open: c.open,
+        high: c.high,
+        low: c.low,
+        close: c.close,
+        volume: c.volume || 0,
+      })),
+    };
+  }
+
+  /**
+   * Describe a condition in human-readable format
+   */
+  private describeCondition(
+    condition: WhenCondition,
+    context: EvaluationContext,
+  ): string {
+    switch (condition.type) {
+      case 'schedule':
+        if (condition.frequency === 'daily') {
+          return 'Daily schedule triggered';
+        } else if (condition.frequency === 'weekly') {
+          return `Weekly schedule triggered (${condition.dayOfWeek})`;
+        } else {
+          return `Monthly schedule triggered (day ${condition.dayOfMonth})`;
+        }
+
+      case 'price_change':
+        const direction = condition.direction === 'drop' ? 'dropped' : 'rose';
+        const thresholdPercent = (condition.threshold * 100).toFixed(1);
+        return `Price ${direction} ${thresholdPercent}% from ${condition.referencePoint}`;
+
+      case 'price_level':
+        return `Price ${condition.operator} $${condition.price.toLocaleString()}`;
+
+      case 'volume_change':
+        return `Volume ${condition.operator} ${condition.threshold}x average (${condition.lookbackDays} day lookback)`;
+
+      case 'indicator':
+        if (condition.indicator === 'rsi') {
+          const rsiValue = this.getCurrentIndicatorValue(condition, context);
+          return `RSI(${condition.params.period}) ${this.formatOperator(condition.operator)} ${condition.value} (current: ${rsiValue?.toFixed(1) || 'N/A'})`;
+        } else if (condition.indicator === 'ma') {
+          const maValue = this.getCurrentIndicatorValue(condition, context);
+          return `Price ${this.formatOperator(condition.operator)} MA(${condition.params.period}) (current: $${maValue?.toLocaleString() || 'N/A'})`;
+        }
+        return `${condition.indicator.toUpperCase()} ${this.formatOperator(condition.operator)} ${condition.value}`;
+
+      case 'and':
+        return `All conditions met: ${condition.conditions.map((c) => this.describeCondition(c, context)).join(' AND ')}`;
+
+      case 'or':
+        return `Any condition met: ${condition.conditions.map((c) => this.describeCondition(c, context)).join(' OR ')}`;
+
+      default:
+        return 'Condition met';
+    }
+  }
+
+  /**
+   * Get current indicator value for description
+   */
+  private getCurrentIndicatorValue(
+    condition: IndicatorCondition,
+    context: EvaluationContext,
+  ): number | null {
+    const candles = context.marketData.map((c) => ({
+      timestamp: c.timestamp,
+      open: c.open,
+      high: c.high,
+      low: c.low,
+      close: c.close,
+      volume: c.volume || 0,
+      timeframe: '1d' as const,
+    }));
+
+    try {
+      if (condition.indicator === 'rsi') {
+        const rsiValues = RsiCalculator.calculate(
+          candles,
+          condition.params.period,
+        );
+        return rsiValues[rsiValues.length - 1] || null;
+      } else if (condition.indicator === 'ma') {
+        const maValues = MaCalculator.calculate(
+          candles,
+          condition.params.period,
+        );
+        return maValues[maValues.length - 1] || null;
+      }
+    } catch {
+      return null;
+    }
+    return null;
+  }
+
+  /**
+   * Format operator for display
+   */
+  private formatOperator(operator: string): string {
+    const map: Record<string, string> = {
+      less_than: '<',
+      greater_than: '>',
+      equals: '=',
+      crosses_above: 'crossed above',
+      crosses_below: 'crossed below',
+    };
+    return map[operator] || operator;
+  }
+
+  /**
+   * Describe an action in human-readable format
+   */
+  private describeAction(
+    action: ThenAction,
+    availableCash: number,
+    currentQuantity: number,
+    currentPrice: number,
+    severity?: number,
+  ): string {
+    switch (action.type) {
+      case 'buy_fixed':
+        return `Buy $${action.amount.toFixed(2)} worth of BTC`;
+
+      case 'buy_percentage':
+        const percentAmount = availableCash * action.percentage;
+        return `Buy ${(action.percentage * 100).toFixed(0)}% of available cash ($${percentAmount.toFixed(2)})`;
+
+      case 'buy_scaled':
+        const scaledAmount =
+          action.baseAmount * (action.scaleFactor || 1) * (severity || 1);
+        const finalAmount = action.maxAmount
+          ? Math.min(scaledAmount, action.maxAmount)
+          : scaledAmount;
+        return `Buy scaled $${finalAmount.toFixed(2)} (base: $${action.baseAmount}, scale: ${((action.scaleFactor || 1) * (severity || 1)).toFixed(2)}x)`;
+
+      case 'sell_fixed':
+        return `Sell $${action.amount.toFixed(2)} worth of BTC`;
+
+      case 'sell_percentage':
+        const sellAmount = currentQuantity * currentPrice * action.percentage;
+        return `Sell ${(action.percentage * 100).toFixed(0)}% of BTC holdings ($${sellAmount.toFixed(2)})`;
+
+      case 'rebalance':
+        return `Rebalance to ${(action.targetAllocation * 100).toFixed(0)}% BTC allocation`;
+
+      case 'limit_order':
+        return `Place limit buy order: $${action.amount.toFixed(2)} at $${action.price.toLocaleString()}`;
+
+      default:
+        return 'Execute action';
     }
   }
 }

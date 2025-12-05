@@ -3,6 +3,7 @@ import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { StrategyService } from './strategy.service';
 import { CustomStrategyConfig } from './interfaces/custom-strategy.interface';
 import { Public } from '../../modules/auth/guards/public.decorator';
+import { StrategyPreviewResult } from './interfaces/preview-result.interface';
 
 /**
  * Validation Result
@@ -79,12 +80,13 @@ export class StrategyController {
 
     try {
       // Use the strategy service to validate
-      const customStrategy = this.strategyService.getStrategy('custom-strategy');
+      const customStrategy =
+        this.strategyService.getStrategy('custom-strategy');
       customStrategy.validateParameters(config);
     } catch (error: any) {
       // Extract detailed error message
       const errorMessage = error?.message || 'Invalid strategy configuration';
-      
+
       // Try to parse field-specific errors from the message
       // Format: "Rule {id}: {error message}" or "Rule at index {index}: {error message}"
       if (errorMessage.includes('Rule')) {
@@ -123,7 +125,8 @@ export class StrategyController {
         warnings.push({
           level: 'warning',
           field: 'rules',
-          message: 'All rules are disabled. Strategy will not execute any actions.',
+          message:
+            'All rules are disabled. Strategy will not execute any actions.',
         });
       }
 
@@ -135,7 +138,8 @@ export class StrategyController {
         warnings.push({
           level: 'info',
           field: 'rules',
-          message: 'Some rules have very high priority numbers. Lower numbers execute first.',
+          message:
+            'Some rules have very high priority numbers. Lower numbers execute first.',
         });
       }
     }
@@ -146,5 +150,78 @@ export class StrategyController {
       warnings,
     };
   }
-}
 
+  /**
+   * Preview custom strategy execution
+   * Returns trigger information for live testing
+   */
+  @Public()
+  @Post('preview')
+  @ApiOperation({
+    summary: 'Preview custom strategy execution with trigger information',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Preview result with trigger information',
+  })
+  async preview(
+    @Body()
+    body: {
+      config: CustomStrategyConfig;
+      startDate: string;
+      endDate: string;
+      timeframe?: '1h' | '4h' | '1d' | '1w' | '1m';
+      investmentAmount?: number;
+      initialPortfolio?: {
+        assets: Array<{ symbol: string; quantity: number }>;
+        usdcAmount: number;
+      };
+      fundingSchedule?: {
+        frequency: 'daily' | 'weekly' | 'monthly';
+        amount: number;
+      };
+    },
+  ): Promise<StrategyPreviewResult> {
+    // Validate strategy first
+    try {
+      const customStrategy =
+        this.strategyService.getStrategy('custom-strategy');
+      customStrategy.validateParameters(body.config);
+    } catch (error: any) {
+      throw new BadRequestException(
+        error?.message || 'Invalid strategy configuration',
+      );
+    }
+
+    // Get market data through strategy service
+    const timeframe = body.timeframe || '1d';
+    const candles = await this.strategyService.getMarketDataForPreview(
+      'BTC/USD',
+      timeframe,
+      body.startDate,
+      body.endDate,
+    );
+
+    if (candles.length === 0) {
+      throw new BadRequestException(
+        'No market data available for the specified date range',
+      );
+    }
+
+    // Prepare parameters
+    const initialPortfolio = body.initialPortfolio || {
+      assets: [],
+      usdcAmount: body.investmentAmount || 10000,
+    };
+
+    // Preview strategy
+    return this.strategyService.previewCustomStrategy(
+      candles,
+      initialPortfolio,
+      body.fundingSchedule,
+      body.startDate,
+      body.endDate,
+      body.config,
+    );
+  }
+}

@@ -71,10 +71,11 @@
           </div>
         </div>
 
-        <!-- Profit Taken (if any) -->
-        <div v-if="(result.metrics?.totalProfitTaken ?? 0) > 0" class="profit-taken">
-          <span class="profit-label">💰 Profit Taken:</span>
+        <!-- Profit Withdrawn (if any) -->
+        <div v-if="(result.metrics?.totalProfitTaken ?? 0) > 0" class="profit-withdrawn">
+          <span class="profit-label">💰 Profit Withdrawn:</span>
           <span class="profit-value">${{ formatNumber(result.metrics?.totalProfitTaken) }}</span>
+          <span class="profit-note">(not in portfolio)</span>
         </div>
       </div>
     </div>
@@ -350,13 +351,14 @@ function handleTransactionsClick(result: StrategyResult) {
   color: #2563eb;
 }
 
-.profit-taken {
+.profit-withdrawn {
   background: linear-gradient(135deg, #dcfce7 0%, #bbf7d0 100%);
   padding: 8px 12px;
   border-radius: 8px;
   display: flex;
-  justify-content: space-between;
+  flex-wrap: wrap;
   align-items: center;
+  gap: 4px;
 }
 
 .profit-label {
@@ -369,6 +371,12 @@ function handleTransactionsClick(result: StrategyResult) {
   font-size: 16px;
   font-weight: 700;
   color: #16a34a;
+}
+
+.profit-note {
+  font-size: 10px;
+  color: #15803d;
+  font-style: italic;
 }
 
 /* Responsive */

@@ -201,9 +201,10 @@
                 {{ formatSharpeRatio(record.metrics?.sharpeRatio) }}
               </template>
               <template v-else-if="column.key === 'totalProfitTaken'">
-                <span class="text-green-600 font-semibold">
+                <span v-if="(record.metrics?.totalProfitTaken ?? 0) > 0" class="text-green-600 font-semibold">
                   ${{ formatNumber(record.metrics?.totalProfitTaken) }}
                 </span>
+                <span v-else class="text-gray-400">-</span>
               </template>
             </template>
           </a-table>
@@ -454,6 +455,29 @@ const columns = computed(() => {
       sorter: (a: StrategyResult, b: StrategyResult) => {
         const aVal = a.metrics?.sharpeRatio ?? 0
         const bVal = b.metrics?.sharpeRatio ?? 0
+        return aVal - bVal
+      },
+    },
+    {
+      title: () =>
+        h('span', [
+          'Profit Withdrawn',
+          ' ',
+          h(
+            ATooltip,
+            { title: 'Total profit taken out of portfolio (not included in final value)' },
+            {
+              default: () =>
+                h(QuestionCircleOutlined, {
+                  style: 'margin-left: 4px; color: #8c8c8c; cursor: help;',
+                }),
+            },
+          ),
+        ]),
+      key: 'totalProfitTaken',
+      sorter: (a: StrategyResult, b: StrategyResult) => {
+        const aVal = a.metrics?.totalProfitTaken ?? 0
+        const bVal = b.metrics?.totalProfitTaken ?? 0
         return aVal - bVal
       },
     },

@@ -1282,19 +1282,25 @@ export class CustomStrategy extends BaseStrategy {
         // Take profit: Sell X% of holdings and calculate profit
         const profitQuantity = currentQuantityHeld * action.percentage;
         const profitSellAmount = profitQuantity * currentPrice;
-        
+
         // Calculate profit: (sell price - average buy price) × quantity sold
         let profitAmount = 0;
+        let costBasisAmount = profitSellAmount; // Default to full amount if no avg price
+
         if (averageBuyPrice && averageBuyPrice > 0) {
           profitAmount = (currentPrice - averageBuyPrice) * profitQuantity;
+          costBasisAmount = averageBuyPrice * profitQuantity; // Only cost basis stays in portfolio
         }
-        
+
+        // Only add cost basis to portfolio, profit is "withdrawn"
+        const actualProfitTaken = Math.max(0, profitAmount);
+
         return {
           quantityChanged: -profitQuantity, // Negative because we're selling
-          amountChanged: profitSellAmount, // Positive because we're receiving cash
+          amountChanged: costBasisAmount, // Only cost basis goes back to USDC (profit withdrawn)
           transactionType: 'take_profit',
-          reason: `Custom rule: Take profit - Sell ${(action.percentage * 100).toFixed(0)}% of holdings ($${profitSellAmount.toFixed(2)}, profit: $${profitAmount.toFixed(2)})`,
-          profitAmount: Math.max(0, profitAmount), // Profit can't be negative
+          reason: `Custom rule: Take profit - Sell ${(action.percentage * 100).toFixed(0)}% of holdings ($${profitSellAmount.toFixed(2)}, profit withdrawn: $${actualProfitTaken.toFixed(2)})`,
+          profitAmount: actualProfitTaken, // Profit withdrawn from portfolio
         };
 
       case 'rebalance':

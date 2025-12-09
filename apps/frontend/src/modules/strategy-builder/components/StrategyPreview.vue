@@ -1,9 +1,50 @@
 <template>
   <div class="strategy-preview">
-    <!-- Preview Header -->
-    <div class="mb-4 flex items-center justify-between">
-      <h3 class="text-lg font-semibold">Live Preview</h3>
-      <a-button type="primary" :loading="isLoading" @click="handlePreview"> Run Preview </a-button>
+    <!-- Preview Header with Controls -->
+    <div class="mb-4">
+      <div class="flex items-center justify-between mb-3">
+        <h3 class="text-lg font-semibold">Live Preview</h3>
+        <a-button type="primary" :loading="isLoading" @click="handlePreview">
+          Run Preview
+        </a-button>
+      </div>
+
+      <!-- Editable Settings -->
+      <div class="flex flex-wrap items-center gap-4 p-3 bg-gray-50 rounded-lg">
+        <!-- Date Range -->
+        <div class="flex items-center gap-2">
+          <span class="text-sm text-gray-600">Period:</span>
+          <a-range-picker
+            v-model:value="dateRange"
+            :format="'YYYY-MM-DD'"
+            size="small"
+            :allow-clear="false"
+            @change="handleDateRangeChange"
+          />
+        </div>
+
+        <!-- Timeframe -->
+        <div class="flex items-center gap-2">
+          <span class="text-sm text-gray-600">Timeframe:</span>
+          <a-radio-group
+            v-model:value="selectedApiTimeframe"
+            size="small"
+            button-style="solid"
+            @change="handleTimeframeChangeFromSelector"
+          >
+            <a-radio-button value="1h">1H</a-radio-button>
+            <a-radio-button value="4h">4H</a-radio-button>
+            <a-radio-button value="1d">1D</a-radio-button>
+            <a-radio-button value="1w">1W</a-radio-button>
+          </a-radio-group>
+        </div>
+
+        <!-- Settings Changed Indicator -->
+        <div v-if="hasSettingsChanged" class="flex items-center gap-1 text-orange-500">
+          <ExclamationCircleOutlined />
+          <span class="text-xs">Settings modified</span>
+        </div>
+      </div>
     </div>
 
     <!-- Loading State -->
@@ -38,6 +79,10 @@
         <CandlestickChartWithTriggers
           :candles="previewResult.candles"
           :trigger-points="allTriggerPoints"
+          :timeframe="selectedChartTimeframe"
+          :timeframes="availableChartTimeframes"
+          :show-timeframe-selector="false"
+          :loading="isChangingTimeframe"
         />
       </div>
 
@@ -116,43 +161,157 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue'
-import { Button as AButton, Spin as ASpin, Tag as ATag } from 'ant-design-vue'
+import { ref, computed, watch } from 'vue'
+import {
+  Button as AButton,
+  Spin as ASpin,
+  Tag as ATag,
+  RangePicker as ARangePicker,
+  RadioGroup as ARadioGroup,
+  RadioButton as ARadioButton,
+} from 'ant-design-vue'
+import { ExclamationCircleOutlined } from '@ant-design/icons-vue'
 import {
   strategyBuilderApi,
   type StrategyPreviewResult,
-  type TriggerPoint,
 } from '../api/strategyBuilderApi'
 import type { CustomStrategyConfig } from '../api/strategyBuilderApi'
+import type { Timeframe } from '@/shared/types/chart'
 import CandlestickChartWithTriggers from './CandlestickChartWithTriggers.vue'
-import dayjs from 'dayjs'
+import dayjs, { type Dayjs } from 'dayjs'
+
+// API timeframe format (lowercase)
+type ApiTimeframe = '1h' | '4h' | '1d' | '1w' | '1m'
 
 interface Props {
   strategyConfig: CustomStrategyConfig
   startDate?: string
   endDate?: string
   investmentAmount?: number
+  /** Initial timeframe (accepts both '1d' and '1D' formats) */
+  timeframe?: string
 }
 
-const props = defineProps<Props>()
+const props = withDefaults(defineProps<Props>(), {
+  timeframe: '1d',
+})
+
+interface Emits {
+  (e: 'settings-change', settings: { startDate: string; endDate: string; timeframe: string }): void
+}
+
+const emit = defineEmits<Emits>()
 
 const isLoading = ref(false)
+const isChangingTimeframe = ref(false)
 const previewResult = ref<StrategyPreviewResult | null>(null)
 const error = ref<string | null>(null)
 
-// Default date range: last 1 year
-const defaultStartDate = computed(() => {
-  return props.startDate || dayjs().subtract(1, 'year').startOf('month').toISOString()
+// Store original values to detect changes
+const originalStartDate = ref<string>('')
+const originalEndDate = ref<string>('')
+const originalTimeframe = ref<string>('')
+
+// Current editable values
+const selectedApiTimeframe = ref<ApiTimeframe>(normalizeTimeframe(props.timeframe))
+const dateRange = ref<[Dayjs, Dayjs]>([
+  dayjs(props.startDate || dayjs().subtract(1, 'year')),
+  dayjs(props.endDate || dayjs()),
+])
+
+// Initialize original values when props change
+watch(
+  () => [props.startDate, props.endDate, props.timeframe],
+  () => {
+    const start = props.startDate || dayjs().subtract(1, 'year').toISOString()
+    const end = props.endDate || dayjs().toISOString()
+    const tf = props.timeframe || '1d'
+
+    // Set original values (only once when modal opens)
+    if (!originalStartDate.value) {
+      originalStartDate.value = start
+      originalEndDate.value = end
+      originalTimeframe.value = normalizeTimeframe(tf)
+    }
+
+    // Update current values
+    dateRange.value = [dayjs(start), dayjs(end)]
+    selectedApiTimeframe.value = normalizeTimeframe(tf)
+  },
+  { immediate: true }
+)
+
+// Normalize timeframe to API format
+function normalizeTimeframe(tf: string): ApiTimeframe {
+  const lower = tf.toLowerCase()
+  if (['1h', '4h', '1d', '1w', '1m'].includes(lower)) {
+    return lower as ApiTimeframe
+  }
+  // Handle uppercase formats
+  const map: Record<string, ApiTimeframe> = {
+    '1D': '1d',
+    '1W': '1w',
+    '1M': '1m',
+  }
+  return map[tf] || '1d'
+}
+
+// Convert API timeframe to chart format
+const apiToChartTimeframe: Record<ApiTimeframe, Timeframe> = {
+  '1h': '1h',
+  '4h': '4h',
+  '1d': '1D',
+  '1w': '1W',
+  '1m': '1M',
+}
+
+// Selected timeframe in chart format
+const selectedChartTimeframe = computed<Timeframe>(() => {
+  return apiToChartTimeframe[selectedApiTimeframe.value] || '1D'
 })
 
-const defaultEndDate = computed(() => {
-  return props.endDate || dayjs().startOf('month').toISOString()
+// Available timeframes for the chart
+const availableChartTimeframes: Timeframe[] = ['1h', '4h', '1D', '1W']
+
+// Check if settings have changed from original
+const hasSettingsChanged = computed(() => {
+  if (!originalStartDate.value) return false
+
+  const currentStart = dateRange.value[0].format('YYYY-MM-DD')
+  const currentEnd = dateRange.value[1].format('YYYY-MM-DD')
+  const originalStart = dayjs(originalStartDate.value).format('YYYY-MM-DD')
+  const originalEnd = dayjs(originalEndDate.value).format('YYYY-MM-DD')
+
+  return (
+    currentStart !== originalStart ||
+    currentEnd !== originalEnd ||
+    selectedApiTimeframe.value !== originalTimeframe.value
+  )
 })
+
+// Expose current settings and change status for parent
+defineExpose({
+  getCurrentSettings: () => ({
+    startDate: dateRange.value[0].toISOString(),
+    endDate: dateRange.value[1].toISOString(),
+    timeframe: selectedApiTimeframe.value,
+  }),
+  getOriginalSettings: () => ({
+    startDate: originalStartDate.value,
+    endDate: originalEndDate.value,
+    timeframe: originalTimeframe.value,
+  }),
+  hasSettingsChanged: () => hasSettingsChanged.value,
+})
+
+// Effective dates for API
+const effectiveStartDate = computed(() => dateRange.value[0].toISOString())
+const effectiveEndDate = computed(() => dateRange.value[1].toISOString())
 
 const formatDateRange = computed(() => {
   if (!previewResult.value) return ''
-  const start = dayjs(defaultStartDate.value).format('MMM YYYY')
-  const end = dayjs(defaultEndDate.value).format('MMM YYYY')
+  const start = dateRange.value[0].format('MMM YYYY')
+  const end = dateRange.value[1].format('MMM YYYY')
   return `${start} - ${end}`
 })
 
@@ -165,25 +324,86 @@ const formatDate = (dateString: string) => {
   return dayjs(dateString).format('MMM DD, YYYY')
 }
 
+/**
+ * Fetch preview data from API
+ */
+async function fetchPreview() {
+  const result = await strategyBuilderApi.preview(props.strategyConfig, {
+    startDate: effectiveStartDate.value,
+    endDate: effectiveEndDate.value,
+    timeframe: selectedApiTimeframe.value,
+    investmentAmount: props.investmentAmount || 10000,
+  })
+
+  return result
+}
+
+/**
+ * Handle initial preview button click
+ */
 const handlePreview = async () => {
   isLoading.value = true
   error.value = null
   previewResult.value = null
 
   try {
-    const result = await strategyBuilderApi.preview(props.strategyConfig, {
-      startDate: defaultStartDate.value,
-      endDate: defaultEndDate.value,
-      timeframe: '1d',
-      investmentAmount: props.investmentAmount || 10000,
-    })
-    previewResult.value = result
-  } catch (err: any) {
-    error.value = err.message || 'Failed to preview strategy'
+    previewResult.value = await fetchPreview()
+  } catch (err) {
+    error.value = err instanceof Error ? err.message : 'Failed to preview strategy'
     console.error('Preview error:', err)
   } finally {
     isLoading.value = false
   }
+}
+
+/**
+ * Handle date range change
+ */
+function handleDateRangeChange() {
+  emitSettingsChange()
+  // Re-fetch if we have results
+  if (previewResult.value) {
+    refetchPreview()
+  }
+}
+
+/**
+ * Handle timeframe change from the selector
+ */
+function handleTimeframeChangeFromSelector() {
+  emitSettingsChange()
+  // Re-fetch if we have results
+  if (previewResult.value) {
+    refetchPreview()
+  }
+}
+
+/**
+ * Re-fetch preview with new settings
+ */
+async function refetchPreview() {
+  isChangingTimeframe.value = true
+  error.value = null
+
+  try {
+    previewResult.value = await fetchPreview()
+  } catch (err) {
+    error.value = err instanceof Error ? err.message : 'Failed to fetch data'
+    console.error('Refetch error:', err)
+  } finally {
+    isChangingTimeframe.value = false
+  }
+}
+
+/**
+ * Emit settings change event
+ */
+function emitSettingsChange() {
+  emit('settings-change', {
+    startDate: effectiveStartDate.value,
+    endDate: effectiveEndDate.value,
+    timeframe: selectedApiTimeframe.value,
+  })
 }
 </script>
 

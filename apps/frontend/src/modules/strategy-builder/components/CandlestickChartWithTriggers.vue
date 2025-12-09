@@ -1,273 +1,184 @@
 <template>
-  <div class="candlestick-chart-container">
-    <canvas ref="chartCanvas"></canvas>
-  </div>
+  <TradingChart
+    :data="chartData"
+    :markers="chartMarkers"
+    :height="height"
+    :show-volume="showVolume"
+    :show-timeframe-selector="showTimeframeSelector"
+    :timeframe="timeframe"
+    :timeframes="availableTimeframes"
+    :theme="theme"
+    :watermark="watermark"
+    :loading="loading"
+    @timeframe-change="handleTimeframeChange"
+  />
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, watch, onBeforeUnmount } from 'vue'
-import {
-  Chart,
-  CategoryScale,
-  LinearScale,
-  PointElement,
-  LineElement,
-  BarElement,
-  BarController,
-  LineController,
-  Title,
-  Tooltip,
-  Legend,
-  type ChartConfiguration,
-} from 'chart.js'
+import { computed } from 'vue'
 import dayjs from 'dayjs'
+import TradingChart from '@/shared/components/charts/TradingChart.vue'
+import type { CandleData, ChartMarker, ChartTheme, Timeframe } from '@/shared/types/chart'
 import type { TriggerPoint } from '../api/strategyBuilderApi'
 
-Chart.register(
-  CategoryScale,
-  LinearScale,
-  PointElement,
-  LineElement,
-  BarElement,
-  BarController,
-  LineController,
-  Title,
-  Tooltip,
-  Legend,
-)
+interface Candle {
+  timestamp: string
+  open: number
+  high: number
+  low: number
+  close: number
+  volume: number
+}
 
 interface Props {
-  candles: Array<{
-    timestamp: string
-    open: number
-    high: number
-    low: number
-    close: number
-    volume: number
-  }>
-  triggerPoints: TriggerPoint[]
+  /** Candlestick data from API */
+  candles: Candle[]
+  /** Strategy trigger points to display as markers */
+  triggerPoints?: TriggerPoint[]
+  /** Chart height in pixels */
+  height?: number
+  /** Show volume histogram */
+  showVolume?: boolean
+  /** Show timeframe selector */
+  showTimeframeSelector?: boolean
+  /** Currently selected timeframe */
+  timeframe?: Timeframe
+  /** Available timeframes */
+  timeframes?: Timeframe[]
+  /** Chart theme */
+  theme?: ChartTheme
+  /** Watermark text (e.g., asset symbol) */
+  watermark?: string
+  /** Loading state */
+  loading?: boolean
 }
 
-const props = defineProps<Props>()
-
-const chartCanvas = ref<HTMLCanvasElement | null>(null)
-let chartInstance: Chart | null = null
-
-// Create a map of trigger points by date for quick lookup
-const triggersByDate = computed(() => {
-  const map = new Map<string, TriggerPoint[]>()
-  props.triggerPoints.forEach((trigger) => {
-    const date = dayjs(trigger.date).format('YYYY-MM-DD')
-    if (!map.has(date)) {
-      map.set(date, [])
-    }
-    map.get(date)!.push(trigger)
-  })
-  return map
+const props = withDefaults(defineProps<Props>(), {
+  triggerPoints: () => [],
+  height: 400,
+  showVolume: true,
+  showTimeframeSelector: false,
+  timeframe: '1D',
+  timeframes: () => ['1h', '4h', '1D', '1W'] as Timeframe[],
+  theme: 'light',
+  watermark: '',
+  loading: false,
 })
 
-function createChart() {
-  if (!chartCanvas.value || props.candles.length === 0) {
-    return
-  }
-
-  // Destroy existing chart
-  if (chartInstance) {
-    chartInstance.destroy()
-  }
-
-  // Prepare candlestick data (simplified as line chart with OHLC markers)
-  const labels = props.candles.map((c) => dayjs(c.timestamp).format('MMM DD, YYYY'))
-  const closePrices = props.candles.map((c) => c.close)
-  const highPrices = props.candles.map((c) => c.high)
-  const lowPrices = props.candles.map((c) => c.low)
-
-  // Prepare trigger points data
-  const triggerPrices: (number | null)[] = []
-  const triggerLabels: string[] = []
-
-  props.candles.forEach((candle) => {
-    const date = dayjs(candle.timestamp).format('YYYY-MM-DD')
-    const triggers = triggersByDate.value.get(date)
-    if (triggers && triggers.length > 0) {
-      // Use the first trigger's price (or average if multiple)
-      const avgPrice =
-        triggers.reduce((sum: number, t: TriggerPoint) => sum + t.price, 0) / triggers.length
-      triggerPrices.push(avgPrice)
-      triggerLabels.push(`${triggers.length} trigger${triggers.length > 1 ? 's' : ''}`)
-    } else {
-      triggerPrices.push(null)
-      triggerLabels.push('')
-    }
-  })
-
-  const datasets: any[] = [
-    {
-      label: 'Close Price',
-      data: closePrices,
-      borderColor: '#1890ff',
-      backgroundColor: '#1890ff20',
-      borderWidth: 1,
-      pointRadius: 0,
-      pointHoverRadius: 4,
-      tension: 0.1,
-    },
-    {
-      label: 'High',
-      data: highPrices,
-      borderColor: '#52c41a',
-      backgroundColor: 'transparent',
-      borderWidth: 1,
-      borderDash: [5, 5],
-      pointRadius: 0,
-      pointHoverRadius: 0,
-      tension: 0.1,
-    },
-    {
-      label: 'Low',
-      data: lowPrices,
-      borderColor: '#f5222d',
-      backgroundColor: 'transparent',
-      borderWidth: 1,
-      borderDash: [5, 5],
-      pointRadius: 0,
-      pointHoverRadius: 0,
-      tension: 0.1,
-    },
-    {
-      label: 'Trigger Points',
-      data: triggerPrices,
-      borderColor: '#faad14',
-      backgroundColor: '#faad14',
-      pointRadius: 6,
-      pointHoverRadius: 8,
-      pointStyle: 'circle',
-      showLine: false,
-      pointBackgroundColor: '#faad14',
-      pointBorderColor: '#fff',
-      pointBorderWidth: 2,
-    },
-  ]
-
-  const config: ChartConfiguration<'line'> = {
-    type: 'line',
-    data: {
-      labels,
-      datasets,
-    },
-    options: {
-      responsive: true,
-      maintainAspectRatio: false,
-      interaction: {
-        mode: 'index',
-        intersect: false,
-      },
-      plugins: {
-        legend: {
-          position: 'top',
-        },
-        title: {
-          display: false,
-        },
-        tooltip: {
-          callbacks: {
-            title: (context) => {
-              return context[0].label
-            },
-            label: (context) => {
-              const datasetLabel = context.dataset.label || ''
-              const value = context.parsed.y
-
-              if (
-                datasetLabel === 'Trigger Points' &&
-                value !== null &&
-                typeof value === 'number'
-              ) {
-                const index = context.dataIndex
-                if (index !== undefined && props.candles[index]) {
-                  const date = dayjs(props.candles[index].timestamp).format('YYYY-MM-DD')
-                  const triggers = triggersByDate.value.get(date) || []
-                  if (triggers.length > 0) {
-                    return [
-                      `Trigger Point: $${value.toLocaleString()}`,
-                      `${triggers.length} trigger${triggers.length > 1 ? 's' : ''}`,
-                      ...triggers.map((t: TriggerPoint) => `  • ${t.conditionMet}`),
-                    ]
-                  }
-                }
-              }
-
-              if (value !== null && typeof value === 'number') {
-                return `${datasetLabel}: $${value.toLocaleString('en-US', {
-                  minimumFractionDigits: 2,
-                  maximumFractionDigits: 2,
-                })}`
-              }
-              return `${datasetLabel}: N/A`
-            },
-          },
-        },
-      },
-      scales: {
-        x: {
-          display: true,
-          title: {
-            display: true,
-            text: 'Date',
-          },
-          ticks: {
-            maxRotation: 45,
-            minRotation: 45,
-            maxTicksLimit: 20,
-            autoSkip: true,
-            autoSkipPadding: 10,
-          },
-        },
-        y: {
-          display: true,
-          title: {
-            display: true,
-            text: 'Price (USD)',
-          },
-          ticks: {
-            callback: (value) => {
-              return `$${Number(value).toLocaleString('en-US', {
-                minimumFractionDigits: 0,
-                maximumFractionDigits: 0,
-              })}`
-            },
-          },
-        },
-      },
-    },
-  }
-
-  chartInstance = new Chart(chartCanvas.value, config)
+interface Emits {
+  (e: 'timeframe-change', timeframe: Timeframe): void
 }
 
-onMounted(() => {
-  createChart()
-})
+const emit = defineEmits<Emits>()
 
-watch(
-  () => [props.candles, props.triggerPoints],
-  () => {
-    createChart()
-  },
-  { deep: true },
-)
+const availableTimeframes = computed(() => props.timeframes)
 
-onBeforeUnmount(() => {
-  if (chartInstance) {
-    chartInstance.destroy()
+/**
+ * Convert candles to chart format
+ * Uses Unix timestamps (seconds) to support all timeframes including intraday
+ */
+const chartData = computed<CandleData[]>(() => {
+  // Sort by timestamp ascending and deduplicate
+  const sortedCandles = [...props.candles]
+    .sort((a, b) => dayjs(a.timestamp).unix() - dayjs(b.timestamp).unix())
+  
+  // Use a Map to deduplicate by timestamp
+  const uniqueCandles = new Map<number, CandleData>()
+  
+  for (const candle of sortedCandles) {
+    const unixTime = dayjs(candle.timestamp).unix()
+    // Keep the last occurrence if there are duplicates
+    uniqueCandles.set(unixTime, {
+      time: unixTime,
+      open: candle.open,
+      high: candle.high,
+      low: candle.low,
+      close: candle.close,
+      volume: candle.volume,
+    })
   }
+  
+  return Array.from(uniqueCandles.values())
 })
+
+/**
+ * Convert trigger points to chart markers (Binance style)
+ * - Buy actions → small green triangle (▲) below bar
+ * - Sell actions → small red triangle (▼) above bar
+ * - Other triggers → small orange circle
+ * - No text labels (details shown in tooltip)
+ */
+const chartMarkers = computed<ChartMarker[]>(() => {
+  if (!props.triggerPoints || props.triggerPoints.length === 0) {
+    return []
+  }
+
+  // Sort markers by time and deduplicate by timestamp
+  const sortedTriggers = [...props.triggerPoints]
+    .sort((a, b) => dayjs(a.date).unix() - dayjs(b.date).unix())
+
+  // Group triggers by timestamp to avoid overlapping markers
+  const triggersByTime = new Map<number, TriggerPoint[]>()
+  for (const trigger of sortedTriggers) {
+    const time = dayjs(trigger.date).unix()
+    if (!triggersByTime.has(time)) {
+      triggersByTime.set(time, [])
+    }
+    triggersByTime.get(time)!.push(trigger)
+  }
+
+  const markers: ChartMarker[] = []
+
+  // Create one marker per timestamp (combine if multiple triggers)
+  for (const [time, triggers] of triggersByTime) {
+    // Check if any trigger is a buy or sell
+    const hasBuy = triggers.some((t) =>
+      t.actionsExecuted.some((action) => action.toLowerCase().includes('buy'))
+    )
+    const hasSell = triggers.some((t) =>
+      t.actionsExecuted.some((action) =>
+        action.toLowerCase().includes('sell') ||
+        action.toLowerCase().includes('take_profit')
+      )
+    )
+
+    // If both buy and sell on same candle, show both markers
+    if (hasBuy) {
+      markers.push({
+        time,
+        position: 'belowBar',
+        color: '#26a69a', // Binance green
+        shape: 'arrowUp',
+        size: 0.5, // Small size like Binance
+      })
+    }
+
+    if (hasSell) {
+      markers.push({
+        time,
+        position: 'aboveBar',
+        color: '#ef5350', // Binance red
+        shape: 'arrowDown',
+        size: 0.5, // Small size like Binance
+      })
+    }
+
+    // If neither buy nor sell, show neutral marker
+    if (!hasBuy && !hasSell) {
+      markers.push({
+        time,
+        position: 'belowBar',
+        color: '#faad14', // Orange for other triggers
+        shape: 'circle',
+        size: 0.5,
+      })
+    }
+  }
+
+  return markers
+})
+
+function handleTimeframeChange(timeframe: Timeframe) {
+  emit('timeframe-change', timeframe)
+}
 </script>
-
-<style scoped>
-.candlestick-chart-container {
-  position: relative;
-  height: 400px;
-  width: 100%;
-}
-</style>

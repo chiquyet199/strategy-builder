@@ -1166,7 +1166,11 @@
       v-model:open="showStrategyBuilderModal"
       :edit-strategy="editingCustomStrategy"
       :edit-index="editingCustomStrategyIndex"
+      :start-date="formState.startDate"
+      :end-date="formState.endDate"
+      :timeframe="formState.timeframe"
       @save="handleSaveCustomStrategy"
+      @update-settings="handleUpdatePreviewSettings"
     />
   </div>
 </template>
@@ -1509,6 +1513,14 @@ const handleSaveCustomStrategy = (strategyConfig: StrategyConfig, index?: number
     props.formState.selectedStrategyIds.push(strategyConfig)
   }
   showStrategyBuilderModal.value = false
+}
+
+// Handle settings update from strategy builder preview
+const handleUpdatePreviewSettings = (settings: { startDate: string; endDate: string; timeframe: string }) => {
+  // Update form state with new settings
+  props.formState.startDate = settings.startDate
+  props.formState.endDate = settings.endDate
+  props.formState.timeframe = settings.timeframe as typeof props.formState.timeframe
 }
 
 // Handle clicking on a variant card

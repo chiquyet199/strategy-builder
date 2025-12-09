@@ -35,6 +35,8 @@ interface Props {
   candles: Candle[]
   /** Strategy trigger points to display as markers */
   triggerPoints?: TriggerPoint[]
+  /** Rule colors map (ruleId -> color) for color-coded markers */
+  ruleColors?: Map<string, string>
   /** Chart height in pixels */
   height?: number
   /** Show volume histogram */
@@ -55,6 +57,7 @@ interface Props {
 
 const props = withDefaults(defineProps<Props>(), {
   triggerPoints: () => [],
+  ruleColors: () => new Map(),
   height: 400,
   showVolume: true,
   showTimeframeSelector: false,
@@ -87,7 +90,6 @@ const chartData = computed<CandleData[]>(() => {
   
   for (const candle of sortedCandles) {
     const unixTime = dayjs(candle.timestamp).unix()
-    // Keep the last occurrence if there are duplicates
     uniqueCandles.set(unixTime, {
       time: unixTime,
       open: candle.open,
@@ -102,22 +104,21 @@ const chartData = computed<CandleData[]>(() => {
 })
 
 /**
- * Convert trigger points to chart markers (Binance style)
- * - Buy actions → small green triangle (▲) below bar
- * - Sell actions → small red triangle (▼) above bar
- * - Other triggers → small orange circle
- * - No text labels (details shown in tooltip)
+ * Convert trigger points to chart markers (Binance style with rule colors)
+ * - Buy actions → small colored triangle (▲) below bar
+ * - Sell actions → small colored triangle (▼) above bar
+ * - Color based on rule (if ruleColors provided) or action type
  */
 const chartMarkers = computed<ChartMarker[]>(() => {
   if (!props.triggerPoints || props.triggerPoints.length === 0) {
     return []
   }
 
-  // Sort markers by time and deduplicate by timestamp
+  // Sort markers by time
   const sortedTriggers = [...props.triggerPoints]
     .sort((a, b) => dayjs(a.date).unix() - dayjs(b.date).unix())
 
-  // Group triggers by timestamp to avoid overlapping markers
+  // Group triggers by timestamp to handle multiple triggers on same candle
   const triggersByTime = new Map<number, TriggerPoint[]>()
   for (const trigger of sortedTriggers) {
     const time = dayjs(trigger.date).unix()
@@ -129,46 +130,53 @@ const chartMarkers = computed<ChartMarker[]>(() => {
 
   const markers: ChartMarker[] = []
 
-  // Create one marker per timestamp (combine if multiple triggers)
+  // Create markers for each timestamp
   for (const [time, triggers] of triggersByTime) {
-    // Check if any trigger is a buy or sell
-    const hasBuy = triggers.some((t) =>
+    // Group by action type (buy/sell) and rule
+    const buyTriggers = triggers.filter((t) =>
       t.actionsExecuted.some((action) => action.toLowerCase().includes('buy'))
     )
-    const hasSell = triggers.some((t) =>
+    const sellTriggers = triggers.filter((t) =>
       t.actionsExecuted.some((action) =>
         action.toLowerCase().includes('sell') ||
         action.toLowerCase().includes('take_profit')
       )
     )
 
-    // If both buy and sell on same candle, show both markers
-    if (hasBuy) {
+    // Create buy markers
+    for (const trigger of buyTriggers) {
+      const color = props.ruleColors.get(trigger.ruleId) || '#26a69a'
       markers.push({
         time,
         position: 'belowBar',
-        color: '#26a69a', // Binance green
+        color,
         shape: 'arrowUp',
-        size: 0.5, // Small size like Binance
+        size: 0.5,
       })
     }
 
-    if (hasSell) {
+    // Create sell markers
+    for (const trigger of sellTriggers) {
+      const color = props.ruleColors.get(trigger.ruleId) || '#ef5350'
       markers.push({
         time,
         position: 'aboveBar',
-        color: '#ef5350', // Binance red
+        color,
         shape: 'arrowDown',
-        size: 0.5, // Small size like Binance
+        size: 0.5,
       })
     }
 
-    // If neither buy nor sell, show neutral marker
-    if (!hasBuy && !hasSell) {
+    // Create neutral markers for triggers that are neither buy nor sell
+    const otherTriggers = triggers.filter(
+      (t) => !buyTriggers.includes(t) && !sellTriggers.includes(t)
+    )
+    for (const trigger of otherTriggers) {
+      const color = props.ruleColors.get(trigger.ruleId) || '#faad14'
       markers.push({
         time,
         position: 'belowBar',
-        color: '#faad14', // Orange for other triggers
+        color,
         shape: 'circle',
         size: 0.5,
       })

@@ -1161,8 +1161,8 @@
       </div>
     </a-modal>
 
-    <!-- Strategy Builder Modal -->
-    <StrategyBuilderModal
+    <!-- Strategy Builder Fullscreen -->
+    <StrategyBuilderFullscreen
       v-model:open="showStrategyBuilderModal"
       :edit-strategy="editingCustomStrategy"
       :edit-index="editingCustomStrategyIndex"
@@ -1172,6 +1172,7 @@
       @save="handleSaveCustomStrategy"
       @update-settings="handleUpdatePreviewSettings"
     />
+
   </div>
 </template>
 
@@ -1189,7 +1190,7 @@ import {
 import dayjs from 'dayjs'
 import DateRangeSlider from './DateRangeSlider.vue'
 import TimeframeSelection from './TimeframeSelection.vue'
-import StrategyBuilderModal from '@/modules/strategy-builder/components/StrategyBuilderModal.vue'
+import StrategyBuilderFullscreen from '@/modules/strategy-builder/components/StrategyBuilderFullscreen.vue'
 import type { FormState } from '../composables/useBacktestForm'
 import {
   isSameStrategyConfig,

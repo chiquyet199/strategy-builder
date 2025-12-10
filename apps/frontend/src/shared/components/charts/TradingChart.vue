@@ -56,7 +56,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch, computed, onMounted } from 'vue'
+import { ref, watch, computed } from 'vue'
 import { Spin as ASpin, Empty as AEmpty, Button as AButton, RadioGroup as ARadioGroup, RadioButton as ARadioButton, Tooltip as ATooltip } from 'ant-design-vue'
 import { FullscreenOutlined, BulbOutlined, BulbFilled } from '@ant-design/icons-vue'
 import { useTradingChart } from '@/shared/composables/useTradingChart'
@@ -135,6 +135,7 @@ const {
   setMarkers,
   fitContent,
   setTheme,
+  resize,
 } = useTradingChart({
   height: props.height,
   showVolume: props.showVolume,
@@ -183,6 +184,16 @@ watch(
   }
 )
 
+// Watch for height prop changes and resize chart
+watch(
+  () => props.height,
+  (newHeight) => {
+    if (newHeight && newHeight > 0) {
+      resize(undefined, newHeight)
+    }
+  }
+)
+
 // Set initial data when chart is ready
 watch(chart, (chartInstance) => {
   if (chartInstance && props.data.length > 0) {
@@ -219,6 +230,7 @@ defineExpose({
 .trading-chart-wrapper {
   position: relative;
   width: 100%;
+  height: 100%;
   background: var(--chart-bg, #ffffff);
   border-radius: 8px;
   overflow: hidden;

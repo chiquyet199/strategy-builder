@@ -504,6 +504,7 @@ function finalizeSave(strategyConfig: StrategyConfig) {
 .fullscreen-modal .ant-modal-content {
   border-radius: 0 !important;
   height: 100vh !important;
+  padding: 0 !important;
 }
 
 .fullscreen-modal .ant-modal-body {

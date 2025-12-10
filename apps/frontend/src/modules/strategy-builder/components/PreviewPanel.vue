@@ -52,12 +52,12 @@
     <!-- Preview Content -->
     <div v-else-if="previewResult" class="preview-content">
       <!-- Chart -->
-      <div class="chart-section">
+      <div ref="chartSectionRef" class="chart-section">
         <CandlestickChartWithTriggers
           :candles="previewResult.candles"
           :trigger-points="allTriggerPoints"
           :rule-colors="ruleColors"
-          :height="400"
+          :height="chartHeight"
           :show-timeframe-selector="false"
         />
       </div>
@@ -126,7 +126,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch } from 'vue'
+import { ref, computed, watch, onMounted, onUnmounted, nextTick } from 'vue'
 import {
   RadioGroup as ARadioGroup,
   RadioButton as ARadioButton,
@@ -175,6 +175,9 @@ const isLoading = ref(false)
 const error = ref<string | null>(null)
 const previewResult = ref<StrategyPreviewResult | null>(null)
 const expandedRules = ref<string[]>([])
+const chartSectionRef = ref<HTMLElement | null>(null)
+const chartHeight = ref(400)
+let resizeObserver: ResizeObserver | null = null
 
 // Original settings
 const originalStartDate = ref<string>('')
@@ -259,6 +262,16 @@ function handleDateRangeSliderChange(range: { startDate: string; endDate: string
   handleSettingsChange()
 }
 
+// Recalculate chart height based on container
+function recalculateChartHeight() {
+  if (chartSectionRef.value) {
+    const height = chartSectionRef.value.clientHeight
+    if (height > 0) {
+      chartHeight.value = height
+    }
+  }
+}
+
 async function runPreview() {
   isLoading.value = true
   error.value = null
@@ -279,12 +292,50 @@ async function runPreview() {
     if (firstWithTriggers) {
       expandedRules.value = [firstWithTriggers.ruleId]
     }
+
+    // Recalculate chart height after DOM updates
+    await nextTick()
+    // Use requestAnimationFrame to ensure layout is complete
+    requestAnimationFrame(() => {
+      recalculateChartHeight()
+    })
   } catch (err) {
     error.value = err instanceof Error ? err.message : 'Failed to preview strategy'
   } finally {
     isLoading.value = false
   }
 }
+
+// Setup resize observer for dynamic chart height
+onMounted(() => {
+  resizeObserver = new ResizeObserver((entries) => {
+    for (const entry of entries) {
+      // Use the available height minus some padding for the chart
+      const availableHeight = entry.contentRect.height
+      if (availableHeight > 0) {
+        chartHeight.value = availableHeight
+      }
+    }
+  })
+
+  // Observe the chart section when it becomes available
+  watch(
+    chartSectionRef,
+    (el) => {
+      if (el && resizeObserver) {
+        resizeObserver.observe(el)
+      }
+    },
+    { immediate: true }
+  )
+})
+
+onUnmounted(() => {
+  if (resizeObserver) {
+    resizeObserver.disconnect()
+    resizeObserver = null
+  }
+})
 
 // Expose for parent
 defineExpose({
@@ -373,12 +424,15 @@ defineExpose({
 
 .preview-content {
   flex: 1;
-  overflow-y: auto;
+  overflow: hidden;
   padding: 16px;
+  display: flex;
+  flex-direction: column;
 }
 
 .chart-section {
-  margin-bottom: 24px;
+  flex: 1;
+  min-height: 0;
 }
 
 .triggers-section {

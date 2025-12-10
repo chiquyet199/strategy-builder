@@ -8,7 +8,7 @@
             v-model:value="selectedTimeframe"
             size="small"
             button-style="solid"
-            @change="handleSettingsChange"
+            @change="handleTimeframeChange"
           >
             <a-radio-button value="1h">1H</a-radio-button>
             <a-radio-button value="4h">4H</a-radio-button>
@@ -19,16 +19,13 @@
         <div class="setting-group slider-group ml-4 pt-2">
           <div class="slider-container">
             <DateRangeSlider
+              ref="dateRangeSliderRef"
               :initial-start-date="startDateISO"
               :initial-end-date="endDateISO"
               @change="handleDateRangeSliderChange"
             />
           </div>
         </div>
-        <!-- <div v-if="hasSettingsChanged" class="settings-changed">
-          <ExclamationCircleOutlined />
-          <span>Modified</span>
-        </div> -->
       </div>
       <div class="settings-right">
         <a-button type="primary" :loading="isLoading" @click="runPreview">
@@ -36,6 +33,20 @@
           Run Preview
         </a-button>
       </div>
+    </div>
+
+    <!-- Date Range Limit Notice -->
+    <div v-if="rangeLimitMessage" class="range-limit-notice">
+      <InfoCircleOutlined />
+      <span>{{ rangeLimitMessage }}</span>
+      <a-button
+        v-if="suggestedTimeframe"
+        type="link"
+        size="small"
+        @click="switchToSuggestedTimeframe"
+      >
+        Switch to {{ suggestedTimeframe.toUpperCase() }}
+      </a-button>
     </div>
 
     <!-- Loading State -->
@@ -138,7 +149,7 @@ import {
   Tag as ATag,
 } from 'ant-design-vue'
 import {
-  ExclamationCircleOutlined,
+  InfoCircleOutlined,
   PlayCircleOutlined,
   LineChartOutlined,
 } from '@ant-design/icons-vue'
@@ -152,6 +163,10 @@ import {
   type TriggerPoint,
 } from '../api/strategyBuilderApi'
 import dayjs from 'dayjs'
+import {
+  validateDateRangeForTimeframe,
+  type TimeframeLimitKey,
+} from '@/shared/utils/timeframe-limits'
 
 interface Props {
   strategyConfig: CustomStrategyConfig
@@ -177,7 +192,12 @@ const previewResult = ref<StrategyPreviewResult | null>(null)
 const expandedRules = ref<string[]>([])
 const chartSectionRef = ref<HTMLElement | null>(null)
 const chartHeight = ref(400)
+const dateRangeSliderRef = ref<{ setRange: (start: string, end: string) => void } | null>(null)
 let resizeObserver: ResizeObserver | null = null
+
+// Range limit feedback
+const rangeLimitMessage = ref<string | null>(null)
+const suggestedTimeframe = ref<TimeframeLimitKey | null>(null)
 
 // Original settings
 const originalStartDate = ref<string>('')
@@ -189,7 +209,7 @@ const selectedTimeframe = ref<string>(props.timeframe?.toLowerCase() || '1d')
 const startDateISO = ref<string>(props.startDate || dayjs().subtract(1, 'year').toISOString())
 const endDateISO = ref<string>(props.endDate || dayjs().toISOString())
 
-// Initialize original values
+// Initialize original values and validate range
 watch(
   () => [props.startDate, props.endDate, props.timeframe],
   () => {
@@ -206,6 +226,11 @@ watch(
     startDateISO.value = start
     endDateISO.value = end
     selectedTimeframe.value = tf
+
+    // Validate on initial load (don't show message initially, just adjust)
+    nextTick(() => {
+      validateAndAdjustDateRange(false)
+    })
   },
   { immediate: true }
 )
@@ -248,6 +273,39 @@ function formatDate(dateString: string): string {
   return dayjs(dateString).format('MMM DD, YYYY')
 }
 
+/**
+ * Validate current date range against timeframe limits
+ * Auto-adjusts if necessary and shows feedback
+ */
+function validateAndAdjustDateRange(showMessage = true): void {
+  const validation = validateDateRangeForTimeframe(
+    startDateISO.value,
+    endDateISO.value,
+    selectedTimeframe.value
+  )
+
+  if (validation.wasAdjusted) {
+    // Update to adjusted range
+    startDateISO.value = validation.adjustedStartDate
+
+    // Update the slider component if it has a setRange method
+    if (dateRangeSliderRef.value?.setRange) {
+      dateRangeSliderRef.value.setRange(
+        validation.adjustedStartDate,
+        validation.adjustedEndDate
+      )
+    }
+
+    if (showMessage) {
+      rangeLimitMessage.value = validation.message || null
+      suggestedTimeframe.value = validation.limit.suggestedTimeframe || null
+    }
+  } else {
+    rangeLimitMessage.value = null
+    suggestedTimeframe.value = null
+  }
+}
+
 function handleSettingsChange() {
   emit('settings-change', {
     startDate: startDateISO.value,
@@ -256,10 +314,28 @@ function handleSettingsChange() {
   })
 }
 
+function handleTimeframeChange() {
+  // Validate date range for new timeframe
+  validateAndAdjustDateRange()
+  handleSettingsChange()
+}
+
 function handleDateRangeSliderChange(range: { startDate: string; endDate: string }) {
   startDateISO.value = range.startDate
   endDateISO.value = range.endDate
+  
+  // Validate the new range against current timeframe
+  validateAndAdjustDateRange()
   handleSettingsChange()
+}
+
+function switchToSuggestedTimeframe() {
+  if (suggestedTimeframe.value) {
+    selectedTimeframe.value = suggestedTimeframe.value
+    rangeLimitMessage.value = null
+    suggestedTimeframe.value = null
+    handleSettingsChange()
+  }
 }
 
 // Recalculate chart height based on container
@@ -420,6 +496,21 @@ defineExpose({
 
 .error-state {
   padding: 16px;
+}
+
+.range-limit-notice {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  background: #fffbe6;
+  border-bottom: 1px solid #ffe58f;
+  color: #ad8b00;
+  font-size: 13px;
+}
+
+.range-limit-notice :deep(.anticon) {
+  color: #faad14;
 }
 
 .preview-content {

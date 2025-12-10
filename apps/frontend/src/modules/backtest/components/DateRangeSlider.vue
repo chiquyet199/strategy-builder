@@ -72,6 +72,28 @@ function handleDateRangeChange(values: [number, number]) {
   const isoDates = getDateRangeISO()
   emit('change', isoDates)
 }
+
+/**
+ * Programmatically set the date range (for external control)
+ */
+function setRange(startDate: string, endDate: string) {
+  const START_DATE = dayjs('2020-01-01').startOf('month')
+  
+  const startMonth = dayjs(startDate).startOf('month')
+  const endMonth = dayjs(endDate).startOf('month')
+  
+  const startIndex = Math.max(0, startMonth.diff(START_DATE, 'month'))
+  const endIndex = Math.min(endMonth.diff(START_DATE, 'month'), totalMonths)
+  
+  dateRange.indices = [startIndex, endIndex]
+  dateRange.startDate = startMonth.startOf('month')
+  dateRange.endDate = endMonth.endOf('month')
+}
+
+// Expose setRange for parent components
+defineExpose({
+  setRange,
+})
 </script>
 
 <style scoped>

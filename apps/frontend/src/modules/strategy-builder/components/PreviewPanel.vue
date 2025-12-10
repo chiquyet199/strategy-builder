@@ -70,6 +70,7 @@
           :rule-colors="ruleColors"
           :height="chartHeight"
           :show-timeframe-selector="false"
+          :default-visible-days="defaultVisibleDays"
         />
       </div>
 
@@ -144,9 +145,6 @@ import {
   Button as AButton,
   Spin as ASpin,
   Alert as AAlert,
-  Collapse as ACollapse,
-  CollapsePanel as ACollapsePanel,
-  Tag as ATag,
 } from 'ant-design-vue'
 import {
   InfoCircleOutlined,
@@ -165,6 +163,7 @@ import {
 import dayjs from 'dayjs'
 import {
   validateDateRangeForTimeframe,
+  getDefaultVisibleDays,
   type TimeframeLimitKey,
 } from '@/shared/utils/timeframe-limits'
 
@@ -256,22 +255,10 @@ const allTriggerPoints = computed<TriggerPoint[]>(() => {
   return previewResult.value.ruleSummaries.flatMap((s) => s.triggerPoints)
 })
 
-// Methods
-function getRuleNumber(ruleId: string): number {
-  const index = props.strategyConfig.rules.findIndex((r) => r.id === ruleId)
-  return index >= 0 ? index + 1 : 0
-}
-
-function getTagColor(count: number): string {
-  if (count > 10) return 'green'
-  if (count > 5) return 'blue'
-  if (count > 0) return 'orange'
-  return 'default'
-}
-
-function formatDate(dateString: string): string {
-  return dayjs(dateString).format('MMM DD, YYYY')
-}
+// Get default visible days based on selected timeframe
+const defaultVisibleDays = computed(() => {
+  return getDefaultVisibleDays(selectedTimeframe.value)
+})
 
 /**
  * Validate current date range against timeframe limits

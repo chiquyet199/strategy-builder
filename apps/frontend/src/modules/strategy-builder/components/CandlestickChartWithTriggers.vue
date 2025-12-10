@@ -10,6 +10,7 @@
     :theme="theme"
     :watermark="watermark"
     :loading="loading"
+    :default-visible-days="defaultVisibleDays"
     @timeframe-change="handleTimeframeChange"
   />
 </template>
@@ -53,6 +54,8 @@ interface Props {
   watermark?: string
   /** Loading state */
   loading?: boolean
+  /** Default number of days to show initially (for zoom level) */
+  defaultVisibleDays?: number
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -66,6 +69,7 @@ const props = withDefaults(defineProps<Props>(), {
   theme: 'light',
   watermark: '',
   loading: false,
+  defaultVisibleDays: undefined,
 })
 
 interface Emits {

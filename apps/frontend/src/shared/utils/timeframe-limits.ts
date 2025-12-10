@@ -22,6 +22,8 @@ export interface TimeframeLimit {
   suggestedTimeframe?: TimeframeLimitKey
   /** Approximate max data points */
   approxMaxDataPoints: number
+  /** Default visible range in days (for initial chart zoom) */
+  defaultVisibleDays: number
 }
 
 /**
@@ -34,29 +36,34 @@ export const TIMEFRAME_LIMITS: Record<TimeframeLimitKey, TimeframeLimit> = {
     description: '3 months',
     suggestedTimeframe: '4h',
     approxMaxDataPoints: 2160, // 24 * 30 * 3
+    defaultVisibleDays: 7, // ~168 candles - easy to see hourly candles
   },
   '4h': {
     maxMonths: 12,
     description: '1 year',
     suggestedTimeframe: '1d',
     approxMaxDataPoints: 2190, // 6 * 30 * 12
+    defaultVisibleDays: 30, // ~180 candles
   },
   '1d': {
     maxMonths: 60, // 5 years
     description: '5 years',
     suggestedTimeframe: '1w',
     approxMaxDataPoints: 1825, // 365 * 5
+    defaultVisibleDays: 180, // ~180 candles
   },
   '1w': {
     maxMonths: 120, // 10 years
     description: '10 years',
     suggestedTimeframe: '1m',
     approxMaxDataPoints: 520, // 52 * 10
+    defaultVisibleDays: 730, // ~104 candles (2 years)
   },
   '1m': {
     maxMonths: 240, // 20 years
     description: '20 years',
     approxMaxDataPoints: 240, // 12 * 20
+    defaultVisibleDays: 1825, // ~60 candles (5 years)
   },
 }
 
@@ -168,4 +175,32 @@ export function formatTimeframeDisplay(timeframe: string): string {
     '1m': 'Monthly',
   }
   return map[timeframe.toLowerCase()] || timeframe
+}
+
+/**
+ * Get the default visible range for a timeframe
+ * Returns the number of days that should be visible by default
+ */
+export function getDefaultVisibleDays(timeframe: string): number {
+  const normalizedTimeframe = timeframe.toLowerCase() as TimeframeLimitKey
+  const limit = TIMEFRAME_LIMITS[normalizedTimeframe]
+  return limit?.defaultVisibleDays || 180 // Default to 6 months if unknown
+}
+
+/**
+ * Calculate visible range dates based on timeframe
+ * Returns start and end dates for the default visible range (zooms to end of data)
+ */
+export function getDefaultVisibleRange(
+  endDate: string,
+  timeframe: string
+): { visibleFrom: string; visibleTo: string } {
+  const days = getDefaultVisibleDays(timeframe)
+  const end = dayjs(endDate)
+  const start = end.subtract(days, 'day')
+  
+  return {
+    visibleFrom: start.toISOString(),
+    visibleTo: end.toISOString(),
+  }
 }

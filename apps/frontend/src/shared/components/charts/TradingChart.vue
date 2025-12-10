@@ -83,6 +83,8 @@ interface Props {
   watermark?: string
   /** Loading state */
   loading?: boolean
+  /** Default number of days to show initially (for zoom level) */
+  defaultVisibleDays?: number
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -95,6 +97,7 @@ const props = withDefaults(defineProps<Props>(), {
   theme: 'light',
   watermark: '',
   loading: false,
+  defaultVisibleDays: undefined,
 })
 
 interface Emits {
@@ -136,6 +139,7 @@ const {
   fitContent,
   setTheme,
   resize,
+  setVisibleRange,
 } = useTradingChart({
   height: props.height,
   showVolume: props.showVolume,
@@ -143,12 +147,39 @@ const {
   watermark: props.watermark,
 })
 
+/**
+ * Apply default visible range based on defaultVisibleDays prop
+ * Shows the most recent data (zooms to the end)
+ */
+function applyDefaultVisibleRange(data: CandleData[]) {
+  if (!props.defaultVisibleDays || data.length === 0) {
+    return // Let fitContent handle it
+  }
+
+  // Find the time range of the data
+  const sortedData = [...data].sort((a, b) => (a.time as number) - (b.time as number))
+  const lastCandle = sortedData[sortedData.length - 1]
+  const lastTime = lastCandle.time as number
+
+  // Calculate visible range (show last N days)
+  const secondsPerDay = 24 * 60 * 60
+  const visibleSeconds = props.defaultVisibleDays * secondsPerDay
+  const fromTime = lastTime - visibleSeconds
+
+  // Set the visible range
+  setVisibleRange(fromTime, lastTime)
+}
+
 // Watch for data changes
 watch(
   () => props.data,
   (newData) => {
     if (newData && newData.length > 0) {
       setData(newData)
+      // Apply default zoom after data is set
+      setTimeout(() => {
+        applyDefaultVisibleRange(newData)
+      }, 50)
     }
   },
   { deep: true }
@@ -201,6 +232,10 @@ watch(chart, (chartInstance) => {
     if (props.markers && props.markers.length > 0) {
       setMarkers(props.markers)
     }
+    // Apply default zoom after initial render
+    setTimeout(() => {
+      applyDefaultVisibleRange(props.data)
+    }, 50)
   }
 })
 
